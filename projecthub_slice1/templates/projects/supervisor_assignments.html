@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+{% block title %}Student allocation · Baze Project Hub{% endblock %}
+{% block content %}
+<section class="page-heading">
+  <p class="eyebrow">DEPARTMENT WORKSPACE</p>
+  <h1>Student allocation</h1>
+  <p class="muted">Assign supervisors to active project records. Each change is recorded with its author, time and reason.</p>
+</section>
+
+<section class="card assignment-workloads">
+  <h2>Current supervisor workload</h2>
+  {% if workloads %}
+    <div class="workload-grid">
+      {% for staff_member in workloads %}
+        <div class="workload-card">
+          <strong>{{ staff_member.get_full_name|default:staff_member.username }}</strong>
+          <span>{{ staff_member.active_project_count }} active project{{ staff_member.active_project_count|pluralize }}</span>
+          {% if staff_member.department %}<small>{{ staff_member.department.name }}</small>{% endif %}
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <p class="muted">No active academic staff are available in this department.</p>
+  {% endif %}
+</section>
+
+<section class="assignment-list">
+  <div class="results-heading">
+    <div>
+      <h2>Active projects</h2>
+      <p class="muted">Project records are scoped to your department.</p>
+    </div>
+    <span class="result-count">{{ rows|length }} project{{ rows|length|pluralize }}</span>
+  </div>
+  {% for row in rows %}
+    <article class="card assignment-project">
+      <div class="assignment-project-heading">
+        <div>
+          <p class="eyebrow">{{ row.project.department }} · {{ row.project.programme }}</p>
+          <h3>{{ row.project.title }}</h3>
+          <p class="muted">{{ row.project.student.get_full_name|default:row.project.student.username }} · {{ row.project.get_stage_display }}</p>
+        </div>
+        {% if row.project.supervisor %}
+          <span class="tag">Current: {{ row.project.supervisor.get_full_name|default:row.project.supervisor.username }}</span>
+        {% else %}
+          <span class="tag">Unassigned</span>
+        {% endif %}
+      </div>
+
+      <form method="post" class="assignment-form">
+        {% csrf_token %}
+        <input type="hidden" name="project_id" value="{{ row.project.pk }}">
+        {% for field in row.form %}
+          <div class="field">
+            {{ field.label_tag }}
+            {{ field }}
+            {% for error in field.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+          </div>
+        {% endfor %}
+        {% for error in row.form.non_field_errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+        <button class="primary" type="submit">Save assignment</button>
+      </form>
+
+      {% with history=row.project.supervisor_assignments.all %}
+        {% if history %}
+          <details class="assignment-history">
+            <summary>Assignment history ({{ history|length }})</summary>
+            <ol>
+              {% for entry in history %}
+                <li>
+                  <strong>{{ entry.supervisor.get_full_name|default:entry.supervisor.username }}</strong>
+                  <span>{% if entry.ended_at %}{{ entry.assigned_at|date:"j M Y" }} – {{ entry.ended_at|date:"j M Y" }}{% else %}Current since {{ entry.assigned_at|date:"j M Y" }}{% endif %}</span>
+                  {% if entry.assigned_by %}<small>Recorded by {{ entry.assigned_by.get_full_name|default:entry.assigned_by.username }}</small>{% endif %}
+                  {% if entry.change_reason %}<p>{{ entry.change_reason }}</p>{% endif %}
+                </li>
+              {% endfor %}
+            </ol>
+          </details>
+        {% endif %}
+      {% endwith %}
+    </article>
+  {% empty %}
+    <div class="card empty-state">
+      <h3>No active projects are available for assignment</h3>
+      <p class="muted">Project records will appear here after they are created for students in your department.</p>
+    </div>
+  {% endfor %}
+</section>
+{% endblock %}

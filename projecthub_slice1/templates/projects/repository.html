@@ -1,0 +1,126 @@
+{% extends "base.html" %}
+{% block title %}Project repository · Baze Project Hub{% endblock %}
+{% block main_class %}wide{% endblock %}
+{% block content %}
+<section class="repository-hero">
+  <div>
+    <p class="eyebrow">BAZE UNIVERSITY · PROJECT DISCOVERY</p>
+    <h1>Find work before choosing a topic</h1>
+    <p>Explore current and completed projects across faculties, departments and programmes.</p>
+  </div>
+  <div class="hero-stat">
+    <span>{{ section_count.current|add:section_count.past }}</span>
+    <small>projects in this view</small>
+  </div>
+</section>
+
+<nav class="repository-tabs" aria-label="Repository sections">
+  <a class="{% if section == 'current' %}selected{% endif %}"
+     href="{% url 'repository' %}?section=current&q={{ query|urlencode }}&faculty={{ faculty_id|urlencode }}&department={{ department_id|urlencode }}&programme={{ programme_id|urlencode }}&year={{ year|urlencode }}">
+    Current students <span>{{ section_count.current }}</span>
+  </a>
+  <a class="{% if section == 'past' %}selected{% endif %}"
+     href="{% url 'repository' %}?section=past&q={{ query|urlencode }}&faculty={{ faculty_id|urlencode }}&department={{ department_id|urlencode }}&programme={{ programme_id|urlencode }}&year={{ year|urlencode }}">
+    Past students <span>{{ section_count.past }}</span>
+  </a>
+  <a class="{% if section == 'all' %}selected{% endif %}"
+     href="{% url 'repository' %}?section=all&q={{ query|urlencode }}&faculty={{ faculty_id|urlencode }}&department={{ department_id|urlencode }}&programme={{ programme_id|urlencode }}&year={{ year|urlencode }}">
+    All projects
+  </a>
+</nav>
+
+<form method="get" class="repository-filter card">
+  <input type="hidden" name="section" value="{{ section }}">
+  <div class="search-field">
+    <label for="repository-search">Search projects</label>
+    <input id="repository-search" name="q" type="search" value="{{ query }}"
+           placeholder="Try a topic, student, supervisor{% if can_see_student_id %} or student ID{% endif %}">
+  </div>
+  <div>
+    <label for="faculty-filter">Faculty</label>
+    <select id="faculty-filter" name="faculty">
+      <option value="">All faculties</option>
+      {% for faculty in faculties %}
+        <option value="{{ faculty.pk }}" {% if faculty_id == faculty.pk|stringformat:"s" %}selected{% endif %}>{{ faculty.name }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div>
+    <label for="department-filter">Department</label>
+    <select id="department-filter" name="department">
+      <option value="">All departments</option>
+      {% for faculty in faculties %}
+        {% for department in faculty.departments.all %}
+          <option value="{{ department.pk }}" {% if department_id == department.pk|stringformat:"s" %}selected{% endif %}>{{ department.name }} · {{ faculty.name }}</option>
+        {% endfor %}
+      {% endfor %}
+    </select>
+  </div>
+  <div>
+    <label for="programme-filter">Programme</label>
+    <select id="programme-filter" name="programme">
+      <option value="">All programmes</option>
+      {% for faculty in faculties %}
+        {% for department in faculty.departments.all %}
+          {% for programme in department.programmes.all %}
+            <option value="{{ programme.pk }}" {% if programme_id == programme.pk|stringformat:"s" %}selected{% endif %}>{{ programme.name }} {{ programme.degree_type }}</option>
+          {% endfor %}
+        {% endfor %}
+      {% endfor %}
+    </select>
+  </div>
+  <div>
+    <label for="year-filter">Year</label>
+    <select id="year-filter" name="year">
+      <option value="">All years</option>
+      {% for available_year in years %}
+        <option value="{{ available_year }}" {% if year == available_year|stringformat:"s" %}selected{% endif %}>{{ available_year }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="filter-actions">
+    <button type="submit" class="primary">Search</button>
+    <a href="{% url 'repository' %}?section={{ section }}">Clear</a>
+  </div>
+</form>
+
+<div class="results-heading">
+  <div>
+    <h2>{% if section == 'current' %}Current students{% elif section == 'past' %}Past students{% else %}All projects{% endif %}</h2>
+    <p class="muted">Project summaries are available to signed-in Baze Project Hub users.</p>
+  </div>
+  <span class="result-count">{{ items|length }} result{{ items|length|pluralize }}</span>
+</div>
+
+{% if items %}
+  <div class="project-grid">
+    {% for item in items %}
+      <article class="project-card">
+        <div class="project-card-top">
+          <span class="status-pill {% if item.is_past %}past{% endif %}">
+            {% if item.is_past %}Past project{% else %}{{ item.stage }}{% endif %}
+          </span>
+          <span class="project-year">{{ item.year }}</span>
+        </div>
+        {% if item.project.is_demo %}<span class="sample-label">Sample data</span>{% endif %}
+        <h3><a href="{{ item.detail_url }}">{{ item.project.title }}</a></h3>
+        <p class="project-description">{{ item.project.description|default:"Project summary has not been added yet."|truncatewords:32 }}</p>
+        <dl class="project-meta">
+          <div><dt>Student</dt><dd>{{ item.project.student.get_full_name|default:item.project.student.username }}</dd></div>
+          <div><dt>Programme</dt><dd>{{ item.project.programme }}</dd></div>
+          <div><dt>Department</dt><dd>{{ item.project.department.name }}</dd></div>
+          <div><dt>Supervisor</dt><dd>{{ item.project.supervisor.get_full_name|default:"Not assigned" }}</dd></div>
+        </dl>
+        <a class="card-link" href="{{ item.detail_url }}">View project <span aria-hidden="true">→</span></a>
+      </article>
+    {% endfor %}
+  </div>
+{% else %}
+  <section class="empty-state card">
+    <div class="empty-icon" aria-hidden="true">⌕</div>
+    <h3>No projects found</h3>
+    <p class="muted">Try another search or remove one of the filters. New project records will appear here as they are added and approved for discovery.</p>
+    <a href="{% url 'repository' %}?section={{ section }}">Clear filters</a>
+  </section>
+{% endif %}
+{% endblock %}

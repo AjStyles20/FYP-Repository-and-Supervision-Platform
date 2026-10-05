@@ -1,0 +1,37 @@
+{% load static %}<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Baze Project Hub{% endblock %}</title>
+  <link rel="stylesheet" href="{% static 'css/app.css' %}">
+</head>
+<body>
+<header class="top">
+  <a class="brand" href="{% url 'home' %}">Baze Project Hub</a>
+  <nav>
+    {% if user.is_authenticated %}
+      <a href="{% url 'dashboard' %}">Dashboard</a>
+      <a href="{% url 'repository' %}">Repository</a>
+      {% if user.role == 'student' %}<a href="{% url 'my_project' %}">My project</a>{% endif %}
+      {% if user.has_staff_role %}<a href="{% url 'supervision' %}">Supervision history</a>{% endif %}
+      {% if user.can_assign_supervisors %}<a href="{% url 'supervisor_assignments' %}">Student allocation</a>{% endif %}
+      {% if user.role == 'coordinator' or user.role == 'hod' or user.role == 'admin' %}<a href="{% url 'approvals' %}">Approvals</a>{% endif %}
+      <a href="{% url 'guidelines' %}">Project guide</a>
+      {% if user.has_staff_role %}<a href="{% url 'academic_structure' %}">Academic structure</a>{% endif %}
+      {% if user.role == 'admin' %}<a href="{% url 'admin_tools' %}">Admin tools</a>{% endif %}
+      <span class="who">{{ user.get_full_name|default:user.username }} · {{ user.get_role_display }}</span>
+      <form method="post" action="{% url 'logout' %}" class="inline">{% csrf_token %}<button type="submit">Log out</button></form>
+    {% else %}
+      <a href="{% url 'login' %}">Log in</a>
+      <a href="{% url 'register_student' %}">Create student account</a>
+    {% endif %}
+  </nav>
+</header>
+<main class="{% block main_class %}{% endblock %}">
+  {% if messages %}{% for m in messages %}<p class="msg">{{ m }}</p>{% endfor %}{% endif %}
+  {% block content %}{% endblock %}
+</main>
+<footer>Baze Project Hub · Final-year project repository and supervision platform</footer>
+</body>
+</html>

@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}Approvals queue · Baze Project Hub{% endblock %}
+{% block content %}
+<h1>Approvals queue</h1>
+{% if projects %}
+  {% for project in projects %}
+    <section class="card">
+      <h2>{{ project.title }}</h2>
+      <div class="muted" style="display:flex; flex-wrap:wrap; gap:12px; margin:8px 0 10px;">
+        <span class="tag">{{ project.get_stage_display }}</span>
+        <span class="tag">Student: {{ project.student.get_full_name|default:project.student.username }}</span>
+        <span class="tag">Supervisor: {{ project.supervisor.get_full_name|default:project.supervisor.username }}</span>
+      </div>
+      <p>{{ project.description }}</p>
+      <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:8px;">
+        <a class="button" href="{% url 'current_project_detail' project.pk %}">View project summary</a>
+      </div>
+    </section>
+  {% endfor %}
+{% else %}
+  <div class="card">
+    <p>No projects are waiting for approval at the moment.</p>
+  </div>
+{% endif %}
+{% endblock %}

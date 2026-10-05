@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}Academic structure · Baze Project Hub{% endblock %}
+{% block content %}
+<h1>Academic structure</h1>
+<p class="muted">Faculty → Department → Programme. Edited by administrators in the admin site.</p>
+{% for faculty in faculties %}
+<section class="card">
+  <h2>{{ faculty.name }}{% if faculty.is_demo %} <span class="tag">demo</span>{% endif %}</h2>
+  {% for dept in faculty.departments.all %}
+    <h3>{{ dept.name }}</h3>
+    <ul>{% for p in dept.programmes.all %}<li>{{ p }}</li>{% endfor %}</ul>
+  {% endfor %}
+</section>
+{% empty %}
+<p>No faculties yet. Run <code>python manage.py seed_demo</code> or add them in the admin site.</p>
+{% endfor %}
+{% endblock %}

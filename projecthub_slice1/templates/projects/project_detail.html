@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+{% block title %}{{ project.title }} · Baze Project Hub{% endblock %}
+{% block main_class %}wide{% endblock %}
+{% block content %}
+<p class="breadcrumb"><a href="{% url 'repository' %}?section={% if is_past %}past{% else %}current{% endif %}">← Back to repository</a></p>
+
+<section class="detail-hero">
+  <div class="detail-topline">
+    <span class="status-pill {% if is_past %}past{% endif %}">{% if is_past %}Past project{% else %}{{ project.get_stage_display }}{% endif %}</span>
+    <span class="muted">{% if is_past %}Archive year {{ project.year }}{% else %}Updated {{ project.updated_at|date:"j M Y" }}{% endif %}</span>
+  </div>
+  <p class="eyebrow">{{ project.department.faculty.name }} · {{ project.department.name }} · {{ project.programme }}</p>
+  <h1>{{ project.title }}</h1>
+  {% if project.is_demo %}<p class="sample-label">Synthetic sample record for development and testing</p>{% endif %}
+  <p class="detail-byline">{{ project.student.get_full_name|default:project.student.username }}{% if project.supervisor %}<span> · </span>Supervised by {{ project.supervisor.get_full_name|default:project.supervisor.username }}{% endif %}</p>
+</section>
+
+<div class="detail-layout">
+  <section class="card detail-content">
+    <h2>Project overview</h2>
+    {% if project.description %}
+      <div class="prose">{{ project.description|linebreaks }}</div>
+    {% else %}
+      <p class="muted">A project description has not been added yet.</p>
+    {% endif %}
+
+    {% if is_past and project.gap_summary %}
+      <section class="gap-panel">
+        <p class="eyebrow">FUTURE RESEARCH</p>
+        <h2>Documented gap</h2>
+        <div class="prose">{{ project.gap_summary|linebreaks }}</div>
+      </section>
+    {% endif %}
+
+    {% if is_past %}
+      <section class="documents-panel">
+        <h2>Available project files</h2>
+        {% if documents %}
+          <ul class="document-list">
+            {% for document in documents %}
+              <li>
+                <span><strong>{{ document.title }}</strong><small>{{ document.get_visibility_display }}</small></span>
+                <a href="{% url 'download_project_document' document.pk %}">Download</a>
+              </li>
+            {% endfor %}
+          </ul>
+        {% else %}
+          <p class="muted">No files have been approved for sharing.</p>
+        {% endif %}
+      </section>
+    {% endif %}
+  </section>
+
+  <aside class="card detail-facts">
+    <h2>Project details</h2>
+    <dl class="fact-list">
+      <div><dt>Student</dt><dd>{{ project.student.get_full_name|default:project.student.username }}</dd></div>
+      <div><dt>Faculty</dt><dd>{{ project.department.faculty.name }}</dd></div>
+      <div><dt>Department</dt><dd>{{ project.department.name }}</dd></div>
+      <div><dt>Programme</dt><dd>{{ project.programme }}</dd></div>
+      {% if can_see_student_id and student_profile %}
+        <div><dt>Student ID</dt><dd>{{ student_profile.student_number }}</dd></div>
+      {% endif %}
+      <div><dt>{% if is_past %}Final supervisor{% else %}Supervisor{% endif %}</dt><dd>{{ project.supervisor.get_full_name|default:"Not assigned" }}</dd></div>
+      {% if previous_supervisors %}
+        <div><dt>Earlier supervisor{{ previous_supervisors|length|pluralize }}</dt><dd>{% for previous_supervisor in previous_supervisors %}{{ previous_supervisor.get_full_name|default:previous_supervisor.username }}{% if not forloop.last %}, {% endif %}{% endfor %}</dd></div>
+      {% endif %}
+      {% if is_past and student_profile and student_profile.graduation_year %}
+        <div><dt>Verified graduation year</dt><dd>{{ student_profile.graduation_year }}</dd></div>
+      {% elif is_past %}
+        <div><dt>Graduation year</dt><dd class="muted">Not recorded</dd></div>
+      {% endif %}
+      {% if is_past %}<div><dt>Archive year</dt><dd>{{ project.year }}</dd></div>{% endif %}
+    </dl>
+    {% if student_profile.contact_consent and student_profile.contact_email %}
+      <div class="contact-panel">
+        <strong>Student contact</strong>
+        <a href="mailto:{{ student_profile.contact_email }}">{{ student_profile.contact_email }}</a>
+        <small>Shared with consent</small>
+      </div>
+    {% endif %}
+  </aside>
+</div>
+
+<p class="privacy-note">This project summary is available to signed-in Baze Project Hub users. Private supervision meeting discussions and corrective-action records are not shown here.</p>
+{% endblock %}

@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}Admin tools · Baze Project Hub{% endblock %}
+{% block content %}
+<h1>Admin tools</h1>
+<section class="card">
+  <h2>Student account approvals</h2>
+  {% if pending_students %}
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Student</th><th>Baze email</th><th>Student ID</th><th>Programme</th><th>Status</th><th>Action</th></tr></thead>
+        <tbody>
+          {% for student in pending_students %}
+            <tr>
+              <td>{{ student.get_full_name|default:student.username }}</td>
+              <td>{{ student.email }}</td>
+              <td>{{ student.student_profile.student_number }}</td>
+              <td>{{ student.student_profile.programme }}</td>
+              <td>{{ student.student_profile.get_student_status_display }}</td>
+              <td>
+                <form method="post" action="{% url 'review_student_registration' student.pk %}">
+                  {% csrf_token %}
+                  <button type="submit" name="action" value="approve" class="primary">Approve</button>
+                  <button type="submit" name="action" value="reject">Reject</button>
+                </form>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <p class="muted">There are no student accounts awaiting approval.</p>
+  {% endif %}
+</section>
+{% endblock %}

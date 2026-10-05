@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% block title %}Supervision history · Baze Project Hub{% endblock %}
+{% block content %}
+<section class="page-heading">
+  <p class="eyebrow">MY ACADEMIC RECORD</p>
+  <h1>Supervision history</h1>
+  <p class="muted">Projects you currently supervise and your previous supervisees, including archived work.</p>
+</section>
+
+<section>
+  <div class="results-heading">
+    <div>
+      <h2>Current supervisees</h2>
+      <p class="muted">Active projects assigned to you.</p>
+    </div>
+    <span class="result-count">{{ current_projects|length }} student{{ current_projects|length|pluralize }}</span>
+  </div>
+  {% for project in current_projects %}
+    <section class="card">
+      <p class="eyebrow">{{ project.department }} · {{ project.programme }}</p>
+      <h3>{{ project.student.get_full_name|default:project.student.username }}</h3>
+      <p><strong>{{ project.title }}</strong> · {{ project.get_stage_display }}</p>
+      <p class="muted">{{ project.description|default:"No project summary has been added yet."|truncatewords:36 }}</p>
+      <a class="card-link" href="{% url 'current_project_detail' project.pk %}">View project summary <span aria-hidden="true">→</span></a>
+    </section>
+  {% empty %}
+    <div class="card empty-state"><p>No active projects are currently assigned to you.</p></div>
+  {% endfor %}
+</section>
+
+<section>
+  <div class="results-heading">
+    <div>
+      <h2>Previous supervision</h2>
+      <p class="muted">Projects you previously supervised before a reassignment.</p>
+    </div>
+    <span class="result-count">{{ former_projects|length }} project{{ former_projects|length|pluralize }}</span>
+  </div>
+  {% for project in former_projects %}
+    <section class="card">
+      <p class="eyebrow">{{ project.department }} · {{ project.programme }}</p>
+      <h3>{{ project.student.get_full_name|default:project.student.username }}</h3>
+      <p><strong>{{ project.title }}</strong> · Currently supervised by {{ project.supervisor.get_full_name|default:project.supervisor.username }}</p>
+      <p class="muted">{{ project.description|default:"No project summary has been added yet."|truncatewords:36 }}</p>
+      <a class="card-link" href="{% url 'current_project_detail' project.pk %}">View project summary <span aria-hidden="true">→</span></a>
+    </section>
+  {% empty %}
+    <div class="card empty-state"><p>No previous supervisor assignments are recorded.</p></div>
+  {% endfor %}
+</section>
+
+<section>
+  <div class="results-heading">
+    <div>
+      <h2>Archived supervisees</h2>
+      <p class="muted">Completed work where you were the final or an earlier supervisor.</p>
+    </div>
+    <span class="result-count">{{ archived_projects|length }} project{{ archived_projects|length|pluralize }}</span>
+  </div>
+  {% for project in archived_projects %}
+    <section class="card">
+      <p class="eyebrow">{{ project.department }} · {{ project.programme }} · Archive year {{ project.year }}</p>
+      <h3>{{ project.student.get_full_name|default:project.student.username }}</h3>
+      <p><strong>{{ project.title }}</strong></p>
+      <p class="muted">{{ project.description|default:"No project summary has been added yet."|truncatewords:36 }}</p>
+      <a class="card-link" href="{% url 'past_project_detail' project.pk %}">View archived project summary <span aria-hidden="true">→</span></a>
+    </section>
+  {% empty %}
+    <div class="card empty-state"><p>No archived supervisees are recorded for you.</p></div>
+  {% endfor %}
+</section>
+{% endblock %}

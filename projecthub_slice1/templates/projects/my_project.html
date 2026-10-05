@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}My project · Baze Project Hub{% endblock %}
+{% block content %}
+<h1>My project</h1>
+{% if project %}
+  <section class="card">
+    <h2>{{ project.title }}</h2>
+    <div class="muted" style="display:flex; flex-wrap:wrap; gap:12px; margin:8px 0 10px;">
+      <span class="tag">{{ project.get_stage_display }}</span>
+      <span class="tag">{{ project.department }}</span>
+      <span class="tag">{{ project.programme }}</span>
+      <span class="tag">{{ project.supervisor.get_full_name|default:project.supervisor.username }}</span>
+    </div>
+    <p>{{ project.description }}</p>
+
+    {% if project.milestones.all %}
+      <h3>Milestones</h3>
+      <ul>
+        {% for milestone in project.milestones.all %}
+          <li>
+            {{ milestone.name }}
+            {% if milestone.done %}<strong>done</strong>{% else %}not yet{% endif %}
+            {% if milestone.at_risk %}<span class="tag">at risk</span>{% endif %}
+          </li>
+        {% endfor %}
+      </ul>
+    {% endif %}
+
+    {% if project.meeting_logs.all %}
+      <h3>Recent meeting logs</h3>
+      {% for log in project.meeting_logs.all %}
+        <div class="card" style="margin-top:10px;">
+          <strong>{{ log.meeting_date }}</strong>
+          <p>Attended: {% if log.attended %}Yes{% else %}No{% endif %}</p>
+          <p><strong>Discussion:</strong> {{ log.discussion|default:"—" }}</p>
+          <p><strong>Corrective action:</strong> {{ log.corrective_action|default:"—" }}</p>
+        </div>
+      {% endfor %}
+    {% else %}
+      <p>No meeting logs have been recorded yet.</p>
+    {% endif %}
+  </section>
+{% else %}
+  <div class="card">
+    <p>You do not currently have an assigned project.</p>
+  </div>
+{% endif %}
+{% endblock %}

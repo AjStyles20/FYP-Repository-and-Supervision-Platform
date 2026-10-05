@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}Create student account · Baze Project Hub{% endblock %}
+{% block content %}
+<section class="card narrow">
+  <h1>Create a student account</h1>
+  <p class="muted">For current and past final-year students. Use your Baze email address and student ID. New accounts require administrator approval before sign-in.</p>
+  <form method="post">
+    {% csrf_token %}
+    {{ form.non_field_errors }}
+    {% for field in form %}
+      <label for="{{ field.id_for_label }}">{{ field.label }} {{ field }}</label>
+      {% if field.help_text %}<small class="muted">{{ field.help_text }}</small>{% endif %}
+      {% for error in field.errors %}<p class="error">{{ error }}</p>{% endfor %}
+    {% endfor %}
+    <button type="submit" class="primary">Submit registration</button>
+  </form>
+  <p>Already registered? <a href="{% url 'login' %}">Log in</a>.</p>
+</section>
+{% endblock %}

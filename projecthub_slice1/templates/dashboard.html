@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Welcome, {{ user.get_full_name|default:user.username }}</h1>
+<p class="muted">Role: {{ user.get_role_display }}{% if user.department %} · {{ user.department }}{% endif %}</p>
+
+<section class="card">
+  {% if role == 'student' %}
+    <h2>Your project</h2>
+    <p>Your project workspace will show your project, supervisor and progress after your department assigns a project to your account.</p>
+  {% elif role == 'supervisor' %}
+    <h2>Your students</h2>
+    <p>Projects assigned to you will appear here for supervision and progress tracking.</p>
+  {% elif role == 'coordinator' %}
+    <h2>Coordinator</h2>
+    <p>Use Student allocation to assign supervisors within your department. Supervision history shows only projects assigned to you.</p>
+  {% elif role == 'hod' %}
+    <h2>Head of Department</h2>
+    <p>Review department approvals and your own supervision history. Assignment responsibility can be granted separately by an administrator.</p>
+  {% else %}
+    <h2>Administrator</h2>
+    <p>Review student account registrations in Admin tools and manage staff accounts through Django Admin.</p>
+  {% endif %}
+</section>
+{% endblock %}
