@@ -1,10 +1,13 @@
 import tempfile
-from datetime import datetime, timezone as dt_timezone
+from datetime import datetime, timedelta, timezone as dt_timezone
 
 from django.core.files.uploadedfile import SimpleUploadedFile
+from django.db import IntegrityError, connection, transaction
+from django.db.migrations.executor import MigrationExecutor
 from django.test import override_settings
-from django.test import TestCase
+from django.test import TestCase, TransactionTestCase
 from django.urls import reverse
+from django.utils import timezone
 
 from apps.academics.models import Department, Faculty, Programme
 from apps.accounts.models import Role, StudentProfile, User
@@ -18,7 +21,7 @@ from .models import (
     ProjectStage,
     ProjectSupervisorAssignment,
 )
-from .services import available_years
+from .services import assign_project_supervisor, available_years, unassign_project_supervisor
 
 
 class RepositoryTests(TestCase):
@@ -504,3 +507,142 @@ class RepositoryTests(TestCase):
         self.current_project.refresh_from_db()
         self.assertEqual(self.current_project.supervisor, self.supervisor)
         self.assertFalse(self.current_project.supervisor_assignments.exists())
+
+
+def _assignment_fixtures(suffix=""):
+    """A department, two supervisors and a student project, for the assignment constraint tests."""
+    faculty = Faculty.objects.create(name=f"Assignment Faculty{suffix}")
+    department = Department.objects.create(faculty=faculty, name=f"Assignment Department{suffix}")
+    programme = Programme.objects.create(department=department, name="Software Engineering", degree_type="BSc")
+    student = User.objects.create(username=f"assign.student{suffix}", role=Role.STUDENT)
+    first = User.objects.create(username=f"assign.first{suffix}", role=Role.SUPERVISOR, department=department)
+    second = User.objects.create(username=f"assign.second{suffix}", role=Role.SUPERVISOR, department=department)
+    project = Project.objects.create(
+        student=student, title=f"Assignment project{suffix}", department=department, programme=programme
+    )
+    return project, first, second
+
+
+class SupervisorAssignmentConstraintTests(TestCase):
+    """One current supervisor per project, enforced by the database on SQLite and MySQL."""
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.project, cls.first, cls.second = _assignment_fixtures()
+
+    def test_second_current_supervisor_is_rejected_by_the_database(self):
+        ProjectSupervisorAssignment.objects.create(project=self.project, supervisor=self.first)
+
+        with self.assertRaises(IntegrityError), transaction.atomic():
+            ProjectSupervisorAssignment.objects.create(project=self.project, supervisor=self.second)
+
+        self.assertEqual(self.project.supervisor_assignments.count(), 1)
+
+    def test_bulk_create_cannot_bypass_the_rule(self):
+        with self.assertRaises(IntegrityError), transaction.atomic():
+            ProjectSupervisorAssignment.objects.bulk_create([
+                ProjectSupervisorAssignment(project=self.project, supervisor=self.first),
+                ProjectSupervisorAssignment(project=self.project, supervisor=self.second),
+            ])
+
+    def test_ended_rows_are_not_current_and_do_not_clash(self):
+        now = timezone.now()
+        for supervisor in (self.first, self.second, self.first):
+            ProjectSupervisorAssignment.objects.create(project=self.project, supervisor=supervisor, ended_at=now)
+        current = ProjectSupervisorAssignment.objects.create(project=self.project, supervisor=self.second)
+
+        self.assertEqual(list(self.project.supervisor_assignments.filter(is_current=True)), [current])
+        self.assertEqual(self.project.supervisor_assignments.filter(is_current__isnull=True).count(), 3)
+
+    def test_ending_through_save_with_update_fields_clears_is_current(self):
+        assignment = ProjectSupervisorAssignment.objects.create(project=self.project, supervisor=self.first)
+        assignment.ended_at = timezone.now()
+        assignment.save(update_fields=["ended_at"])
+
+        assignment.refresh_from_db()
+        self.assertIsNone(assignment.is_current)
+        ProjectSupervisorAssignment.objects.create(project=self.project, supervisor=self.second)
+
+    def test_queryset_update_of_ended_at_clears_is_current(self):
+        assignment = ProjectSupervisorAssignment.objects.create(project=self.project, supervisor=self.first)
+
+        ProjectSupervisorAssignment.objects.filter(pk=assignment.pk).update(ended_at=timezone.now())
+
+        assignment.refresh_from_db()
+        self.assertIsNone(assignment.is_current)
+        ProjectSupervisorAssignment.objects.create(project=self.project, supervisor=self.second)
+
+    def test_database_rejects_is_current_out_of_step_with_ended_at(self):
+        assignment = ProjectSupervisorAssignment.objects.create(
+            project=self.project, supervisor=self.first, ended_at=timezone.now()
+        )
+
+        with self.assertRaises(IntegrityError), transaction.atomic():
+            ProjectSupervisorAssignment.objects.filter(pk=assignment.pk).update(is_current=True)
+
+    def test_reassignment_service_keeps_exactly_one_current_row(self):
+        assign_project_supervisor(self.project.pk, self.first, assigned_by=None)
+        assign_project_supervisor(self.project.pk, self.second, assigned_by=None, change_reason="Workload")
+        unassign_project_supervisor(self.project.pk, supervisor=self.second, changed_by=None)
+        assign_project_supervisor(self.project.pk, self.first, assigned_by=None)
+
+        rows = list(self.project.supervisor_assignments.order_by("assigned_at", "id"))
+        self.assertEqual([row.is_current for row in rows], [None, None, True])
+        self.assertEqual([row.ended_at is None for row in rows], [False, False, True])
+
+
+class SupervisorAssignmentMigrationTests(TransactionTestCase):
+    """Migration 0010 on a database that already holds assignment rows, current and ended.
+
+    Migrations change the schema, which MySQL cannot roll back inside a transaction, so this
+    needs TransactionTestCase. It writes no audit events, so the table flush afterwards is safe.
+    """
+
+    before = [("projects", "0009_projectapprovalform_approval_criteria_snapshot")]
+
+    def setUp(self):
+        self.executor = MigrationExecutor(connection)
+        self.executor.migrate(self.before)
+
+    def tearDown(self):
+        executor = MigrationExecutor(connection)
+        executor.migrate(executor.loader.graph.leaf_nodes())
+
+    def test_existing_rows_are_converted_and_the_constraint_added(self):
+        old_apps = self.executor.loader.project_state(self.before).apps
+        OldAssignment = old_apps.get_model("projects", "ProjectSupervisorAssignment")
+        reassigned, first, second = _assignment_fixtures(" A")
+        unassigned, third, _ = _assignment_fixtures(" B")
+        earlier, later = timezone.now() - timedelta(days=30), timezone.now() - timedelta(days=10)
+
+        ended = OldAssignment.objects.create(
+            project_id=reassigned.pk, supervisor_id=first.pk, assigned_at=earlier, ended_at=later
+        )
+        kept = OldAssignment.objects.create(project_id=reassigned.pk, supervisor_id=second.pk, assigned_at=later)
+        OldAssignment.objects.create(project_id=unassigned.pk, supervisor_id=third.pk, assigned_at=earlier, ended_at=later)
+        duplicate_open = newest_open = None
+        if not connection.features.supports_partial_indexes:
+            # MySQL never enforced the old conditional rule, so two open rows may already exist.
+            duplicate_open = OldAssignment.objects.create(
+                project_id=unassigned.pk, supervisor_id=first.pk, assigned_at=earlier
+            )
+            newest_open = OldAssignment.objects.create(
+                project_id=unassigned.pk, supervisor_id=second.pk, assigned_at=later
+            )
+
+        executor = MigrationExecutor(connection)
+        executor.migrate(executor.loader.graph.leaf_nodes())
+
+        rows = {row.pk: row for row in ProjectSupervisorAssignment.objects.all()}
+        self.assertIs(rows[kept.pk].is_current, True)
+        self.assertIsNone(rows[ended.pk].is_current)
+        if duplicate_open is None:
+            self.assertFalse(ProjectSupervisorAssignment.objects.filter(project=unassigned, is_current=True).exists())
+        else:
+            self.assertIsNone(rows[duplicate_open.pk].is_current)
+            self.assertEqual(rows[duplicate_open.pk].ended_at, rows[newest_open.pk].assigned_at)
+            self.assertIn("Closed by migration 0010", rows[duplicate_open.pk].change_reason)
+            self.assertIs(rows[newest_open.pk].is_current, True)
+
+        with self.assertRaises(IntegrityError), transaction.atomic():
+            ProjectSupervisorAssignment.objects.create(project=reassigned, supervisor=first)
