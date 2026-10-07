@@ -17,6 +17,7 @@ from .repository import (
     clean_section,
     current_projects,
     faculties_with_structure,
+    local_year,
     past_projects,
     read_filters,
 )
@@ -31,6 +32,7 @@ __all__ = [
     "clean_section",
     "current_projects",
     "faculties_with_structure",
+    "local_year",
     "log_approved_form",
     "past_projects",
     "previous_supervisors_for",

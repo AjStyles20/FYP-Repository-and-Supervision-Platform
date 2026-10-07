@@ -21,7 +21,7 @@ from .services import (
     assign_project_supervisor, unassign_project_supervisor, log_approved_form, record_supervisor_decision,
     record_transition, sign_off_completion, submit_proposal, available_years,
     current_projects as repository_current_projects,
-    faculties_with_structure, past_projects as repository_past_projects, read_filters,
+    faculties_with_structure, local_year, past_projects as repository_past_projects, read_filters,
 )
 
 REPOSITORY_ROLES = (Role.SUPERVISOR, Role.COORDINATOR, Role.HOD, Role.ADMIN, Role.STUDENT)
@@ -41,7 +41,7 @@ def _repository_context(request, section):
     else:
         items = [(project, False) for project in current_projects]
         items.extend((project, True) for project in past_projects)
-        items.sort(key=lambda row: (row[0].updated_at.year if not row[1] else row[0].year, row[0].title.lower()), reverse=True)
+        items.sort(key=lambda row: (local_year(row[0].updated_at) if not row[1] else row[0].year, row[0].title.lower()), reverse=True)
 
     if section == "current":
         items = [(project, False) for project in items]
@@ -54,7 +54,7 @@ def _repository_context(request, section):
             {
                 "project": project,
                 "is_past": is_past,
-                "year": project.year if is_past else project.updated_at.year,
+                "year": project.year if is_past else local_year(project.updated_at),
                 "stage": "" if is_past else project.get_stage_display(),
                 "detail_url": reverse(
                     "past_project_detail" if is_past else "current_project_detail",

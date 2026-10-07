@@ -1,4 +1,5 @@
 import tempfile
+from datetime import datetime, timezone as dt_timezone
 
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import override_settings
@@ -17,6 +18,7 @@ from .models import (
     ProjectStage,
     ProjectSupervisorAssignment,
 )
+from .services import available_years
 
 
 class RepositoryTests(TestCase):
@@ -346,6 +348,27 @@ class RepositoryTests(TestCase):
         )
 
         self.assertContains(response, "Student Support Portal")
+
+    def test_repository_years_use_local_time_without_mysql_time_zone_tables(self):
+        # 23:30 UTC on 31 December is already 00:30 on 1 January in Lagos (UTC+1).
+        # The year list is worked out in Python so it works on MySQL without time zone
+        # tables, and it must agree with the year filter and the year shown on the card.
+        late_utc = datetime(2026, 12, 31, 23, 30, tzinfo=dt_timezone.utc)
+        Project.objects.filter(pk=self.current_project.pk).update(updated_at=late_utc)
+
+        self.assertEqual(available_years(), [2027, 2025])
+
+        self.client.force_login(self.student)
+        response = self.client.get(reverse("running_topics"), {"year": "2027"})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context["years"], [2027, 2025])
+        cards = response.context["items"]
+        self.assertEqual([card["project"].title for card in cards], ["Campus Transport Analytics"])
+        self.assertEqual(cards[0]["year"], 2027)
+
+        response = self.client.get(reverse("running_topics"), {"year": "2026"})
+        self.assertEqual(response.context["items"], [])
 
     def test_archived_projects_are_not_listed_as_current(self):
         self.current_project.archived = True

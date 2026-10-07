@@ -1,6 +1,7 @@
 """Search helpers for running topics and the completed project repository."""
 
 from django.db.models import Q
+from django.utils import timezone
 
 from apps.academics.models import Faculty, QualificationLevel
 
@@ -74,9 +75,17 @@ def past_projects(filters, can_see_student_id=False):
     return queryset.order_by("-year", "-completed_on", "-created_at")
 
 
+def local_year(moment):
+    """The year of a stored datetime in the site's time zone (Africa/Lagos), not UTC."""
+    return timezone.localtime(moment).year
+
+
 def available_years():
+    # Years are worked out in Python on purpose. QuerySet.dates() makes MySQL convert time zones
+    # with CONVERT_TZ, which returns NULL unless the server's time zone tables are loaded.
     current_years = {
-        date.year for date in Project.objects.filter(archived=False).dates("updated_at", "year", order="DESC")
+        local_year(moment)
+        for moment in Project.objects.filter(archived=False).values_list("updated_at", flat=True).distinct()
     }
     past_years = set(ArchivedProject.objects.filter(
         student__student_profile__student_status="graduated"
