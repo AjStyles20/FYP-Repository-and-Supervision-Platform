@@ -67,13 +67,54 @@ class StudentProfile(models.Model):
     contact_email = models.EmailField(blank=True)
     contact_consent = models.BooleanField(default=False, help_text="Contact is shown publicly only if True")
 
+    @property
+    def award(self):
+        return self.programme.award
+
+    @property
+    def has_finished_study(self):
+        return self.student_status in (self.Status.FYP_COMPLETED, self.Status.GRADUATED)
+
     def __str__(self):
         return f"{self.user} ({self.student_number})"
 
 
 class SupervisorProfile(models.Model):
+    """Extra academic detail for a member of staff who supervises.
+
+    This is a public-facing professional profile: the repository shows it so a current student
+    can see who a past project was supervised by and what that supervisor works on.
+    """
+
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="supervisor_profile")
+    class ApprovalMethod(models.TextChoices):
+        TOPIC_ONLY = "topic_only", "Topic, aim and methodology"
+        LITERATURE_REVIEW = "literature_review", "Literature review and research gap"
+        WORKING_PROJECT = "working_project", "Working project demonstration"
+
+    approval_method = models.CharField(
+        max_length=24,
+        choices=ApprovalMethod.choices,
+        default=ApprovalMethod.TOPIC_ONLY,
+        help_text="Evidence required before you accept a student's project proposal.",
+    )
+    approval_criteria = models.TextField(
+        blank=True,
+        default="",
+        help_text="Additional proposal criteria students should meet before requesting your review.",
+    )
     title = models.CharField(max_length=30, blank=True)  # Dr., Mrs., Prof.
+    office = models.CharField(max_length=80, blank=True, default="")
+    specialisation = models.CharField(
+        max_length=160, blank=True, default="", help_text="Subject area, e.g. Distributed systems."
+    )
+    research_interests = models.TextField(
+        blank=True, default="", help_text="Free text; shown on the public staff profile."
+    )
+    is_accepting_students = models.BooleanField(
+        default=True,
+        help_text="Unchecked means this supervisor is not taking new final-year students this session.",
+    )
     is_active = models.BooleanField(default=True)
 
     def __str__(self):

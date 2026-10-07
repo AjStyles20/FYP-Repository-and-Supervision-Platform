@@ -56,43 +56,43 @@ Requirement IDs (R-xx, N-xx) refer to `requirements.md`. Question IDs (Q-xx) ref
 
 ## Phase D — Repository (R-01 to R-10)
 
-- [ ] Project, document and status-history models
-- [ ] Past / Current tabs; Faculty → Department → Programme filters (R-01, R-02)
-- [ ] Project detail page with the past-project fields (R-03)
-- [ ] Staff-only student ID; consent-based contact (R-04, R-05)
-- [ ] Full-text search plus search by supervisor, student name and ID (R-06)
-- [ ] File upload and permission-checked download (R-07)
-- [ ] CSV import with a rejected-rows report; purge demo (R-10)
+- [x] Project, document and status-history models
+- [x] Past / Current tabs; Faculty → Department → Programme filters (R-01, R-02)
+- [x] Project detail page with the past-project fields (R-03)
+- [x] Staff-only student ID; consent-based contact (R-04, R-05)
+- [x] Search by topic, supervisor, student name and staff-only student ID (R-06)
+- [x] File upload and permission-checked download (R-07)
+- [x] CSV import with a rejected-rows report; purge demo (R-10)
 - [ ] Tests: visibility rules, search results, file access
 
 ## Phase E — Workflow and approval (R-11 to R-20)
 
-- [ ] Approval policy model and a screen for each supervisor to choose a method (R-13)
-- [ ] Digital approval form with checklist based on the method (R-14)
-- [ ] Status transition engine: one allowed role per transition; history rows (R-11, R-12, R-17)
-- [ ] Coordinator screen: assign and change supervisors with history (R-18)
-- [ ] Supervisor counters and history page (R-19, R-20)
-- [ ] HOD sign-off: capture gap, archive, appear in past students (R-15)
-- [ ] Separate student status from project status (R-16)
+- [x] Self-service approval policy per supervisor profile and snapshot on decision (R-13)
+- [x] Digital approval form and evidence requirements based on the supervisor's method (R-14)
+- [x] Student project start and role-checked status transitions with event history (R-11, R-12, R-17)
+- [x] Coordinator screen: assign and change supervisors with history (R-18)
+- [x] Supervisor counters and history page (R-19, R-20)
+- [x] HOD sign-off: capture gap, archive, appear in past students (R-15)
+- [x] Separate student status from project status (R-16)
 - [ ] Tests: every allowed transition, every refused transition, supervisor change, single current supervisor
 
 ## Phase F — Supervision (R-21 to R-29)
 
-- [ ] Availability slots and meeting requests (R-21)
-- [ ] Meeting scheduling with date, time, venue (R-22)
-- [ ] Meeting record form and attendance counts (R-23, R-24)
-- [ ] Student confirm / dispute (R-26)
-- [ ] Versioned edits with visible history (R-27, R-32)
-- [ ] Notices with first-seen and acknowledged timestamps (R-25, R-28)
+- [x] Availability slots and meeting requests (R-21)
+- [x] Meeting scheduling with date, time, venue (R-22)
+- [x] Meeting record form and held/missed counts (R-23, R-24)
+- [x] Student confirm / dispute (R-26)
+- [x] Versioned meeting edits with visible history (R-27)
+- [x] Notices with first-seen and acknowledged timestamps (R-25, R-28)
 - [ ] Project guide page and PDF downloads (R-34)
 - [ ] At-risk flag (R-29), if time allows
 - [ ] Tests: confirmation flow, edit history, notice acknowledgement, record visibility (R-33)
 
 ## Phase G — Audit, security, hardening
 
-- [ ] Audit log writes for every important action (R-31)
-- [ ] Remove UPDATE and DELETE privilege on `audit_log` for the application user; keep the triggers
-- [ ] Admin-only audit screen with filters
+- [x] Audit log writes for key workflow and supervision actions (R-31)
+- [ ] Remove UPDATE and DELETE privilege on audit rows for the MySQL application user; add/review database guards
+- [x] Admin-only audit screen with action filters
 - [ ] Test that the application account cannot change audit rows
 - [ ] Review: CSRF, input validation, upload limits, file serving, secure cookies
 - [ ] Review: no secrets in the repository

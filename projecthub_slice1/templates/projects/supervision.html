@@ -1,72 +1,59 @@
 {% extends "base.html" %}
-{% block title %}Supervision history · Baze Project Hub{% endblock %}
+{% block title %}My Students · Baze Project Hub{% endblock %}
 {% block content %}
 <section class="page-heading">
   <p class="eyebrow">MY ACADEMIC RECORD</p>
-  <h1>Supervision history</h1>
-  <p class="muted">Projects you currently supervise and your previous supervisees, including archived work.</p>
+  <h1>My Students</h1>
+  <p class="muted">Manage your current supervisees, project topics, meeting records, and previous supervision history.</p>
 </section>
 
+{% if can_manage_roster %}
+<section class="card">
+  <h2>Add a student to your roster</h2>
+  <p class="muted">Choose an unassigned project from your department. Students without a project record should start one from their Student Portal first.</p>
+  {% if add_form.fields.project.queryset %}
+    <form method="post" class="stack-form">{% csrf_token %}<input type="hidden" name="action" value="add_student">
+      {% for field in add_form %}<div class="form-row">{{ field.label_tag }}{{ field }}{{ field.errors }}</div>{% endfor %}
+      {% if add_form.non_field_errors %}<p class="error">{{ add_form.non_field_errors }}</p>{% endif %}
+      <button class="button">Add student</button>
+    </form>
+  {% else %}<p class="muted">There are no unassigned project topics in your department right now.</p>{% endif %}
+</section>
+{% endif %}
+
 <section>
-  <div class="results-heading">
-    <div>
-      <h2>Current supervisees</h2>
-      <p class="muted">Active projects assigned to you.</p>
-    </div>
-    <span class="result-count">{{ current_projects|length }} student{{ current_projects|length|pluralize }}</span>
-  </div>
-  {% for project in current_projects %}
+  <div class="results-heading"><div><h2>Current supervisees</h2><p class="muted">Active projects assigned to you.</p></div><span class="result-count">{{ current_projects|length }} student{{ current_projects|length|pluralize }}</span></div>
+  {% for row in project_rows %}{% with project=row.project %}
     <section class="card">
       <p class="eyebrow">{{ project.department }} · {{ project.programme }}</p>
       <h3>{{ project.student.get_full_name|default:project.student.username }}</h3>
+      {% if project.student.student_profile %}<p class="muted">Student ID: {{ project.student.student_profile.student_number }}</p>{% endif %}
       <p><strong>{{ project.title }}</strong> · {{ project.get_stage_display }}</p>
       <p class="muted">{{ project.description|default:"No project summary has been added yet."|truncatewords:36 }}</p>
-      <a class="card-link" href="{% url 'current_project_detail' project.pk %}">View project summary <span aria-hidden="true">→</span></a>
+      <p class="muted">Project record updated {{ project.updated_at|date:"j M Y, H:i" }}</p>
+      <a class="card-link" href="{% url 'current_project_detail' project.pk %}">View project summary</a>
+      <a class="card-link" href="{% url 'project_workflow' project.pk %}">Open project workflow</a>
+      <a class="card-link" href="{% url 'project_meetings' project.pk %}">Meetings and records</a>
+      {% if can_manage_roster %}
+        <details class="management-details" {% if row.edit_form.errors %}open{% endif %}><summary>Edit project topic and summary</summary>
+          <form method="post" class="stack-form">{% csrf_token %}<input type="hidden" name="action" value="edit_project"><input type="hidden" name="project_id" value="{{ project.pk }}">
+            {% for field in row.edit_form %}<div class="form-row">{{ field.label_tag }}{{ field }}{{ field.errors }}</div>{% endfor %}
+            <button class="button">Save project details</button>
+          </form>
+        </details>
+        <form method="post" class="roster-remove" onsubmit="return confirm('Remove this student from your active roster? Their project and supervision history will be retained.');">{% csrf_token %}<input type="hidden" name="action" value="remove_student"><input type="hidden" name="project_id" value="{{ project.pk }}"><label for="remove-reason-{{ project.pk }}">Reason (optional)</label><input id="remove-reason-{{ project.pk }}" name="reason" maxlength="1000"><button class="btn btn-sm">Remove from my roster</button></form>
+      {% endif %}
     </section>
-  {% empty %}
-    <div class="card empty-state"><p>No active projects are currently assigned to you.</p></div>
-  {% endfor %}
+  {% endwith %}{% empty %}<div class="card empty-state"><p>No active projects are currently assigned to you.</p></div>{% endfor %}
 </section>
 
 <section>
-  <div class="results-heading">
-    <div>
-      <h2>Previous supervision</h2>
-      <p class="muted">Projects you previously supervised before a reassignment.</p>
-    </div>
-    <span class="result-count">{{ former_projects|length }} project{{ former_projects|length|pluralize }}</span>
-  </div>
-  {% for project in former_projects %}
-    <section class="card">
-      <p class="eyebrow">{{ project.department }} · {{ project.programme }}</p>
-      <h3>{{ project.student.get_full_name|default:project.student.username }}</h3>
-      <p><strong>{{ project.title }}</strong> · Currently supervised by {{ project.supervisor.get_full_name|default:project.supervisor.username }}</p>
-      <p class="muted">{{ project.description|default:"No project summary has been added yet."|truncatewords:36 }}</p>
-      <a class="card-link" href="{% url 'current_project_detail' project.pk %}">View project summary <span aria-hidden="true">→</span></a>
-    </section>
-  {% empty %}
-    <div class="card empty-state"><p>No previous supervisor assignments are recorded.</p></div>
-  {% endfor %}
+  <div class="results-heading"><div><h2>Previous supervision</h2><p class="muted">Projects you supervised before a reassignment.</p></div><span class="result-count">{{ former_projects|length }} project{{ former_projects|length|pluralize }}</span></div>
+  {% for project in former_projects %}<section class="card"><p class="eyebrow">{{ project.department }} · {{ project.programme }}</p><h3>{{ project.student.get_full_name|default:project.student.username }}</h3><p><strong>{{ project.title }}</strong> · {% if project.supervisor %}Currently supervised by {{ project.supervisor.get_full_name|default:project.supervisor.username }}{% else %}Awaiting supervisor reassignment{% endif %}</p><p class="muted">{{ project.description|default:"No project summary has been added yet."|truncatewords:36 }}</p><a class="card-link" href="{% url 'current_project_detail' project.pk %}">View project summary</a></section>{% empty %}<div class="card empty-state"><p>No previous supervisor assignments are recorded.</p></div>{% endfor %}
 </section>
 
 <section>
-  <div class="results-heading">
-    <div>
-      <h2>Archived supervisees</h2>
-      <p class="muted">Completed work where you were the final or an earlier supervisor.</p>
-    </div>
-    <span class="result-count">{{ archived_projects|length }} project{{ archived_projects|length|pluralize }}</span>
-  </div>
-  {% for project in archived_projects %}
-    <section class="card">
-      <p class="eyebrow">{{ project.department }} · {{ project.programme }} · Archive year {{ project.year }}</p>
-      <h3>{{ project.student.get_full_name|default:project.student.username }}</h3>
-      <p><strong>{{ project.title }}</strong></p>
-      <p class="muted">{{ project.description|default:"No project summary has been added yet."|truncatewords:36 }}</p>
-      <a class="card-link" href="{% url 'past_project_detail' project.pk %}">View archived project summary <span aria-hidden="true">→</span></a>
-    </section>
-  {% empty %}
-    <div class="card empty-state"><p>No archived supervisees are recorded for you.</p></div>
-  {% endfor %}
+  <div class="results-heading"><div><h2>Archived supervisees</h2><p class="muted">Completed work where you were the final or an earlier supervisor.</p></div><span class="result-count">{{ archived_projects|length }} project{{ archived_projects|length|pluralize }}</span></div>
+  {% for project in archived_projects %}<section class="card"><p class="eyebrow">{{ project.department }} · {{ project.programme }} · Archive year {{ project.year }}</p><h3>{{ project.student.get_full_name|default:project.student.username }}</h3><p><strong>{{ project.title }}</strong></p><p class="muted">{{ project.description|default:"No project summary has been added yet."|truncatewords:36 }}</p><a class="card-link" href="{% url 'past_project_detail' project.pk %}">View archived project summary</a></section>{% empty %}<div class="card empty-state"><p>No archived supervisees are recorded for you.</p></div>{% endfor %}
 </section>
 {% endblock %}

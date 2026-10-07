@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block title %}Start a project · Baze Project Hub{% endblock %}
+{% block content %}
+<h1>Start a project proposal</h1>
+<section class="card">
+  <p>Your project will be placed under your registered programme. A supervisor must be assigned before the proposal can be reviewed.</p>
+  <form method="post" class="stack-form">
+    {% csrf_token %}
+    {% for field in form %}<div class="form-row">{{ field.label_tag }}{{ field }}{% if field.help_text %}<small>{{ field.help_text }}</small>{% endif %}{% if field.errors %}<small class="error">{{ field.errors|join:", " }}</small>{% endif %}</div>{% endfor %}
+    <button class="button" type="submit">Create project record</button>
+  </form>
+</section>
+{% endblock %}

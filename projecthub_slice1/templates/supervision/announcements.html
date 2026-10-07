@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}Notices and resources · Baze Project Hub{% endblock %}
+{% block content %}
+<section class="page-heading"><p class="eyebrow">SUPERVISION</p><h1>Notices and resources</h1><p class="muted">Post updates and share guides with one or more of your current supervisees. Each student receives an in-app notification.</p></section>
+
+{% if can_post %}
+<section class="grid-2">
+  <div class="card"><h2>Publish a notice</h2><form method="post" class="stack-form">{% csrf_token %}<input type="hidden" name="action" value="publish">{% for field in form %}<div class="form-row">{{ field.label_tag }}{{ field }}{{ field.errors }}</div>{% endfor %}<button class="button">Publish notice</button></form></div>
+  <div class="card" id="share-resource"><h2>Upload a guide or resource</h2><p class="muted">Select one or more current supervisees. They will see the file in their Student Portal and Project Guide.</p><form method="post" enctype="multipart/form-data" class="stack-form">{% csrf_token %}<input type="hidden" name="action" value="publish_resource">{% for field in resource_form %}<div class="form-row">{{ field.label_tag }}{{ field }}{% if field.help_text %}<small class="muted">{{ field.help_text }}</small>{% endif %}{{ field.errors }}</div>{% endfor %}<button class="button">Upload and notify students</button></form></div>
+</section>
+{% endif %}
+
+{% if can_post %}<section><div class="results-heading"><div><h2>Your shared resources</h2><p class="muted">Your upload history and recipients. Changes notify the selected students.</p></div><span class="result-count">{{ resource_rows|length }} resource{{ resource_rows|length|pluralize }}</span></div>
+  {% for resource in resource_rows %}<article class="card"><p class="eyebrow">Shared {{ resource.created_at|date:"j M Y, H:i" }} · Updated {{ resource.updated_at|date:"j M Y, H:i" }}</p><h2>{{ resource.title }}</h2>{% if resource.description %}<p>{{ resource.description }}</p>{% endif %}<p class="muted">Sent to: {% for project in resource.projects.all %}{{ project.student.get_full_name|default:project.student.username }}{% if not forloop.last %}, {% endif %}{% empty %}No active recipients{% endfor %}</p><div class="row">{% if resource.file %}<a class="btn btn-sm" href="{% url 'download_shared_resource' resource.pk %}">Download</a>{% elif resource.url %}<a class="btn btn-sm" href="{{ resource.url }}" target="_blank" rel="noopener">Open link</a>{% endif %}<a class="btn btn-sm" href="{% url 'edit_shared_resource' resource.pk %}">Edit resource</a></div></article>{% empty %}<p class="muted">You have not shared any files yet.</p>{% endfor %}
+</section>{% endif %}
+
+<section><div class="results-heading"><div><h2>Notices</h2><p class="muted">Department and supervisor announcements.</p></div></div>
+{% for card in notice_cards %}{% with notice=card.notice acknowledgement=card.acknowledgement %}<article class="card"><p class="eyebrow">{{ notice.audience_label }} · {{ notice.created_at|date:"j M Y H:i" }}</p><h2>{{ notice.title }}</h2><div>{{ notice.body|linebreaks }}</div>{% if notice.requires_acknowledgement %}{% if acknowledgement.acknowledged_at %}<p>Acknowledged {{ acknowledgement.acknowledged_at|date:"j M Y H:i" }}</p>{% else %}<form method="post">{% csrf_token %}<input type="hidden" name="action" value="acknowledge"><input type="hidden" name="notice_id" value="{{ notice.pk }}"><button>Acknowledge notice</button></form>{% endif %}{% endif %}</article>{% endwith %}{% empty %}<p>No notices are available.</p>{% endfor %}
+</section>
+{% endblock %}

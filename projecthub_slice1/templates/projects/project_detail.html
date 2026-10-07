@@ -13,6 +13,8 @@
   <h1>{{ project.title }}</h1>
   {% if project.is_demo %}<p class="sample-label">Synthetic sample record for development and testing</p>{% endif %}
   <p class="detail-byline">{{ project.student.get_full_name|default:project.student.username }}{% if project.supervisor %}<span> · </span>Supervised by {{ project.supervisor.get_full_name|default:project.supervisor.username }}{% endif %}</p>
+  {% if not is_past and request.user.role == 'student' and request.user.pk == project.student_id %}<p><a class="button" href="{% url 'project_workflow' project.pk %}">Project workflow</a></p>{% endif %}
+  {% if not is_past and request.user.pk == project.supervisor_id %}<p><a class="button" href="{% url 'project_workflow' project.pk %}">Review project workflow</a></p>{% endif %}
 </section>
 
 <div class="detail-layout">

@@ -1,6 +1,6 @@
 # Progress
 
-**Last updated:** 2026-10-05 · **Repository and project discovery slice implemented**
+**Last updated:** 2026-10-05 · **Core workflows implemented; hardening and academic deliverables remain**
 
 ## Implemented
 - Django 5.2 project, settings read from environment or `.env`
@@ -11,6 +11,7 @@
 - Sign-in with Baze email, student ID, or staff username; superusers receive the application administrator role
 - Faculty → Department → Programme models and admin screens
 - Login and logout (logout is POST only), role-based dashboard
+- Separate portal experiences and role-aware navigation for current students, alumni, supervisors, coordinators, HODs and system administrators
 - `role_required` permission helper (deny by default)
 - Staff-only academic structure page; admin-only tools page
 - `seed_demo` and `purge_demo` commands (demo rows flagged `is_demo`)
@@ -21,12 +22,19 @@
 - Supervisor workload counts in the assignment workspace; direct Django Admin editing of a project's supervisor is disabled so changes use the audited workflow
 - Synthetic sample projects in the demo seed, removed by demo purge
 - Automated tests cover account roles/registration, repository search/filtering/privacy, secure downloads, assignment permissions/history, demo seed/purge, and unique student IDs
+- Student project creation and a role-checked proposal-to-HOD-archive workflow, with per-supervisor approval criteria, decision snapshots, and status history
+- Students can upload proposal and final report files; the project cannot be submitted until a final report is present
+- Supervisor meeting scheduling and records, held/missed counts, student confirmation/dispute, and versioned edits
+- Weekly supervisor availability with student meeting requests and supervisor approval into a scheduled meeting
+- Department/project notices with first-seen and acknowledgement timestamps
+- Admin-only audit log screen and read-only audit events for key workflow, assignment, notice, meeting and account actions
+- Admin-only CSV import of historic project summaries with row-level errors
 
-## Tested
-- `manage.py test apps`: all 39 tests pass on SQLite.
-- `manage.py check`: no issues.
+## Verification status
+- `manage.py check`: no issues (SQLite).
 - `manage.py makemigrations --check --dry-run`: no model changes missing migrations.
-- Browser smoke checks: repository showed four current and two past sample projects; coordinator navigation omits My Project; Supervision history and Approvals render without URL errors.
+- `manage.py test apps`: all 41 tests pass (SQLite), including role-specific portal and student/alumni routing tests.
+- Browser smoke checks from the earlier repository slice are documented below; the role portals still need an interactive visual review.
 
 ## Run it on Windows (Python 3.12, MySQL 8.4)
 1. Unzip, open a terminal in the folder, then:
@@ -50,11 +58,14 @@ Local demo login: `demo.amina` / `ChangeMe123!` (also `amina@bazeuniversity.edu.
 ## Git
 Commit this folder as your first commit. `.env` is ignored. Keep each future slice as its own commit.
 
-## Next
-- Department-specific approval form and project status transitions
-- Supervision meeting records, attendance confirmation, notices and version history
-- HOD completion sign-off and archive transition
-- Public-facing document-upload workflow (current documents are administered through Django Admin)
+## Still outstanding
+- Shared resource upload and publication screen for supervisor materials; project documents can be uploaded by students and admins.
+- Student upload workflow for project documents; current document upload is through Django Admin.
+- A corrections-required stage, if the department confirms it is needed.
+- Database-level audit immutability (MySQL privileges/triggers); application audit screens are read-only.
+- MySQL integration run and browser smoke test of the new workflow pages.
+- Confirm the approval chain, consent rules, final title, signed approval form and open questions in `docs/decisions.md`.
+- Academic report, diagrams, backup/restore procedure, and usability/evaluation evidence remain separate deliverables.
 
 ## Open items that affect later slices
 See `docs/decisions.md` section C. Q-03 (repository audience) is answered; Q-07 (the department's exact approval chain) remains open and should be confirmed before hard-coding approval policy.

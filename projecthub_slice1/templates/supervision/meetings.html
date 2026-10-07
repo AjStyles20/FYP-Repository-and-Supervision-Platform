@@ -1,0 +1,8 @@
+{% extends "base.html" %}
+{% block title %}Meetings · {{ project.title }}{% endblock %}
+{% block content %}
+<h1>Supervision meetings</h1>
+<section class="card"><h2>{{ project.title }}</h2><p>Held: {{ counts.held }} · Missed: {{ counts.missed }}</p></section>
+{% if can_schedule %}<section class="card"><h2>Schedule or record a meeting</h2><form method="post" class="stack-form">{% csrf_token %}{% for field in form %}<div class="form-row">{{ field.label_tag }}{{ field }}{{ field.errors }}</div>{% endfor %}<button class="button">Save meeting</button></form></section>{% endif %}
+<section><h2>Meeting history</h2>{% for meeting in meetings %}<article class="card"><h3>{{ meeting.scheduled_for|date:"j M Y, H:i" }} · {{ meeting.get_status_display }}</h3><p>{{ meeting.venue }} · {{ meeting.get_mode_display }}</p><a class="button" href="{% url 'meeting_detail' meeting.pk %}">View record</a></article>{% empty %}<p>No meetings are recorded yet.</p>{% endfor %}</section>
+{% endblock %}

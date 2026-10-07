@@ -12,6 +12,11 @@
       <span class="tag">{{ project.supervisor.get_full_name|default:project.supervisor.username }}</span>
     </div>
     <p>{{ project.description }}</p>
+    <p><a class="button" href="{% url 'project_workflow' project.pk %}">Project actions and approval form</a> <a class="button" href="{% url 'project_meetings' project.pk %}">Supervision meetings</a></p>
+    <p class="muted">Your supervisor schedules meetings and notifies you when a session is set.</p>
+    <p><a class="button" href="{% url 'upload_project_document' project.pk %}">Upload project document</a></p>
+    {% if documents %}<h3>Your project files</h3><ul>{% for document in documents %}<li>{{ document.title }} · {{ document.get_document_type_display }} · <a href="{% url 'download_project_document' document.pk %}">Download</a>{% if document.visibility == 'staff_only' %} (staff only){% endif %}</li>{% endfor %}</ul>{% endif %}
+    <p><a class="button" href="{% url 'project_workflow' project.pk %}">Project actions and approval form</a></p>
 
     {% if project.milestones.all %}
       <h3>Milestones</h3>
@@ -26,12 +31,12 @@
       </ul>
     {% endif %}
 
-    {% if project.meeting_logs.all %}
+    {% if project.meetings.all %}
       <h3>Recent meeting logs</h3>
-      {% for log in project.meeting_logs.all %}
+      {% for log in project.meetings.all %}
         <div class="card" style="margin-top:10px;">
-          <strong>{{ log.meeting_date }}</strong>
-          <p>Attended: {% if log.attended %}Yes{% else %}No{% endif %}</p>
+          <strong>{{ log.scheduled_for }}</strong>
+          <p>Status: {{ log.get_status_display }}</p>
           <p><strong>Discussion:</strong> {{ log.discussion|default:"—" }}</p>
           <p><strong>Corrective action:</strong> {{ log.corrective_action|default:"—" }}</p>
         </div>
@@ -42,7 +47,8 @@
   </section>
 {% else %}
   <div class="card">
-    <p>You do not currently have an assigned project.</p>
+    <p>You do not currently have a project record.</p>
+    <a class="button" href="{% url 'start_project' %}">Start a project proposal</a>
   </div>
 {% endif %}
 {% endblock %}

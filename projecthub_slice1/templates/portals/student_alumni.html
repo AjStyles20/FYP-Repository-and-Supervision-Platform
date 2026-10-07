@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}Alumni Portal · Baze Project Hub{% endblock %}
+{% block content %}
+<section class="hero-band">
+  <div class="hero-copy">
+    <p class="eyebrow">Past student / alumni portal · {{ student_profile.programme.department.faculty.name }}</p>
+    <h1>Your work stays useful</h1>
+    <p>Find your completed FYP records, see what was left for future researchers, and choose whether you want students to contact you.</p>
+    <div class="hero-actions"><a class="btn btn-primary" href="{% url 'repository' %}?section=past">Browse the completed-project archive</a><a class="btn btn-quiet" href="{% url 'guidelines' %}">Project guide</a></div>
+  </div>
+</section>
+
+<section class="bento" aria-label="Alumni information">
+  <div class="bento-cell"><span class="bento-label">Programme</span><strong class="bento-value" style="font-size:1.35rem">{{ student_profile.programme.award }}</strong></div>
+  <div class="bento-cell"><span class="bento-label">Graduation year</span><strong class="bento-value">{{ student_profile.graduation_year|default:"—" }}</strong></div>
+  <div class="bento-cell"><span class="bento-label">Archived projects</span><strong class="bento-value">{{ archived_projects|length }}</strong></div>
+  <div class="bento-cell"><span class="bento-label">Contact preference</span><strong class="bento-value" style="font-size:1.35rem">{% if student_profile.contact_consent %}Opted in{% else %}Private{% endif %}</strong></div>
+</section>
+
+<section class="stack">
+  <div class="section-title"><div><p class="eyebrow">Your record</p><h2>Completed projects</h2></div></div>
+  {% for project in archived_projects %}
+    <article class="project-card">
+      <div class="project-card-top"><span class="tag tag-live">Completed {{ project.year }}</span><span class="tag tag-mono">{{ project.programme.award }}</span></div>
+      <h3><a href="{% url 'past_project_detail' project.pk %}">{{ project.title }}</a></h3>
+      <p class="project-description">{{ project.description|default:"Project summary not yet published."|truncatewords:32 }}</p>
+      <div class="project-meta"><div><dt>Final supervisor</dt><dd>{{ project.supervisor.get_full_name|default:"Not recorded" }}</dd></div><div><dt>Department</dt><dd>{{ project.department }}</dd></div></div>
+      <a class="card-link" href="{% url 'past_project_detail' project.pk %}">Open project record →</a>
+    </article>
+  {% empty %}
+    <div class="card"><h3>No archived project yet</h3><p class="muted">Your signed-off work will appear here once it is added to the department archive.</p></div>
+  {% endfor %}
+  <aside class="form-note"><strong>Contact details are private by default.</strong> Your public archive record only includes a contact route when you have explicitly opted in.</aside>
+</section>
+{% endblock %}

@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}Availability · Baze Project Hub{% endblock %}
+{% block content %}
+<section class="page-heading">
+  <p class="eyebrow">SUPERVISOR TOOLS</p>
+  <h1>Supervision availability</h1>
+  <p class="muted">When you add a weekly availability window, your current supervisees receive an in-app notification. These are recurring office hours; students cannot request a meeting. Schedule each actual meeting from that student’s meeting log.</p>
+</section>
+<section class="card">
+  <h2>Weekly slots</h2>
+  {% for slot in slots %}
+    <article class="resource-preview"><strong>{{ slot.get_weekday_display }}</strong> · {{ slot.start_time|time:"H:i" }}–{{ slot.end_time|time:"H:i" }} · {{ slot.venue|default:slot.get_mode_display }}{% if not slot.is_active %} · Paused{% endif %}</article>
+  {% empty %}<p>No availability slots are set.</p>{% endfor %}
+</section>
+<section class="card">
+  <h2>Add availability</h2>
+  <form method="post" class="stack-form">{% csrf_token %}<input type="hidden" name="action" value="save_slot">
+    {% for field in slot_form %}<div class="form-row">{{ field.label_tag }}{{ field }}{{ field.errors }}</div>{% endfor %}
+    <button class="button">Add availability</button>
+  </form>
+</section>
+{% endblock %}

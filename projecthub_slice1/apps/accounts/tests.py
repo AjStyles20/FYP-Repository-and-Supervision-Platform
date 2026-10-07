@@ -4,10 +4,12 @@ from django.core.management import call_command
 from django.core.management.base import CommandError
 from django.test import TestCase, override_settings
 from django.urls import reverse
+from django.utils import timezone
 
 from apps.academics.models import Department, Faculty, Programme
 from apps.accounts.models import Role, StudentProfile, SupervisorProfile, User
 from apps.projects.models import ArchivedProject, Project, ProjectSupervisorAssignment
+from apps.supervision.models import Announcement, SharedResource, SupervisionMeeting
 
 
 def run(*args, **kwargs):
@@ -45,6 +47,74 @@ class LoginAndRolesTests(TestCase):
             response = self.client.get(reverse("dashboard"))
             self.assertEqual(response.status_code, 200, username)
             self.assertContains(response, heading)
+
+    def test_role_dashboards_use_separate_portal_templates(self):
+        expected = {
+            "demo.amina": "portals/student_current.html",
+            "demo.okoro": "portals/supervisor.html",
+            "demo.coordinator": "portals/coordinator.html",
+            "demo.hod": "portals/hod.html",
+            "demo.admin": "portals/admin.html",
+        }
+        for username, template in expected.items():
+            with self.subTest(username=username):
+                self.client.logout()
+                self.login(username)
+                response = self.client.get(reverse("dashboard"))
+                self.assertEqual(response.status_code, 200)
+                self.assertTemplateUsed(response, template)
+
+    def test_graduated_students_have_a_separate_alumni_portal(self):
+        student = User.objects.get(username="demo.amina")
+        self.client.force_login(student)
+        current_response = self.client.get(reverse("student_portal"))
+        self.assertTemplateUsed(current_response, "portals/student_current.html")
+
+        student.student_profile.student_status = StudentProfile.Status.GRADUATED
+        student.student_profile.graduation_year = 2026
+        student.student_profile.save(update_fields=["student_status", "graduation_year"])
+
+        alumni_response = self.client.get(reverse("dashboard"))
+        self.assertTemplateUsed(alumni_response, "portals/student_alumni.html")
+        self.assertContains(alumni_response, "Past student / alumni portal")
+        self.assertContains(alumni_response, "2026")
+        self.assertRedirects(self.client.get(reverse("student_portal")), reverse("alumni_portal"))
+
+    def test_student_portal_shows_supervisor_updates_and_unread_notifications(self):
+        student = User.objects.get(username="demo.amina")
+        project = Project.objects.get(student=student, archived=False)
+        supervisor = project.supervisor
+        Announcement.objects.create(
+            author=supervisor,
+            project=project,
+            title="Updated literature review guide",
+            body="Please use the new citation format for chapter two.",
+        )
+        SupervisionMeeting.objects.create(
+            project=project,
+            scheduled_for=timezone.now(),
+            status="held",
+            discussion="Reviewed the literature and identified missing sources.",
+            corrective_action="Add citations to chapter two before the next meeting.",
+            recorded_by=supervisor,
+        )
+        SharedResource.objects.create(
+            author=supervisor,
+            project=project,
+            title="Department citation guide",
+            url="https://example.com/citation-guide",
+        )
+        self.client.force_login(student)
+
+        response = self.client.get(reverse("student_portal"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "1 new update")
+        self.assertContains(response, "Updated literature review guide")
+        self.assertContains(response, "Add citations to chapter two")
+        self.assertContains(response, "Department citation guide")
+        self.assertContains(response, reverse("running_topics"))
+        self.assertContains(response, reverse("repository"))
 
     def test_student_cannot_open_staff_or_admin_pages(self):
         self.login("demo.amina")

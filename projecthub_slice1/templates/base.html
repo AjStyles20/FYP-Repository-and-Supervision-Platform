@@ -1,37 +1,68 @@
 {% load static %}<!doctype html>
-<html lang="en">
+<html lang="en" data-theme="modern-campus">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{% block title %}Baze Project Hub{% endblock %}</title>
-  <link rel="stylesheet" href="{% static 'css/app.css' %}">
+  <link rel="stylesheet" href="{% static 'css/theme.css' %}?v=2">
+  <link rel="stylesheet" href="{% static 'css/app.css' %}?v=10">
 </head>
 <body>
 <header class="top">
-  <a class="brand" href="{% url 'home' %}">Baze Project Hub</a>
-  <nav>
+  <div class="top-inner">
+  <a class="brand" href="{% url 'home' %}"><span class="brand-mark" aria-hidden="true">BU</span>Baze Project Hub</a>
+  <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="main-nav" aria-label="Open navigation">
+    <span class="nav-toggle-icon" aria-hidden="true"><span></span><span></span><span></span></span>
+  </button>
+  <nav class="top-nav" id="main-nav" aria-label="Main navigation">
     {% if user.is_authenticated %}
-      <a href="{% url 'dashboard' %}">Dashboard</a>
-      <a href="{% url 'repository' %}">Repository</a>
-      {% if user.role == 'student' %}<a href="{% url 'my_project' %}">My project</a>{% endif %}
-      {% if user.has_staff_role %}<a href="{% url 'supervision' %}">Supervision history</a>{% endif %}
-      {% if user.can_assign_supervisors %}<a href="{% url 'supervisor_assignments' %}">Student allocation</a>{% endif %}
-      {% if user.role == 'coordinator' or user.role == 'hod' or user.role == 'admin' %}<a href="{% url 'approvals' %}">Approvals</a>{% endif %}
+      <span class="tag tag-quiet">{{ user.get_role_display }} portal</span>
+      <a href="{% url 'dashboard' %}">Portal home</a>
+      {% if user.role == 'student' %}<a href="{% url 'repository' %}">Completed projects</a>{% else %}<a href="{% url 'repository' %}">Repository</a>{% endif %}
       <a href="{% url 'guidelines' %}">Project guide</a>
-      {% if user.has_staff_role %}<a href="{% url 'academic_structure' %}">Academic structure</a>{% endif %}
-      {% if user.role == 'admin' %}<a href="{% url 'admin_tools' %}">Admin tools</a>{% endif %}
+      {% if user.role == 'student' %}
+        {% if user.student_profile.student_status == 'graduated' %}
+          <a href="{% url 'alumni_portal' %}">Alumni workspace</a>
+        {% else %}
+          <a href="{% url 'student_portal' %}">Student workspace</a>
+          <a href="{% url 'my_project' %}">My project</a>
+          <a href="{% url 'running_topics' %}">Running topics</a>
+        {% endif %}
+        <a href="{% url 'announcements' %}">Notifications</a>
+      {% elif user.role == 'supervisor' %}
+        <a href="{% url 'supervision' %}">My students</a>
+        <a href="{% url 'announcements' %}">Notices & resources</a>
+        <a href="{% url 'supervisor_availability' %}">Availability</a>
+        <a href="{% url 'approval_policy' %}">Review criteria</a>
+      {% elif user.role == 'coordinator' %}
+        {% if user.can_assign_supervisors %}<a href="{% url 'supervisor_assignments' %}">Student allocation</a>{% endif %}
+        <a href="{% url 'approvals' %}">Approval register</a>
+        <a href="{% url 'supervision' %}">Supervised students</a>
+        <a href="{% url 'announcements' %}">Notices</a>
+        <a href="{% url 'academic_structure' %}">Academic structure</a>
+      {% elif user.role == 'hod' %}
+        <a href="{% url 'approvals' %}">Department sign-offs</a>
+        <a href="{% url 'supervision' %}">Supervision history</a>
+        <a href="{% url 'academic_structure' %}">Academic structure</a>
+      {% elif user.role == 'admin' %}
+        <a href="{% url 'admin_tools' %}">System administration</a>
+        <a href="{% url 'audit_log' %}">Audit log</a>
+        <a href="{% url 'academic_structure' %}">Academic structure</a>
+      {% endif %}
       <span class="who">{{ user.get_full_name|default:user.username }} · {{ user.get_role_display }}</span>
-      <form method="post" action="{% url 'logout' %}" class="inline">{% csrf_token %}<button type="submit">Log out</button></form>
+      <form method="post" action="{% url 'logout' %}" class="inline-form">{% csrf_token %}<button type="submit" class="btn btn-sm">Log out</button></form>
     {% else %}
       <a href="{% url 'login' %}">Log in</a>
       <a href="{% url 'register_student' %}">Create student account</a>
     {% endif %}
   </nav>
+  </div>
 </header>
-<main class="{% block main_class %}{% endblock %}">
+<main class="shell {% block main_class %}{% endblock %}">
   {% if messages %}{% for m in messages %}<p class="msg">{{ m }}</p>{% endfor %}{% endif %}
   {% block content %}{% endblock %}
 </main>
-<footer>Baze Project Hub · Final-year project repository and supervision platform</footer>
+<footer class="site-footer"><div class="footer-inner">Baze Project Hub <span>·</span> Final-year project repository and supervision platform</div></footer>
+<script src="{% static 'js/navigation.js' %}?v=2" defer></script>
 </body>
 </html>

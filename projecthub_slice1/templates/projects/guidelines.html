@@ -1,26 +1,14 @@
 {% extends "base.html" %}
-{% block title %}Project guidelines · Baze Project Hub{% endblock %}
+{% block title %}Project guide · Baze Project Hub{% endblock %}
 {% block content %}
-<h1>Project guidelines</h1>
-<div class="card">
-  <h2>Academic workflow</h2>
-  <ol>
-    <li>Propose a project title and problem statement.</li>
-    <li>Secure supervisor acceptance and formal approval.</li>
-    <li>Set milestones and keep meeting logs updated.</li>
-    <li>Submit progress evidence before the defence stage.</li>
-    <li>Archive the completed project for repository reuse and follow-on work.</li>
-  </ol>
-</div>
+<section class="page-heading"><p class="eyebrow">PROJECT GUIDE</p><h1>FYP guidelines and resources</h1><p class="muted">A shared guide to the project process, with current resources from your supervisor and department.</p>{% if user.role == 'supervisor' %}<a class="btn btn-primary" href="{% url 'announcements' %}#share-resource">Upload or edit a guide</a>{% endif %}</section>
 
-<div class="card">
-  <h2>Recommended milestones</h2>
-  <ul>
-    <li>Topic selection and problem framing</li>
-    <li>Literature review and project plan</li>
-    <li>Implementation and testing</li>
-    <li>Draft report and presentation preparation</li>
-    <li>Defence and final archival</li>
-  </ul>
-</div>
+<section class="grid-2">
+  <div class="card"><h2>Project workflow</h2><ol><li>Propose a project title and problem statement.</li><li>Review the supervisor’s proposal criteria and secure acceptance.</li><li>Have the department log the approved topic.</li><li>Track progress through supervisor meetings and agreed actions.</li><li>Submit the final work, defend it, and complete the HOD sign-off.</li><li>After graduation is verified, the approved project materials can appear in the completed repository.</li></ol></div>
+  <div class="card"><h2>Recommended milestones</h2><ul><li>Topic selection and problem framing</li><li>Literature review and project plan</li><li>Implementation and testing</li><li>Draft report and presentation preparation</li><li>Defence and final archival</li></ul></div>
+</section>
+
+<section><div class="results-heading"><div><h2>Shared guide documents</h2><p class="muted">Documents are shared with current supervisees; graduated students do not receive new supervisor notices.</p></div><span class="result-count">{{ guide_resources|length }} resource{{ guide_resources|length|pluralize }}</span></div>
+  {% for resource in guide_resources %}<article class="card"><p class="eyebrow">Updated {{ resource.updated_at|date:"j M Y, H:i" }} · Shared by {{ resource.author.get_full_name|default:resource.author.username }}</p><h3>{{ resource.title }}</h3>{% if resource.description %}<p>{{ resource.description|linebreaksbr }}</p>{% endif %}{% if resource.file %}<a class="btn btn-sm" href="{% url 'download_shared_resource' resource.pk %}">Download file</a>{% elif resource.url %}<a class="btn btn-sm" href="{{ resource.url }}" target="_blank" rel="noopener">Open guide</a>{% endif %}</article>{% empty %}<div class="card empty-state"><h3>No uploaded guide documents yet</h3><p class="muted">When a supervisor shares a guide or resource with you, it will appear here.</p></div>{% endfor %}
+</section>
 {% endblock %}

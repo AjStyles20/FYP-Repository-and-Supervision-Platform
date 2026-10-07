@@ -24,4 +24,8 @@ The intended project progression is:
 | Submitted | Record the defence outcome | Coordinator |
 | Defended | Sign off and archive | HOD |
 
-Project-stage actions, meeting records, archives, and role-specific screens are implemented as their Django features are completed. Refer to `PROGRESS.md` for the current implementation state.
+Students can start a project record and submit the digital proposal. The assigned supervisor records a decision, a coordinator logs accepted forms, the supervisor records work-start, the student records submission, the coordinator records defence, and the department HOD signs completion off and archives it. Each transition is restricted by role and department and appends a status event.
+
+The student's **My project** page links to the workflow and meeting history. Assigned supervisors schedule and edit meeting records; students can confirm or dispute them. Edits retain a version row. Supervisors can publish project or department notices, with first-seen and acknowledgement times recorded per user. Administrators can review the audit log and import past project summaries from CSV.
+
+Refer to `PROGRESS.md` for implemented screens and outstanding deployment, policy and report work. The workflow still needs an interactive browser smoke pass.

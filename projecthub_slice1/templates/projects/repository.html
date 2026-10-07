@@ -5,32 +5,22 @@
 <section class="repository-hero">
   <div>
     <p class="eyebrow">BAZE UNIVERSITY · PROJECT DISCOVERY</p>
-    <h1>Find work before choosing a topic</h1>
-    <p>Explore current and completed projects across faculties, departments and programmes.</p>
+    {% if is_running_topics %}<h1>Explore running topics</h1><p>See what students are currently researching, where each project stands, and who is supervising it.</p>
+    {% else %}<h1>Completed project repository</h1><p>Browse projects signed off by the department and completed by graduated students.</p>{% endif %}
   </div>
   <div class="hero-stat">
-    <span>{{ section_count.current|add:section_count.past }}</span>
-    <small>projects in this view</small>
+    <span>{% if is_running_topics %}{{ section_count.current }}{% else %}{{ section_count.past }}{% endif %}</span>
+    <small>{% if is_running_topics %}running topics{% else %}completed projects{% endif %}</small>
   </div>
 </section>
 
-<nav class="repository-tabs" aria-label="Repository sections">
-  <a class="{% if section == 'current' %}selected{% endif %}"
-     href="{% url 'repository' %}?section=current&q={{ query|urlencode }}&faculty={{ faculty_id|urlencode }}&department={{ department_id|urlencode }}&programme={{ programme_id|urlencode }}&year={{ year|urlencode }}">
-    Current students <span>{{ section_count.current }}</span>
-  </a>
-  <a class="{% if section == 'past' %}selected{% endif %}"
-     href="{% url 'repository' %}?section=past&q={{ query|urlencode }}&faculty={{ faculty_id|urlencode }}&department={{ department_id|urlencode }}&programme={{ programme_id|urlencode }}&year={{ year|urlencode }}">
-    Past students <span>{{ section_count.past }}</span>
-  </a>
-  <a class="{% if section == 'all' %}selected{% endif %}"
-     href="{% url 'repository' %}?section=all&q={{ query|urlencode }}&faculty={{ faculty_id|urlencode }}&department={{ department_id|urlencode }}&programme={{ programme_id|urlencode }}&year={{ year|urlencode }}">
-    All projects
-  </a>
-</nav>
+<div class="hero-actions repository-switcher">
+  {% if is_running_topics %}<a class="btn btn-quiet" href="{% url 'repository' %}">Browse completed projects</a>
+  {% else %}<a class="btn btn-quiet" href="{% url 'running_topics' %}">Search running topics</a>{% endif %}
+</div>
 
 <form method="get" class="repository-filter card">
-  <input type="hidden" name="section" value="{{ section }}">
+  {% if is_running_topics %}<input type="hidden" name="section" value="current">{% else %}<input type="hidden" name="section" value="past">{% endif %}
   <div class="search-field">
     <label for="repository-search">Search projects</label>
     <input id="repository-search" name="q" type="search" value="{{ query }}"
@@ -86,7 +76,7 @@
 
 <div class="results-heading">
   <div>
-    <h2>{% if section == 'current' %}Current students{% elif section == 'past' %}Past students{% else %}All projects{% endif %}</h2>
+    <h2>{% if is_running_topics %}Current students{% else %}Graduated students{% endif %}</h2>
     <p class="muted">Project summaries are available to signed-in Baze Project Hub users.</p>
   </div>
   <span class="result-count">{{ items|length }} result{{ items|length|pluralize }}</span>
@@ -98,7 +88,7 @@
       <article class="project-card">
         <div class="project-card-top">
           <span class="status-pill {% if item.is_past %}past{% endif %}">
-            {% if item.is_past %}Past project{% else %}{{ item.stage }}{% endif %}
+            {% if item.is_past %}Completed{% else %}{{ item.stage }}{% endif %}
           </span>
           <span class="project-year">{{ item.year }}</span>
         </div>
@@ -119,8 +109,8 @@
   <section class="empty-state card">
     <div class="empty-icon" aria-hidden="true">⌕</div>
     <h3>No projects found</h3>
-    <p class="muted">Try another search or remove one of the filters. New project records will appear here as they are added and approved for discovery.</p>
-    <a href="{% url 'repository' %}?section={{ section }}">Clear filters</a>
+    <p class="muted">Try another search or remove one of the filters. {% if is_running_topics %}Only active student topics appear in this directory.{% else %}Only completed work from graduated students appears in this repository.{% endif %}</p>
+    <a href="{% if is_running_topics %}{% url 'running_topics' %}{% else %}{% url 'repository' %}{% endif %}">Clear filters</a>
   </section>
 {% endif %}
 {% endblock %}

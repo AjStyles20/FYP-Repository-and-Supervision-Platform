@@ -7,6 +7,8 @@ from django.urls import reverse
 
 from apps.academics.models import Department, Faculty, Programme
 from apps.accounts.models import Role, StudentProfile, User
+from apps.audit.models import AuditEvent
+from apps.supervision.models import Announcement
 
 from .models import (
     ArchivedProject,
@@ -56,6 +58,23 @@ class RepositoryTests(TestCase):
             contact_consent=True,
             graduation_year=2026,
         )
+        cls.alumni = User.objects.create_user(
+            username="repository.alumni@bazeuniversity.edu.ng",
+            email="repository.alumni@bazeuniversity.edu.ng",
+            password="test-password",
+            first_name="Grace",
+            last_name="Alumni",
+            role=Role.STUDENT,
+        )
+        StudentProfile.objects.create(
+            user=cls.alumni,
+            student_number="BU/25/CS/4321",
+            programme=cls.programme,
+            student_status=StudentProfile.Status.GRADUATED,
+            graduation_year=2025,
+            contact_email="grace.contact@example.com",
+            contact_consent=True,
+        )
         cls.supervisor = User.objects.create_user(
             username="supervisor.okoro",
             email="okoro@bazeuniversity.edu.ng",
@@ -100,7 +119,7 @@ class RepositoryTests(TestCase):
             year=2025,
             department=cls.department,
             programme=cls.programme,
-            student=cls.student,
+            student=cls.alumni,
             supervisor=cls.supervisor,
             gap_summary="Evaluate accessibility with a larger student sample.",
         )
@@ -155,6 +174,55 @@ class RepositoryTests(TestCase):
         self.assertNotContains(response, "Campus Transport Analytics")
         self.assertNotContains(response, "Assign supervisor")
 
+    def test_supervisor_can_add_and_remove_a_student_without_deleting_their_record(self):
+        new_student = User.objects.create_user(
+            username="new.supervisee", password="test-password", first_name="New", last_name="Student",
+            role=Role.STUDENT,
+        )
+        StudentProfile.objects.create(user=new_student, student_number="BU/26/CS/8899", programme=self.programme)
+        unassigned_project = Project.objects.create(
+            student=new_student, title="Unassigned topic", department=self.department, programme=self.programme,
+        )
+        self.client.force_login(self.supervisor)
+
+        added = self.client.post(reverse("supervision"), {
+            "action": "add_student", "project": unassigned_project.pk, "reason": "Research area match",
+        })
+
+        self.assertRedirects(added, reverse("supervision"))
+        unassigned_project.refresh_from_db()
+        self.assertEqual(unassigned_project.supervisor, self.supervisor)
+        self.assertTrue(unassigned_project.supervisor_assignments.filter(ended_at__isnull=True).exists())
+        self.assertTrue(Announcement.objects.filter(project=unassigned_project, title="You have a new supervisor").exists())
+
+        removed = self.client.post(reverse("supervision"), {
+            "action": "remove_student", "project_id": unassigned_project.pk, "reason": "Reassign to another specialist",
+        })
+
+        self.assertRedirects(removed, reverse("supervision"))
+        unassigned_project.refresh_from_db()
+        self.assertIsNone(unassigned_project.supervisor)
+        self.assertTrue(unassigned_project.supervisor_assignments.filter(ended_at__isnull=False).exists())
+        self.assertTrue(Announcement.objects.filter(project=unassigned_project, title="Supervisor assignment updated").exists())
+
+    def test_supervisor_can_edit_project_details_with_audit_and_student_notice(self):
+        editable_project = Project.objects.create(
+            student=self.student, title="Editable topic", description="Old summary", department=self.department,
+            programme=self.programme, supervisor=self.supervisor, is_demo=False,
+        )
+        self.client.force_login(self.supervisor)
+
+        response = self.client.post(reverse("supervision"), {
+            "action": "edit_project", "project_id": editable_project.pk,
+            "title": "Updated campus transport study", "description": "Expanded summary", "keywords": "transit, analytics",
+        })
+
+        self.assertRedirects(response, reverse("supervision"))
+        editable_project.refresh_from_db()
+        self.assertEqual(editable_project.title, "Updated campus transport study")
+        self.assertTrue(AuditEvent.objects.filter(action="project.supervisor_edited", object_id=str(editable_project.pk)).exists())
+        self.assertTrue(Announcement.objects.filter(project=editable_project, title="Your project topic was updated").exists())
+
     def test_supervision_and_approval_pages_render_project_links(self):
         self.client.force_login(self.coordinator)
         self.assertEqual(self.client.get(reverse("supervision")).status_code, 200)
@@ -166,32 +234,59 @@ class RepositoryTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, reverse("current_project_detail", args=[self.current_project.pk]))
 
-    def test_repository_has_current_and_past_sections(self):
+    def test_repository_only_shows_completed_graduated_projects(self):
         self.client.force_login(self.student)
 
-        current_response = self.client.get(reverse("repository"), {"section": "current"})
-        past_response = self.client.get(reverse("repository"), {"section": "past"})
+        repository_response = self.client.get(reverse("repository"))
+        running_response = self.client.get(reverse("running_topics"))
 
-        self.assertContains(current_response, "Campus Transport Analytics")
-        self.assertContains(current_response, "Sample data")
-        self.assertNotContains(current_response, "Student Support Portal")
-        self.assertContains(past_response, "Student Support Portal")
-        self.assertNotContains(past_response, "Campus Transport Analytics")
-        self.assertContains(current_response, "Past students")
-        self.assertContains(past_response, "Current students")
+        self.assertContains(repository_response, "Student Support Portal")
+        self.assertNotContains(repository_response, "Campus Transport Analytics")
+        self.assertContains(running_response, "Campus Transport Analytics")
+        self.assertNotContains(running_response, "Student Support Portal")
+        self.assertContains(repository_response, "Completed project repository")
+        self.assertContains(running_response, "Explore running topics")
+
+    def test_repository_hides_archived_work_until_graduation_is_verified(self):
+        unverified_project = ArchivedProject.objects.create(
+            title="Awaiting verified graduation",
+            year=2026,
+            department=self.department,
+            programme=self.programme,
+            student=self.student,
+        )
+        self.client.force_login(self.student)
+
+        response = self.client.get(reverse("repository"))
+
+        self.assertNotContains(response, unverified_project.title)
+
+    def test_completed_project_detail_requires_graduated_student(self):
+        self.client.force_login(self.student)
+        unverified_project = ArchivedProject.objects.create(
+            title="Not yet eligible",
+            year=2026,
+            department=self.department,
+            programme=self.programme,
+            student=self.student,
+        )
+
+        response = self.client.get(reverse("past_project_detail", args=[unverified_project.pk]))
+
+        self.assertEqual(response.status_code, 404)
 
     def test_repository_searches_topics_students_and_supervisors(self):
         self.client.force_login(self.student)
 
         for search_term in ("Transport Analytics", "Ada", "Okoro"):
             with self.subTest(search_term=search_term):
-                response = self.client.get(reverse("repository"), {"section": "current", "q": search_term})
+                response = self.client.get(reverse("running_topics"), {"q": search_term})
                 self.assertContains(response, "Campus Transport Analytics")
 
     def test_student_id_search_is_not_available_to_students(self):
         self.client.force_login(self.student)
 
-        response = self.client.get(reverse("repository"), {"section": "current", "q": "BU/26/CS/1234"})
+        response = self.client.get(reverse("running_topics"), {"q": "BU/26/CS/1234"})
 
         self.assertNotContains(response, "Campus Transport Analytics")
         self.assertNotContains(response, "student ID")
@@ -204,7 +299,7 @@ class RepositoryTests(TestCase):
         )
         self.client.force_login(staff)
 
-        response = self.client.get(reverse("repository"), {"section": "current", "q": "BU/26/CS/1234"})
+        response = self.client.get(reverse("running_topics"), {"q": "BU/26/CS/1234"})
 
         self.assertContains(response, "Campus Transport Analytics")
 
@@ -237,7 +332,7 @@ class RepositoryTests(TestCase):
 
         self.assertContains(response, "Evaluate accessibility")
         self.assertContains(response, "Verified graduation year")
-        self.assertContains(response, "2026")
+        self.assertContains(response, "2025")
         self.assertContains(response, "Archive year 2025")
         self.assertContains(response, "Earlier supervisor")
         self.assertContains(response, "B Earlier")
@@ -247,10 +342,9 @@ class RepositoryTests(TestCase):
 
         response = self.client.get(
             reverse("repository"),
-            {"section": "all", "department": self.department.pk},
+            {"department": self.department.pk},
         )
 
-        self.assertContains(response, "Campus Transport Analytics")
         self.assertContains(response, "Student Support Portal")
 
     def test_archived_projects_are_not_listed_as_current(self):
@@ -258,7 +352,7 @@ class RepositoryTests(TestCase):
         self.current_project.save(update_fields=["archived"])
         self.client.force_login(self.student)
 
-        response = self.client.get(reverse("repository"), {"section": "current"})
+        response = self.client.get(reverse("running_topics"))
 
         self.assertNotContains(response, "Campus Transport Analytics")
 

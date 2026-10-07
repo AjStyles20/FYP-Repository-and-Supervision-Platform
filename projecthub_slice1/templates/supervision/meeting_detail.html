@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block title %}Meeting record · Baze Project Hub{% endblock %}
+{% block content %}
+<h1>Meeting record</h1>
+<section class="card"><h2>{{ meeting.project.title }}</h2><p>{{ meeting.scheduled_for|date:"j M Y, H:i" }} · {{ meeting.get_status_display }} · {{ meeting.venue }}</p><p><strong>Agenda:</strong> {{ meeting.agenda|default:"—"|linebreaksbr }}</p><p><strong>Discussion:</strong> {{ meeting.discussion|default:"—"|linebreaksbr }}</p><p><strong>Attendance:</strong> {% if meeting.status == 'held' %}Held{% elif meeting.status == 'missed' %}Missed{% else %}Not yet held{% endif %}</p><p><strong>Corrective action:</strong> {{ meeting.corrective_action|default:"—"|linebreaksbr }}</p><p><strong>Next steps:</strong> {{ meeting.next_steps|default:"—"|linebreaksbr }}</p>
+{% if meeting.student_disputed_at %}<p class="error">Student disputed this record on {{ meeting.student_disputed_at|date:"j M Y H:i" }}: {{ meeting.student_comment }}</p>{% elif meeting.student_confirmed_at %}<p>Student confirmed: {{ meeting.student_confirmed_at|date:"j M Y H:i" }}</p>{% else %}<p>Student response is pending.</p>{% endif %}
+<p>Supervisor confirmation: {% if meeting.supervisor_confirmed_at %}{{ meeting.supervisor_confirmed_at|date:"j M Y H:i" }}{% else %}Pending{% endif %}</p>
+{% if request.user.pk == meeting.project.supervisor_id %}<a class="button" href="{% url 'edit_meeting' meeting.pk %}">Edit record</a><form method="post" class="inline">{% csrf_token %}<button>Confirm record</button></form>{% endif %}
+{% if request.user.role == 'student' and request.user.pk == meeting.project.student_id %}<form method="post" class="stack-form">{% csrf_token %}{% for field in form %}<div class="form-row">{{ field.label_tag }}{{ field }}{{ field.errors }}</div>{% endfor %}<button class="button">Send response</button></form>{% endif %}
+</section>
+<section class="card"><h2>Version history</h2><ol>{% for edit in meeting.edits.all %}<li>{{ edit.edited_at|date:"j M Y H:i" }}{% if edit.edited_by %} · {{ edit.edited_by.get_full_name|default:edit.edited_by.username }}{% endif %}{% if edit.note %} · {{ edit.note }}{% endif %}</li>{% empty %}<li>No edits.</li>{% endfor %}</ol></section>
+{% endblock %}

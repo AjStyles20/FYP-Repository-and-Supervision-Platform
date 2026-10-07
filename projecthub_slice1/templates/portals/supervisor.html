@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+{% block title %}Supervisor Portal | Baze Project Hub{% endblock %}
+{% block content %}
+<div class="supervisor-dashboard">
+  <section class="supervisor-welcome">
+    <div>
+      <p class="eyebrow">Supervisor workspace{% if department %} · {{ department }}{% endif %}</p>
+      <h1>Good day, {{ user.first_name|default:user.username }}</h1>
+      <p>Your students, project progress, and upcoming meetings at a glance.</p>
+    </div>
+    <div class="supervisor-welcome-actions">
+      <a class="btn btn-primary" href="{% url 'supervision' %}">Manage my students</a>
+      <a class="btn btn-quiet" href="{% url 'supervisor_availability' %}">Set availability</a>
+    </div>
+  </section>
+
+  <section class="supervisor-metrics" aria-label="Supervision overview">
+    <article class="supervisor-metric">
+      <span class="supervisor-metric-label">Current students</span>
+      <strong>{{ active_count }}</strong>
+      <span class="supervisor-metric-note">On your roster</span>
+    </article>
+    <article class="supervisor-metric">
+      <span class="supervisor-metric-label">Topics to review</span>
+      <strong>{{ proposal_count }}</strong>
+      <span class="supervisor-metric-note">Awaiting your decision</span>
+    </article>
+    <article class="supervisor-metric">
+      <span class="supervisor-metric-label">Approved / in progress</span>
+      <strong>{{ approved_count }}</strong>
+      <span class="supervisor-metric-note">Active project work</span>
+    </article>
+    <article class="supervisor-metric">
+      <span class="supervisor-metric-label">Past supervision</span>
+      <strong>{{ past_count }}</strong>
+      <span class="supervisor-metric-note">Completed records</span>
+    </article>
+  </section>
+
+  <div class="supervisor-dashboard-grid">
+    <section class="supervisor-panel" aria-labelledby="roster-title">
+      <div class="supervisor-panel-heading">
+        <div>
+          <p class="eyebrow">Active assignments</p>
+          <h2 id="roster-title">My students</h2>
+        </div>
+        <a class="supervisor-text-link" href="{% url 'supervision' %}">Full roster and history <span aria-hidden="true">→</span></a>
+      </div>
+
+      {% for project in projects %}
+        <article class="supervisor-student-row">
+          <div class="supervisor-student-identity">
+            <span class="supervisor-avatar" aria-hidden="true">{{ project.student.first_name|default:project.student.username|slice:":1"|upper }}</span>
+            <div>
+              <h3>{{ project.student.get_full_name|default:project.student.username }}</h3>
+              <p>{{ project.programme.award }} · {{ project.department }}</p>
+            </div>
+          </div>
+          <div class="supervisor-student-topic">
+            <span class="supervisor-field-label">Project topic</span>
+            <a href="{% url 'project_workflow' project.pk %}">{{ project.title }}</a>
+          </div>
+          <div class="supervisor-student-stage">
+            <span class="supervisor-field-label">Status</span>
+            <span class="tag tag-live">{{ project.get_stage_display }}</span>
+          </div>
+          <div class="supervisor-student-actions">
+            <a href="{% url 'project_workflow' project.pk %}">Workflow</a>
+            <a href="{% url 'project_meetings' project.pk %}">Meeting log</a>
+          </div>
+        </article>
+      {% empty %}
+        <div class="supervisor-empty-state">
+          <h3>No active students yet</h3>
+          <p>Once a student is assigned to you, their project and next steps will appear here.</p>
+          <a class="btn btn-sm" href="{% url 'supervision' %}">Open student roster</a>
+        </div>
+      {% endfor %}
+    </section>
+
+    <aside class="supervisor-side-column">
+      <section class="supervisor-panel" aria-labelledby="meetings-title">
+        <div class="supervisor-panel-heading">
+          <div>
+            <p class="eyebrow">Your schedule</p>
+            <h2 id="meetings-title">Upcoming meetings</h2>
+          </div>
+          <a class="supervisor-icon-link" href="{% url 'supervisor_availability' %}" aria-label="Manage availability" title="Manage availability">↗</a>
+        </div>
+        {% for meeting in upcoming_meetings %}
+          <article class="supervisor-meeting-row">
+            <time datetime="{{ meeting.scheduled_for|date:'c' }}" class="supervisor-meeting-date">
+              <span>{{ meeting.scheduled_for|date:"d" }}</span>
+              {{ meeting.scheduled_for|date:"M" }}
+            </time>
+            <div class="supervisor-meeting-detail">
+              <h3>{{ meeting.project.student.get_full_name|default:meeting.project.student.username }}</h3>
+              <p>{{ meeting.scheduled_for|date:"D, j M · H:i" }} · {{ meeting.venue|default:meeting.get_mode_display }}</p>
+              <a href="{% url 'meeting_detail' meeting.pk %}">Open meeting record</a>
+            </div>
+          </article>
+        {% empty %}
+          <div class="supervisor-empty-meetings">
+            <p>No upcoming meetings scheduled.</p>
+            <a href="{% url 'supervisor_availability' %}">Manage availability</a>
+          </div>
+        {% endfor %}
+      </section>
+
+      <section class="supervisor-panel supervisor-quick-actions" aria-labelledby="quick-actions-title">
+        <p class="eyebrow">Shortcuts</p>
+        <h2 id="quick-actions-title">Supervisor tools</h2>
+        <a href="{% url 'announcements' %}"><span>Share a notice or resource</span><span aria-hidden="true">→</span></a>
+        <a href="{% url 'approval_policy' %}"><span>Set review criteria</span><span aria-hidden="true">→</span></a>
+        <a href="{% url 'repository' %}?section=past"><span>Explore past student work</span><span aria-hidden="true">→</span></a>
+      </section>
+    </aside>
+  </div>
+</div>
+{% endblock %}

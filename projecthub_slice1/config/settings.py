@@ -1,5 +1,6 @@
 """Settings for Baze Project Hub. Secrets come from environment variables or a local .env file."""
 import os
+import sys
 from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -39,6 +40,8 @@ INSTALLED_APPS = [
     "apps.academics",
     "apps.accounts",
     "apps.projects",
+    "apps.supervision",
+    "apps.audit",
 ]
 
 MIDDLEWARE = [
@@ -71,7 +74,12 @@ TEMPLATES = [
 WSGI_APPLICATION = "config.wsgi.application"
 
 if env("DB_ENGINE", "mysql") == "sqlite":
-    DATABASES = {"default": {"ENGINE": "django.db.backends.sqlite3", "NAME": BASE_DIR / "db.sqlite3"}}
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": env("DB_NAME", str(BASE_DIR / "db.sqlite3")),
+        }
+    }
 else:
     DATABASES = {
         "default": {
@@ -93,6 +101,12 @@ AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
 ]
 
+# The suite creates dozens of accounts. PBKDF2 is deliberately slow and the tests assert nothing
+# about hash strength, so use a fast hasher only while the test runner is active. This never
+# applies to runserver or to any other management command.
+if "test" in sys.argv:
+    PASSWORD_HASHERS = ["django.contrib.auth.hashers.MD5PasswordHasher"]
+
 LOGIN_URL = "login"
 LOGIN_REDIRECT_URL = "dashboard"
 LOGOUT_REDIRECT_URL = "login"
@@ -107,6 +121,15 @@ STATICFILES_DIRS = [BASE_DIR / "static"]
 STATIC_ROOT = BASE_DIR / "staticfiles"
 MEDIA_ROOT = BASE_DIR / "media"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+# --- Project Hub product settings -------------------------------------------------------------
+SITE_NAME = "Baze Project Hub"
+
+# Repository access follows D-09: signed-in Baze Project Hub accounts only.
+PUBLIC_REPOSITORY = False
+
+# Personal data (student ID, an individual's contact) is never public, whatever the flag above says.
+REPOSITORY_PAGE_SIZE = 12
 
 # Security defaults. Production deployment must also serve over HTTPS.
 SESSION_COOKIE_HTTPONLY = True

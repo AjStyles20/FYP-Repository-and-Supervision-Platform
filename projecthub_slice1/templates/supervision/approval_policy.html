@@ -1,0 +1,6 @@
+{% extends "base.html" %}
+{% block title %}Approval criteria · Baze Project Hub{% endblock %}
+{% block content %}
+<section class="page-heading"><p class="eyebrow">SUPERVISOR TOOLS</p><h1>My approval criteria</h1><p class="muted">Set the evidence you expect before reviewing a proposal. The selected method and additional criteria are shown to assigned students and snapshotted on each signed decision.</p></section>
+<section class="card"><form method="post" class="stack-form">{% csrf_token %}{% for field in form %}<div class="form-row">{{ field.label_tag }}{{ field }}{% if field.help_text %}<small class="muted">{{ field.help_text }}</small>{% endif %}{{ field.errors }}</div>{% endfor %}<button class="button">Save and post criteria</button></form></section>
+{% endblock %}

@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}Project workflow · {{ project.title }}{% endblock %}
+{% block content %}
+<p class="breadcrumb"><a href="{% url 'current_project_detail' project.pk %}">← Project summary</a></p>
+<h1>Project workflow</h1>
+<section class="card">
+  <p class="eyebrow">{{ project.get_stage_display }}</p>
+  <h2>{{ project.title }}</h2>
+  <p>{{ project.student.get_full_name|default:project.student.username }} · {{ project.department.name }}</p>
+  {% if project.supervisor_id %}<section class="form-note"><strong>Supervisor approval criteria:</strong> {{ approval_method|title }}{% if approval_criteria %}<br>{{ approval_criteria|linebreaksbr }}{% else %}<br><span class="muted">No additional criteria have been posted.</span>{% endif %}</section>{% endif %}
+  {% if project.approval_form %}
+    <p>Approval form status: <strong>{{ project.approval_form.state_label }}</strong></p>
+    {% if project.approval_form.supervisor_comments %}<p>Supervisor comments: {{ project.approval_form.supervisor_comments|linebreaksbr }}</p>{% endif %}
+  {% endif %}
+  {% if form %}
+    <form method="post" class="stack-form">
+      {% csrf_token %}
+      {% for field in form %}<div class="form-row">{{ field.label_tag }}{{ field }}{% if field.errors %}<small class="error">{{ field.errors|join:", " }}</small>{% endif %}</div>{% endfor %}
+      {% if form.non_field_errors %}<p class="error">{{ form.non_field_errors|join:", " }}</p>{% endif %}
+      <button class="button" type="submit">Save workflow step</button>
+    </form>
+  {% else %}
+    <p>No action is available for your account at this stage.</p>
+  {% endif %}
+</section>
+<section class="card">
+  <h2>History</h2>
+  {% if project.status_events.all %}
+    <ol>{% for event in project.status_events.all %}<li>{{ event.get_to_stage_display }} · {{ event.created_at|date:"j M Y H:i" }}{% if event.actor %} · {{ event.actor.get_full_name|default:event.actor.username }}{% endif %}{% if event.note %}<br>{{ event.note|linebreaksbr }}{% endif %}</li>{% endfor %}</ol>
+  {% else %}<p>No status changes recorded yet.</p>{% endif %}
+</section>
+{% endblock %}

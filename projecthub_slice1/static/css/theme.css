@@ -1,0 +1,103 @@
+/* Theme Pack 164 — v1.9.0 — CERAMIC
+   Usage: <html data-theme="ceramic"> ... then style everything with var(--tp-*).
+   Re-brand per app: html { --tp-h: 312; }  — must be declared on the SAME element as the theme block.
+   Every component rule in app.css must consume var(--tp-*) only: no raw hex, font names, px radii,
+   durations or shadows belong in component code. */
+
+@keyframes tp-pop{0%{transform:scale(.88);opacity:0}62%{transform:scale(1.05)}100%{transform:scale(1);opacity:1}}
+@keyframes tp-up{from{transform:translateY(var(--tp-reveal-dist,16px));opacity:0}to{transform:translateY(0);opacity:1}}
+@keyframes tp-down{from{transform:translateY(-16px);opacity:0}to{transform:translateY(0);opacity:1}}
+@keyframes tp-sheet{from{transform:translateY(102%)}to{transform:translateY(0)}}
+@keyframes tp-fade{from{opacity:0}to{opacity:1}}
+@keyframes tp-wipe{from{clip-path:inset(0 100% 0 0)}to{clip-path:inset(0 0 0 0)}}
+@keyframes tp-curtain{from{clip-path:inset(100% 0 0 0);transform:translateY(var(--tp-reveal-dist,16px))}to{clip-path:inset(0 0 0 0);transform:translateY(0)}}
+@keyframes tp-rise{from{clip-path:inset(0 0 100% 0);transform:translateY(var(--tp-reveal-dist,16px))}to{clip-path:inset(0 0 0 0);transform:translateY(0)}}
+@keyframes tp-blur-in{from{opacity:0;filter:blur(16px);transform:scale(1.05) translateY(var(--tp-reveal-dist,16px))}to{opacity:1;filter:blur(0);transform:scale(1) translateY(0)}}
+@keyframes tp-glitch{0%{opacity:0;transform:translate3d(-6px,0,0);clip-path:inset(40% 0 38% 0)}18%{opacity:1;transform:translate3d(5px,0,0);clip-path:inset(12% 0 62% 0)}36%{transform:translate3d(-3px,0,0);clip-path:inset(68% 0 6% 0)}54%{transform:translate3d(2px,0,0);clip-path:inset(0 0 0 0)}72%{transform:translate3d(-1px,0,0)}100%{opacity:1;transform:none;clip-path:inset(0 0 0 0)}}
+@keyframes tp-tape{from{opacity:0;transform:rotate(-9deg) translateY(var(--tp-reveal-dist,16px)) scale(.95)}to{opacity:1;transform:rotate(var(--tp-img-tilt,0deg)) translateY(0) scale(1)}}
+@keyframes tp-zoom{from{transform:scale(1.16)}to{transform:scale(1)}}
+@keyframes tp-bar{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+@keyframes tp-shake{10%,90%{transform:translateX(-2px)}30%,70%{transform:translateX(3px)}50%{transform:translateX(-4px)}}
+@keyframes tp-pulse{0%,100%{opacity:1}50%{opacity:.42}}
+@keyframes tp-breathe{0%,100%{transform:scale(1)}50%{transform:scale(1.045)}}
+@keyframes tp-shimmer{from{background-position:-160% 0}to{background-position:260% 0}}
+@keyframes tp-float{0%,100%{transform:translateY(0)}50%{transform:translateY(-9px)}}
+@keyframes tp-spin{to{transform:rotate(360deg)}}
+@keyframes tp-blink{50%{opacity:0}}
+@keyframes tp-tilt{0%,100%{transform:rotate(-2.5deg)}50%{transform:rotate(2.5deg)}}
+@keyframes tp-drift{0%{transform:translate3d(0,0,0) scale(1)}50%{transform:translate3d(4%,-3%,0) scale(1.12)}100%{transform:translate3d(0,0,0) scale(1)}}
+@media (prefers-reduced-motion: reduce){*,*::before,*::after{animation-duration:1ms!important;animation-iteration-count:1!important;transition-duration:1ms!important}}
+
+@keyframes fx-scroll{from{background-position:0 0}to{background-position:0 160px}}
+@keyframes fx-floor{from{background-position:0 0}to{background-position:0 64px}}
+@keyframes fx-spin{to{transform:rotate(360deg)}}
+@keyframes fx-hue{to{filter:hue-rotate(360deg)}}
+@keyframes fx-flicker{0%,100%{opacity:var(--tp-fx-op)}7%{opacity:0}9%{opacity:var(--tp-fx-op)}52%{opacity:calc(var(--tp-fx-op)*.4)}54%{opacity:var(--tp-fx-op)}}
+@keyframes fx-blob{0%{transform:translate(0,0) scale(1) rotate(0)}33%{transform:translate(8%,-6%) scale(1.15) rotate(40deg)}66%{transform:translate(-6%,8%) scale(.92) rotate(-30deg)}100%{transform:none}}
+@keyframes fx-stars{from{background-position:0 0,0 0,0 0}to{background-position:0 400px,0 260px,0 140px}}
+@keyframes fx-foil{from{background-position:0% 50%}to{background-position:200% 50%}}
+@keyframes fx-diag{from{background-position:0 0}to{background-position:120px 120px}}
+@keyframes d3-sway{0%,100%{transform:perspective(1100px) rotateY(-14deg) rotateX(6deg)}50%{transform:perspective(1100px) rotateY(14deg) rotateX(-4deg)}}
+@keyframes d3-float{0%,100%{transform:perspective(1200px) rotateX(18deg) translateY(0)}50%{transform:perspective(1200px) rotateX(10deg) translateY(-14px)}}
+@keyframes d3-glitch{0%,92%,100%{transform:none;filter:none}93%{transform:translate(-4px,2px) skewX(-6deg);filter:drop-shadow(4px 0 0 #ff003c) drop-shadow(-4px 0 0 #00e6ff)}95%{transform:translate(3px,-1px) skewX(4deg)}97%{transform:translate(-1px,0);filter:drop-shadow(-3px 0 0 #ff003c) drop-shadow(3px 0 0 #00e6ff)}}
+@keyframes d3-wobble{0%,100%{transform:rotate(-1.5deg)}50%{transform:rotate(1.5deg) translateY(-6px)}}
+@keyframes fx-slide{from{background-position:0 0}to{background-position:-160px 0}}
+@keyframes fx-fall{from{background-position:0 0,0 0,0 0}to{background-position:0 160px,0 320px,0 480px}}
+@keyframes d3-card{0%,100%{transform:perspective(900px) rotateX(10deg) rotateY(-16deg) rotateZ(2deg)}50%{transform:perspective(900px) rotateX(4deg) rotateY(-6deg) translateY(-8px)}}
+@keyframes d3-bounce{0%,100%{transform:translateY(0) scale(1)}40%{transform:translateY(-10px) scale(1.01,.99)}60%{transform:translateY(0) scale(1.01,.98)}}
+@keyframes d3-web{0%,100%{transform:perspective(2400px) rotateX(2.5deg) rotateY(-3deg)}50%{transform:perspective(2400px) rotateX(1deg) rotateY(3deg) translateY(-4px)}}
+/* Web / landing: gentle tilt only on themes that declare --tp-3d or --tp-3d-anim. */
+.tp-web-stage{position:relative;isolation:isolate;overflow:hidden;animation:var(--tp-3d-web,none);transform-origin:50% 50%}
+.tp-web-stage>.tp-fx{inset:-20%}
+.tp-fx{position:absolute;inset:-40%;z-index:-1;pointer-events:none;background:var(--tp-fx);background-size:var(--tp-fx-size);opacity:var(--tp-fx-op);mix-blend-mode:var(--tp-fx-blend);transform:var(--tp-fx-tf);animation:var(--tp-fx-anim)}
+.tp-screen{position:relative;isolation:isolate;overflow:hidden}
+.tp-stage{transform:var(--tp-3d);animation:var(--tp-3d-anim);transform-style:preserve-3d}
+
+[data-theme="ceramic"]{
+  --tp-h:60;
+  --tp-fx:none;--tp-fx-size:auto;--tp-fx-anim:none;--tp-fx-op:0;--tp-fx-blend:normal;--tp-fx-tf:none;
+  --tp-3d:none;--tp-3d-anim:none;--tp-3d-web:none;
+  --tp-dur-slow:760ms;--tp-stagger:90ms;--tp-reveal:tp-up;--tp-reveal-dist:12px;
+  --tp-img-r:32px;--tp-img-frame:none;--tp-img-sh:none;--tp-img-filter:saturate(.8) contrast(1.02);
+  --tp-img-overlay-op:0;--tp-img-blend:normal;--tp-img-tilt:0deg;--tp-img-ar:1 / 1;
+  --tp-bg:#f3efe8;--tp-canvas:#f3efe8;--tp-surf:#fbf9f5;--tp-surf-2:#e6dfd3;
+  --tp-ink:#26211b;--tp-mute:#6b6257;
+  --tp-acc:oklch(0.42 0.04 calc(var(--tp-h) + 0));
+  --tp-acc-2:oklch(0.7 0.07 calc(var(--tp-h) + 150));
+  --tp-acc-ink:#fbf9f5;--tp-line:#dbd2c4;
+  --tp-grad:linear-gradient(135deg, #3a332b, #26211b);
+  --tp-r:32px;--tp-r-sm:18px;--tp-r-lg:40px;--tp-r-btn:99px;
+  --tp-sh:0 18px 34px rgba(38,33,27,.1), inset 0 1px 0 rgba(255,255,255,.8);
+  --tp-sh-sm:0 4px 12px rgba(38,33,27,.07);
+  --tp-bw:1px;
+  --tp-font-display:'Hanken Grotesk', system-ui;
+  --tp-font-body:'Hanken Grotesk', system-ui;
+  --tp-font-mono:'JetBrains Mono', monospace;
+  --tp-w-display:300;--tp-track-display:-0.05em;--tp-case-display:none;--tp-hero:80px;
+  --tp-dur:200ms;--tp-ease:cubic-bezier(.22,1,.36,1);--tp-press:0.99;
+  --tp-tex:none;--tp-blur:none;
+}
+
+/* Modern Campus: clear institutional blues, restrained teal accents, compact cards. */
+[data-theme="modern-campus"] {
+  --tp-h:205;
+  --tp-fx:none;--tp-fx-size:auto;--tp-fx-anim:none;--tp-fx-op:0;--tp-fx-blend:normal;--tp-fx-tf:none;
+  --tp-3d:none;--tp-3d-anim:none;--tp-3d-web:none;
+  --tp-dur-slow:600ms;--tp-stagger:65ms;--tp-reveal:tp-up;--tp-reveal-dist:10px;
+  --tp-img-r:14px;--tp-img-frame:none;--tp-img-sh:none;--tp-img-filter:saturate(.92) contrast(1.02);
+  --tp-img-overlay-op:0;--tp-img-blend:normal;--tp-img-tilt:0deg;--tp-img-ar:1 / 1;
+  --tp-bg:#f2f5f9;--tp-canvas:#f2f5f9;--tp-surf:#ffffff;--tp-surf-2:#e7edf4;
+  --tp-ink:#172b45;--tp-mute:#566a80;
+  --tp-acc:#1d567d;--tp-acc-2:#25847f;--tp-acc-ink:#ffffff;--tp-line:#d5dfe9;
+  --tp-grad:linear-gradient(135deg, #173d60, #1d6682);
+  --tp-r:16px;--tp-r-sm:10px;--tp-r-lg:22px;--tp-r-btn:10px;
+  --tp-sh:0 10px 28px rgba(23,43,69,.08);
+  --tp-sh-sm:0 3px 10px rgba(23,43,69,.06);
+  --tp-bw:1px;
+  --tp-font-display:'Segoe UI', system-ui, sans-serif;
+  --tp-font-body:'Segoe UI', system-ui, sans-serif;
+  --tp-font-mono:ui-monospace, 'Cascadia Code', monospace;
+  --tp-w-display:600;--tp-track-display:-0.035em;--tp-case-display:none;--tp-hero:72px;
+  --tp-dur:180ms;--tp-ease:cubic-bezier(.2,.75,.25,1);--tp-press:0.99;
+  --tp-tex:none;--tp-blur:none;
+}

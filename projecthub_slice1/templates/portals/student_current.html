@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% block title %}Student Portal · Baze Project Hub{% endblock %}
+{% block content %}
+<section class="hero-band">
+  <div class="hero-copy">
+    <p class="eyebrow">Student portal{% if student_profile %} · {{ student_profile.programme.department }}{% endif %}</p>
+    <h1>Your project, in one place</h1>
+    <p>Keep up with supervisor feedback, meetings, resources, and the next steps for your project.</p>
+    <div class="hero-actions">
+      {% if project %}<a class="btn btn-primary" href="{% url 'my_project' %}">Open my project</a>{% else %}<a class="btn btn-primary" href="{% url 'start_project' %}">Start a project record</a>{% endif %}
+      <a class="btn btn-quiet" href="{% url 'running_topics' %}">Search running topics</a>
+      <a class="btn btn-quiet" href="{% url 'repository' %}">Completed projects</a>
+    </div>
+  </div>
+  <a class="card notification-callout" href="{% url 'announcements' %}" aria-label="Notifications: {{ unread_notice_count }} unread">
+    <span class="notification-icon" aria-hidden="true">🔔</span>
+    <span><strong>Notifications</strong><small>{% if unread_notice_count %}{{ unread_notice_count }} new update{{ unread_notice_count|pluralize }}{% else %}You’re all caught up{% endif %}</small></span>
+    {% if unread_notice_count %}<span class="notification-count">{{ unread_notice_count }}</span>{% endif %}
+  </a>
+</section>
+
+{% if is_project_complete %}
+  <div class="form-note"><strong>FYP complete.</strong> Your project is awaiting verified graduation before it appears in the completed project repository.</div>
+{% endif %}
+
+<section class="bento" aria-label="Student project overview">
+  <div class="bento-cell"><span class="bento-label">Project status</span><strong class="bento-value bento-value-small">{% if project %}{{ project.get_stage_display }}{% elif is_project_complete %}FYP complete{% else %}Not started{% endif %}</strong></div>
+  <div class="bento-cell"><span class="bento-label">Supervisor</span><strong class="bento-value bento-value-small">{% if project and project.supervisor %}{{ project.supervisor.get_full_name|default:project.supervisor.username }}{% else %}To be assigned{% endif %}</strong></div>
+  <div class="bento-cell"><span class="bento-label">Next meeting</span><strong class="bento-value bento-value-small">{% if upcoming_meeting %}{{ upcoming_meeting.scheduled_for|date:"j M" }}{% else %}Not scheduled{% endif %}</strong></div>
+  <div class="bento-cell"><span class="bento-label">Unread updates</span><strong class="bento-value">{{ unread_notice_count }}</strong></div>
+</section>
+
+<section class="grid-2">
+  <div class="stack">
+    <div class="section-title"><h2>My project</h2>{% if project %}<a class="btn btn-sm" href="{% url 'project_workflow' project.pk %}">View progress</a>{% endif %}</div>
+    {% if project %}
+      <article class="card project-card">
+        <div class="project-card-top"><span class="tag tag-live">{{ project.get_stage_display }}</span><span class="tag tag-mono">{{ project.programme.award }}</span></div>
+        <h3><a href="{% url 'my_project' %}">{{ project.title }}</a></h3>
+        <p class="project-description">{{ project.description|default:"Your project description will appear here."|truncatewords:28 }}</p>
+        <div class="project-meta"><div><dt>Department</dt><dd>{{ project.department }}</dd></div><div><dt>Supervisor</dt><dd>{{ project.supervisor.get_full_name|default:"Not assigned" }}</dd></div></div>
+        <ol class="stage-track" aria-label="Project progress">
+          {% for step in project.stages_with_state %}<li class="stage-step {{ step.state }}"><span class="stage-marker"></span><span class="stage-name">{{ step.label }}</span></li>{% endfor %}
+        </ol>
+      </article>
+    {% else %}
+      <div class="card"><h3>No active project record yet</h3><p class="muted">Start your record when you are ready to propose a topic. Your programme is already linked to your account.</p><a class="btn btn-primary" href="{% url 'start_project' %}">Start project</a></div>
+    {% endif %}
+
+    <div class="section-title"><h2>Supervisor meeting updates</h2>{% if project %}<a class="btn btn-sm" href="{% url 'project_meetings' project.pk %}">Full meeting log</a>{% endif %}</div>
+    {% for meeting in recent_meetings %}
+      <article class="card meeting-update">
+        <div class="meeting-head"><h3>{{ meeting.scheduled_for|date:"j M Y" }}</h3><span class="tag">{{ meeting.get_status_display }}</span></div>
+        {% if meeting.discussion %}<p><strong>Discussed</strong><br>{{ meeting.discussion|linebreaksbr }}</p>{% endif %}
+        {% if meeting.corrective_action %}<p><strong>Next action</strong><br>{{ meeting.corrective_action|linebreaksbr }}</p>{% endif %}
+        {% if meeting.next_steps %}<p><strong>Agreed next steps</strong><br>{{ meeting.next_steps|linebreaksbr }}</p>{% endif %}
+        <small class="muted">Updated {{ meeting.updated_at|date:"j M Y, H:i" }}{% if meeting.recorded_by %} by {{ meeting.recorded_by.get_full_name|default:meeting.recorded_by.username }}{% endif %}</small>
+        <p><a href="{% url 'meeting_detail' meeting.pk %}">{% if meeting.student_disputed_at %}View your response{% elif meeting.student_confirmed_at %}View confirmed record{% else %}Review and respond{% endif %}</a></p>
+      </article>
+    {% empty %}
+      <div class="card"><h3>No meeting feedback yet</h3><p class="muted">After each meeting, your supervisor’s notes and next actions will appear here with their update time.</p>{% if project %}<a href="{% url 'project_meetings' project.pk %}">Open meeting log</a>{% endif %}</div>
+    {% endfor %}
+  </div>
+
+  <div class="stack">
+    {% if upcoming_meeting %}
+      <article class="meeting"><div class="meeting-head"><h2>Next supervision meeting</h2><span class="tag tag-live">Scheduled</span></div><p class="meeting-when">{{ upcoming_meeting.scheduled_for|date:"l, j F · H:i" }}</p><p class="meeting-meta">{{ upcoming_meeting.venue|default:upcoming_meeting.get_mode_display }}{% if upcoming_meeting.agenda %} · {{ upcoming_meeting.agenda|truncatewords:18 }}{% endif %}</p><a href="{% url 'meeting_detail' upcoming_meeting.pk %}">View meeting details</a></article>
+    {% else %}
+      <div class="card"><h2>Next meeting</h2><p class="muted">Meeting times appear here once scheduled. You can review the shared attendance and feedback log.</p>{% if project %}<a href="{% url 'project_meetings' project.pk %}">View supervision log</a>{% endif %}</div>
+    {% endif %}
+
+    <section class="card"><div class="section-title"><h2>Notices</h2><a href="{% url 'announcements' %}">All updates</a></div>
+      {% for item in student_notices %}<article class="notice-preview"><div class="meeting-head"><h3>{{ item.title }}</h3>{% if not item.already_seen %}<span class="tag tag-live">New</span>{% endif %}</div><p>{{ item.body|truncatewords:28 }}</p><small class="muted">{{ item.author.get_full_name|default:item.author.username }} · {{ item.created_at|date:"j M Y, H:i" }}</small>{% if item.requires_acknowledgement and not item.acknowledged %}<p><a href="{% url 'announcements' %}">Acknowledgement required</a></p>{% endif %}</article>{% empty %}<p class="muted">Supervisor and department updates will appear here.</p>{% endfor %}
+    </section>
+
+    <section class="card"><div class="section-title"><h2>Shared guide and resources</h2><a href="{% url 'guidelines' %}">Project guide</a></div>
+      {% for resource in student_resources %}<article class="resource-preview"><h3>{{ resource.title }}</h3>{% if resource.description %}<p>{{ resource.description|truncatewords:24 }}</p>{% endif %}<small class="muted">Shared by {{ resource.author.get_full_name|default:resource.author.username }} · Updated {{ resource.updated_at|date:"j M Y, H:i" }}</small><p>{% if resource.file %}<a href="{% url 'download_shared_resource' resource.pk %}">Download resource</a>{% elif resource.url %}<a href="{{ resource.url }}" target="_blank" rel="noopener">Open resource</a>{% endif %}</p></article>{% empty %}<p class="muted">Your supervisor’s shared material will appear here when available.</p>{% endfor %}
+    </section>
+
+    <div class="card card-pad-sm"><h2>Find project work</h2><ul class="plain-list"><li><a href="{% url 'running_topics' %}">Search running student topics</a></li><li><a href="{% url 'repository' %}">Browse completed projects</a></li><li><a href="{% url 'guidelines' %}">Read the FYP guide and process</a></li></ul></div>
+  </div>
+</section>
+{% endblock %}

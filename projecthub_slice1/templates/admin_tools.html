@@ -2,6 +2,8 @@
 {% block title %}Admin tools · Baze Project Hub{% endblock %}
 {% block content %}
 <h1>Admin tools</h1>
+<p><a class="button" href="{% url 'audit_log' %}">View audit log</a></p>
+<p><a class="button" href="{% url 'import_projects' %}">Import past projects from CSV</a></p>
 <section class="card">
   <h2>Student account approvals</h2>
   {% if pending_students %}
