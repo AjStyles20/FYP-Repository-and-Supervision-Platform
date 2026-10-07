@@ -127,7 +127,6 @@ def past_project_detail(request, project_id):
             "student", "student__student_profile", "department__faculty", "programme", "supervisor"
         ).prefetch_related("previous_supervisors"),
         pk=project_id,
-        student__student_profile__student_status=StudentProfile.Status.GRADUATED,
     )
     visible_documents = Q(visibility=ProjectDocument.Visibility.BAZE_USERS)
     if request.user.role in STAFF_ROLES:
@@ -150,13 +149,7 @@ def past_project_detail(request, project_id):
 
 @role_required(*REPOSITORY_ROLES)
 def download_project_document(request, document_id):
-    document = get_object_or_404(
-        ProjectDocument.objects.filter(
-            Q(archived_project__isnull=True)
-            | Q(archived_project__student__student_profile__student_status=StudentProfile.Status.GRADUATED)
-        ),
-        pk=document_id,
-    )
+    document = get_object_or_404(ProjectDocument, pk=document_id)
     if (
         document.project_id
         and request.user.role == Role.STUDENT

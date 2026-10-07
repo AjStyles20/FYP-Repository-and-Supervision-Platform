@@ -268,7 +268,9 @@ class RepositoryTests(TestCase):
         self.assertContains(repository_response, "Completed project repository")
         self.assertContains(running_response, "Explore running topics")
 
-    def test_repository_hides_archived_work_until_graduation_is_verified(self):
+    def test_repository_lists_archived_work_before_graduation_is_verified(self):
+        # Completion and graduation are separate facts: an archived project is listed whether or
+        # not the student has graduated yet.
         unverified_project = ArchivedProject.objects.create(
             title="Awaiting verified graduation",
             year=2026,
@@ -280,12 +282,15 @@ class RepositoryTests(TestCase):
 
         response = self.client.get(reverse("repository"))
 
-        self.assertNotContains(response, unverified_project.title)
+        self.assertContains(response, unverified_project.title)
+        self.assertIn(2026, response.context["years"])
 
-    def test_completed_project_detail_requires_graduated_student(self):
-        self.client.force_login(self.student)
+    def test_completed_project_detail_shows_graduation_separately(self):
+        self.client.force_login(self.alumni)
+        self.profile.student_status = StudentProfile.Status.FYP_COMPLETED
+        self.profile.save(update_fields=["student_status"])
         unverified_project = ArchivedProject.objects.create(
-            title="Not yet eligible",
+            title="Completed, not yet graduated",
             year=2026,
             department=self.department,
             programme=self.programme,
@@ -294,7 +299,39 @@ class RepositoryTests(TestCase):
 
         response = self.client.get(reverse("past_project_detail", args=[unverified_project.pk]))
 
-        self.assertEqual(response.status_code, 404)
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Not yet verified (project completed)")
+        # graduation_year is set on this profile, but status is not GRADUATED, so it is not shown
+        # as a verified graduation.
+        self.assertNotContains(response, "Verified graduation year")
+
+    def test_signed_off_project_without_graduation_appears_in_repository(self):
+        project = Project.objects.create(
+            student=self.student, title="Signed off before graduation", department=self.department,
+            programme=self.programme, supervisor=self.supervisor, stage=ProjectStage.DEFENDED,
+        )
+        ProjectDocument.objects.create(
+            project=project, title="Final report", document_type="report",
+            file=SimpleUploadedFile("final.pdf", b"%PDF-1.4 report"),
+        )
+        _, archived = sign_off_completion(
+            project, self.hod, signed_on=date(2026, 10, 5), gap_summary="Scale the pilot", graduation_verified=False,
+        )
+        self.profile.refresh_from_db()
+        self.assertEqual(self.profile.student_status, StudentProfile.Status.FYP_COMPLETED)
+
+        self.client.force_login(self.alumni)
+        listing = self.client.get(reverse("repository"))
+        detail = self.client.get(reverse("past_project_detail", args=[archived.pk]))
+        document = archived.documents.get()
+        download = self.client.get(reverse("download_project_document", args=[document.pk]))
+
+        self.assertContains(listing, "Signed off before graduation")
+        self.assertContains(detail, "Scale the pilot")
+        self.assertEqual(download.status_code, 200)
+        # Read the stream rather than calling close(): close() fires request_finished, which
+        # closes the database connection and breaks the test transaction on MySQL.
+        self.assertEqual(b"".join(download.streaming_content), b"%PDF-1.4 report")
 
     def test_repository_searches_topics_students_and_supervisors(self):
         self.client.force_login(self.student)

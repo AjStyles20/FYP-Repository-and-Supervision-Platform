@@ -6,7 +6,7 @@
   <div>
     <p class="eyebrow">BAZE UNIVERSITY · PROJECT DISCOVERY</p>
     {% if is_running_topics %}<h1>Explore running topics</h1><p>See what students are currently researching, where each project stands, and who is supervising it.</p>
-    {% else %}<h1>Completed project repository</h1><p>Browse projects signed off by the department and completed by graduated students.</p>{% endif %}
+    {% else %}<h1>Completed project repository</h1><p>Browse every project the Head of Department has signed off and archived.</p>{% endif %}
   </div>
   <div class="hero-stat">
     <span>{% if is_running_topics %}{{ section_count.current }}{% else %}{{ section_count.past }}{% endif %}</span>
@@ -109,7 +109,7 @@
   <section class="empty-state card">
     <div class="empty-icon" aria-hidden="true">⌕</div>
     <h3>No projects found</h3>
-    <p class="muted">Try another search or remove one of the filters. {% if is_running_topics %}Only active student topics appear in this directory.{% else %}Only completed work from graduated students appears in this repository.{% endif %}</p>
+    <p class="muted">Try another search or remove one of the filters. {% if is_running_topics %}Only active student topics appear in this directory.{% else %}Only projects signed off by the Head of Department appear in this repository.{% endif %}</p>
     <a href="{% if is_running_topics %}{% url 'running_topics' %}{% else %}{% url 'repository' %}{% endif %}">Clear filters</a>
   </section>
 {% endif %}

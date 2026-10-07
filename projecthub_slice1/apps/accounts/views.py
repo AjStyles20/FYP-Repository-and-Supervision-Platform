@@ -125,10 +125,7 @@ def _student_portal_response(request, profile):
             | SharedResource.objects.filter(project__isnull=True, department__isnull=True)
         )
         shared_resources = shared_resources.select_related("author").distinct().order_by("-created_at")
-    completed_projects = ArchivedProject.objects.filter(
-        student=request.user,
-        student__student_profile__student_status=StudentProfile.Status.GRADUATED,
-    ).order_by("-year")
+    completed_projects = ArchivedProject.objects.filter(student=request.user).order_by("-year")
     return render(
         request,
         "portals/student_current.html",

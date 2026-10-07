@@ -63,11 +63,9 @@ def current_projects(filters, can_see_student_id=False):
 
 
 def past_projects(filters, can_see_student_id=False):
-    queryset = (
-        ArchivedProject.objects.filter(
-            student__student_profile__student_status="graduated"
-        ).select_related(*CURRENT_SELECT_RELATED).prefetch_related("previous_supervisors")
-    )
+    # Every archived (HOD signed-off) project is listed. Graduation is a separate fact on the
+    # student profile (R-16) and is shown on the record, but it never hides the project.
+    queryset = ArchivedProject.objects.select_related(*CURRENT_SELECT_RELATED).prefetch_related("previous_supervisors")
     queryset = _apply_academic_filters(queryset, filters)
     if filters["year"]:
         queryset = queryset.filter(year=int(filters["year"]))
@@ -87,9 +85,7 @@ def available_years():
         local_year(moment)
         for moment in Project.objects.filter(archived=False).values_list("updated_at", flat=True).distinct()
     }
-    past_years = set(ArchivedProject.objects.filter(
-        student__student_profile__student_status="graduated"
-    ).values_list("year", flat=True))
+    past_years = set(ArchivedProject.objects.values_list("year", flat=True))
     return sorted(current_years | past_years, reverse=True)
 
 

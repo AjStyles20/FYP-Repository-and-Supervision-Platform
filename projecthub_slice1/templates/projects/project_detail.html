@@ -67,10 +67,10 @@
       {% if previous_supervisors %}
         <div><dt>Earlier supervisor{{ previous_supervisors|length|pluralize }}</dt><dd>{% for previous_supervisor in previous_supervisors %}{{ previous_supervisor.get_full_name|default:previous_supervisor.username }}{% if not forloop.last %}, {% endif %}{% endfor %}</dd></div>
       {% endif %}
-      {% if is_past and student_profile and student_profile.graduation_year %}
-        <div><dt>Verified graduation year</dt><dd>{{ student_profile.graduation_year }}</dd></div>
+      {% if is_past and student_profile.student_status == "graduated" %}
+        <div><dt>Verified graduation year</dt><dd>{{ student_profile.graduation_year|default:"Graduated (year not recorded)" }}</dd></div>
       {% elif is_past %}
-        <div><dt>Graduation year</dt><dd class="muted">Not recorded</dd></div>
+        <div><dt>Graduation</dt><dd class="muted">Not yet verified (project completed)</dd></div>
       {% endif %}
       {% if is_past %}<div><dt>Archive year</dt><dd>{{ project.year }}</dd></div>{% endif %}
     </dl>
