@@ -1,4 +1,8 @@
+import shutil
+import tempfile
+from collections import Counter
 from io import StringIO
+from pathlib import Path
 
 from django.core.management import call_command
 from django.core.management.base import CommandError
@@ -8,8 +12,23 @@ from django.utils import timezone
 
 from apps.academics.models import Department, Faculty, Programme
 from apps.accounts.models import Role, StudentProfile, SupervisorProfile, User
-from apps.projects.models import ArchivedProject, Project, ProjectSupervisorAssignment
+from apps.projects.models import (
+    ArchivedProject,
+    Project,
+    ProjectApprovalDecision,
+    ProjectDocument,
+    ProjectStage,
+    ProjectSupervisorAssignment,
+)
 from apps.supervision.models import Announcement, SharedResource, SupervisionMeeting
+
+
+# seed_demo writes demo report files; keep them out of the real media folder during tests.
+TEST_MEDIA = tempfile.mkdtemp(prefix="projecthub-test-media-")
+
+
+def tearDownModule():
+    shutil.rmtree(TEST_MEDIA, ignore_errors=True)
 
 
 def run(*args, **kwargs):
@@ -19,6 +38,7 @@ def run(*args, **kwargs):
     call_command(*args, stdout=StringIO(), stderr=StringIO(), **kwargs)
 
 
+@override_settings(MEDIA_ROOT=TEST_MEDIA)
 class LoginAndRolesTests(TestCase):
     @classmethod
     def setUpTestData(cls):
@@ -147,25 +167,61 @@ class LoginAndRolesTests(TestCase):
         self.assertEqual(self.client.post(reverse("logout")).status_code, 302)
 
 
+@override_settings(MEDIA_ROOT=TEST_MEDIA)
 class SeedAndPurgeTests(TestCase):
     def test_seed_creates_expected_demo_data(self):
         run("seed_demo")
-        self.assertEqual(User.objects.filter(is_demo=True, role=Role.STUDENT).count(), 6)
-        self.assertEqual(User.objects.filter(is_demo=True, role=Role.SUPERVISOR).count(), 3)
-        self.assertEqual(SupervisorProfile.objects.count(), 3)
-        self.assertEqual(StudentProfile.objects.count(), 6)
-        self.assertEqual(Faculty.objects.filter(is_demo=True).count(), 2)
+        self.assertEqual(User.objects.filter(is_demo=True, role=Role.STUDENT).count(), 20)
+        self.assertEqual(User.objects.filter(is_demo=True, role=Role.SUPERVISOR).count(), 6)
+        self.assertEqual(SupervisorProfile.objects.count(), 6)
+        self.assertEqual(StudentProfile.objects.count(), 20)
+        self.assertEqual(Faculty.objects.filter(is_demo=True).count(), 1)
+        self.assertEqual(Department.objects.filter(is_demo=True).count(), 2)
         self.assertEqual(User.objects.get(username="demo.amina").email, "amina@bazeuniversity.edu.ng")
-        self.assertEqual(Project.objects.filter(is_demo=True).count(), 4)
-        self.assertEqual(ProjectSupervisorAssignment.objects.filter(ended_at__isnull=True).count(), 4)
-        self.assertEqual(ArchivedProject.objects.filter(is_demo=True).count(), 2)
+        self.assertEqual(Project.objects.filter(is_demo=True).count(), 20)
+        # One project is deliberately unassigned; one was reassigned, so its first row is closed.
+        self.assertEqual(ProjectSupervisorAssignment.objects.filter(ended_at__isnull=True).count(), 19)
+        self.assertEqual(ArchivedProject.objects.filter(is_demo=True).count(), 3)
+
+    def test_seed_tells_the_demo_story(self):
+        run("seed_demo")
+        stages = Counter(Project.objects.filter(is_demo=True).values_list("stage", flat=True))
+        self.assertEqual(set(stages), set(ProjectStage.values), "every stage has at least one project")
+        self.assertEqual(stages[ProjectStage.COMPLETED], 3)
+        for department in Department.objects.filter(is_demo=True):
+            methods = set(SupervisorProfile.objects.filter(user__department=department).values_list("approval_method", flat=True))
+            self.assertEqual(methods, {"topic_only", "literature_review", "working_project"}, department.name)
+        archived = ArchivedProject.objects.filter(is_demo=True)
+        self.assertTrue(all(project.gap_summary for project in archived))
+        statuses = Counter(archived.values_list("student__student_profile__student_status", flat=True))
+        self.assertEqual(statuses, {StudentProfile.Status.GRADUATED: 1, StudentProfile.Status.FYP_COMPLETED: 2})
+        self.assertTrue(archived.filter(previous_supervisors__isnull=False).exists())
+        # Every project moved through the real workflow, so each stage change has a history row.
+        for project in Project.objects.filter(is_demo=True):
+            self.assertEqual(project.status_events.count(), project.stage_position, project.title)
+
+    def test_seed_includes_a_visible_append_only_decision_history(self):
+        run("seed_demo")
+        project = Project.objects.get(title="Course Registration Clash Detector")
+        decisions = list(project.approval_decisions.values_list("decision", "proposed_title"))
+        self.assertEqual(decisions, [
+            ("rejected", "Timetable Clash Checker for the Whole University"),
+            ("accepted_with_changes", "Course Registration Clash Detector"),
+            ("", "Course Registration Clash Detector"),
+        ])
+        self.assertEqual(ProjectApprovalDecision.objects.filter(project=project).count(), 3)
+        self.client.force_login(User.objects.get(username="demo.adaeze"))
+        page = self.client.get(reverse("project_workflow", args=[project.pk]))
+        self.assertContains(page, "Approval decisions")
+        self.assertContains(page, "Timetable Clash Checker for the Whole University")
+        self.assertContains(page, "The scope is too broad")
 
     def test_seed_is_repeatable(self):
         run("seed_demo")
-        before = User.objects.count()
+        before = (User.objects.count(), Project.objects.count(), ProjectApprovalDecision.objects.count())
         run("seed_demo")
-        self.assertEqual(User.objects.count(), before)
-        self.assertEqual(ProjectSupervisorAssignment.objects.filter(ended_at__isnull=True).count(), 4)
+        self.assertEqual((User.objects.count(), Project.objects.count(), ProjectApprovalDecision.objects.count()), before)
+        self.assertEqual(ProjectSupervisorAssignment.objects.filter(ended_at__isnull=True).count(), 19)
 
     @override_settings(DEBUG=False)
     def test_seed_refuses_without_force_when_not_debug(self):
@@ -179,7 +235,11 @@ class SeedAndPurgeTests(TestCase):
         real_faculty = Faculty.objects.create(name="Real Faculty")
         real_dept = Department.objects.create(faculty=real_faculty, name="Real Dept")
         real_user = User.objects.create_user("real.user", password="x-real-pass-1", role=Role.SUPERVISOR, department=real_dept)
-        run("purge_demo")
+        demo_files = [Path(document.file.path) for document in ProjectDocument.objects.filter(is_demo=True)]
+        self.assertTrue(demo_files and all(path.exists() for path in demo_files))
+        with self.captureOnCommitCallbacks(execute=True):
+            run("purge_demo")
+        self.assertFalse(any(path.exists() for path in demo_files))
         self.assertFalse(User.objects.filter(is_demo=True).exists())
         self.assertFalse(Faculty.objects.filter(is_demo=True).exists())
         self.assertFalse(Programme.objects.filter(is_demo=True).exists())

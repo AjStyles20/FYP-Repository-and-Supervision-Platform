@@ -29,4 +29,11 @@
     <ol>{% for event in project.status_events.all %}<li>{{ event.get_to_stage_display }} · {{ event.created_at|date:"j M Y H:i" }}{% if event.actor %} · {{ event.actor.get_full_name|default:event.actor.username }}{% endif %}{% if event.note %}<br>{{ event.note|linebreaksbr }}{% endif %}</li>{% endfor %}</ol>
   {% else %}<p>No status changes recorded yet.</p>{% endif %}
 </section>
+<section class="card">
+  <h2>Approval decisions</h2>
+  <p class="muted">Every supervisor decision and departmental log entry is kept, including ones a later resubmission replaced. Entries cannot be edited or deleted.</p>
+  {% if project.approval_decisions.all %}
+    <ol>{% for decision in project.approval_decisions.all %}<li><strong>{{ decision.get_step_display }}</strong>{% if decision.decision %}: {{ decision.get_decision_display }}{% endif %} · “{{ decision.proposed_title }}” · {{ decision.decided_on|date:"j M Y"|default:"no date" }}{% if decision.decided_by %} · {{ decision.decided_by.get_full_name|default:decision.decided_by.username }}{% endif %}{% if decision.approval_method %} · method: {{ decision.approval_method }}{% endif %}{% if decision.comments %}<br>{{ decision.comments|linebreaksbr }}{% endif %}</li>{% endfor %}</ol>
+  {% else %}<p>No approval decisions recorded yet.</p>{% endif %}
+</section>
 {% endblock %}

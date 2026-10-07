@@ -1,0 +1,163 @@
+# Demo script: 7 minutes, one role per step
+
+This walkthrough follows one department through a term. Each step is one role, about one minute. Every click below was checked against the seeded data with a scripted run of the same URLs; all 42 checks passed.
+
+All demo accounts use the password **`ChangeMe123!`**. Usernames start with `demo.`. Students can also sign in with their Baze email or student ID.
+
+---
+
+## Before the panel arrives (not part of the 7 minutes)
+
+From `projecthub_slice1/`, in PowerShell:
+
+```powershell
+.\.venv\Scripts\python.exe manage.py purge_demo          # start from a clean story
+.\.venv\Scripts\python.exe manage.py seed_demo           # about 10 seconds
+.\.venv\Scripts\python.exe manage.py createsuperuser     # username: panel.admin (a real admin, see step 7)
+.\.venv\Scripts\python.exe manage.py runserver
+```
+
+1. In a private browser window, open `http://127.0.0.1:8000/register/` and register a **real** test student:
+   - Tolu Ade, `tolu.ade@bazeuniversity.edu.ng`, student ID `BU/23/CS/5001`, programme "Computer Science BSc", status "Current final-year student".
+   - Choose any strong password.
+   - This leaves one registration waiting for step 7.
+2. Close that window and open `http://127.0.0.1:8000/` in a normal window.
+
+**Why two admins:** demo accounts are never written to the audit log, by design, so that test clicks don't pollute the real history. `panel.admin` is a real account, which is how step 7 can show a genuine audit entry.
+
+**Reset between rehearsals:** steps 2, 3, 5 and 7 change data. Run `purge_demo` then `seed_demo` again. In the Django admin (`/admin/`), delete the Tolu account if you registered it; it is not demo data, so `purge_demo` leaves it.
+
+**What the seed contains:**
+- One faculty with two departments, Computer Science and Software Engineering.
+- In each department, a coordinator, an HOD and three supervisors, one per approval method:
+
+  | Approval method | Computer Science | Software Engineering |
+  |---|---|---|
+  | topic only | `demo.danjuma` | `demo.yusuf` |
+  | literature review | `demo.okoro` | `demo.nwosu` |
+  | working project | `demo.eze` | `demo.lawal` |
+
+- 20 projects across every stage, including 3 archived projects with documented gaps. Only one of those students is graduated, which shows that completion and graduation are separate.
+
+---
+
+## Step 1 (0:00–1:00): Student, `demo.adaeze`: the decision history nobody can rewrite
+
+1. Log in with the **student ID `BU/22/CS/4041`** to show that students can sign in with their ID.
+2. The student portal opens. Point at the stage track: "Approved by the department".
+3. Click **View progress** to open the Project workflow.
+4. Scroll to **History**: every stage change, with who made it and when.
+5. Scroll to **Approval decisions**. There are three entries:
+   - Dr Okoro **declined** the first idea, "Timetable Clash Checker for the Whole University", with his reason.
+   - He then **accepted with changes** the narrowed topic.
+   - The department logged the form.
+6. **Say:** "The form itself is replaced when a student resubmits, but this list is append-only. The rejection and its reason stay on record."
+
+**If it breaks:**
+- If login by ID fails, use `demo.adaeze`.
+- If the page errors, run `manage.py test apps.accounts.tests.SeedAndPurgeTests.test_seed_includes_a_visible_append_only_decision_history` and show that it passes.
+
+## Step 2 (1:00–2:00): Supervisor, `demo.danjuma`: accept a proposal under his own rules
+
+1. Log out, then log in as `demo.danjuma`.
+2. Click **Review criteria** in the top bar. His method is "Topic, aim and methodology". Mention that Dr Okoro requires a literature review and Dr Eze a working prototype: each supervisor sets their own (R-13).
+3. Click **Portal home**. In his student list, click **Hostel Maintenance Request Tracker** (Kemi Adebayo, stage "Topic proposed").
+4. On the workflow page:
+   - set **Decision** to "Accepted as proposed";
+   - type a short comment and his name as it appears on the form;
+   - keep today's date;
+   - click **Save workflow step**.
+5. The stage changes to **Supervisor accepted**, and a new line appears under History and Approval decisions.
+
+**If it breaks:**
+- If the form isn't shown, the project has already moved on (the data wasn't reset). Open **Microservice Template for Student Projects** as `demo.lawal` instead: also a pending proposal, under the "working project" method.
+- Otherwise, reseed.
+
+## Step 3 (2:00–3:00): Coordinator, `demo.coordinator`: log the form, allocate a student
+
+1. Log in as `demo.coordinator`.
+2. Click **Approval register**. Kemi's project now shows "Supervisor accepted". Click **Review project workflow**.
+3. Enter a note (e.g. "Filed in the register"), keep today's date, then click **Save workflow step**. The stage changes to **Approved by the department**.
+4. Click **Student allocation**. Find **Lecture Attendance with QR Codes** (Musa Garba, "Unassigned").
+5. Choose **K. Danjuma**, give the reason "Topic fits Mr Danjuma", then click **Save assignment**. The card shows the new supervisor and the change is kept in the history.
+6. **Say:** "A coordinator only sees their own department. The system enforces one current supervisor per project in the database, on MySQL as well."
+
+**If it breaks:**
+- If Kemi isn't listed, use **Accessibility Checker for Course Pages**. It is in Software Engineering, so log in as `demo.se.coordinator`.
+- If allocation fails, show the existing history on **Exam Seating Allocation Tool** in the repository (it was reassigned once).
+
+## Step 4 (3:00–4:00): Supervisor, `demo.okoro`: meeting records both sides can rely on
+
+1. Log in as `demo.okoro`.
+2. On the portal, find **Campus Event Notification App** (Chinedu Okafor) and click **Meeting log**.
+3. The log shows two held meetings and one upcoming. Click **View record** on the most recent held meeting (about a week ago).
+4. Show:
+   - what was discussed and the **Corrective action**, in the supervisor's words;
+   - the student's **dispute**: "I sent the survey design by email…";
+   - the record's **Version history**.
+5. **Say:** "Meeting records are visible only to the student, their supervisor, and the department's coordinator and HOD (R-33). Another supervisor in the same department gets a 'Not allowed' page."
+
+**If it breaks:**
+- If the meeting log is empty, the seed didn't run its supervision records. Reseed.
+- To prove the privacy rule instead, log in as `demo.danjuma`, paste the meeting record's URL, and show the 403 page.
+
+## Step 5 (4:00–5:00): HOD, `demo.hod`: sign off and archive
+
+1. Log in as `demo.hod`.
+2. The portal's sign-off queue lists **Cafeteria Queue Predictor** (Ngozi Chukwu, "Defended"). Click it.
+3. On the workflow page:
+   - The **Gap summary** is already filled in from the project: "Only lunch-time data was available…"
+   - Add a completion note.
+   - **Leave "Graduation verified" unticked.**
+   - Click **Save workflow step**.
+4. You land on the archived record. Point at **Documented gap** and at **Graduation: Not yet verified (project completed)**.
+5. **Say:** "Only the HOD can archive. A sign-off needs a documented gap or an explicit 'no gap' tick. Finishing the project is not the same as graduating, so graduation is shown separately, and the project is in the repository straight away."
+
+**If it breaks:**
+- If the queue is empty (Ngozi was already signed off), use **Requirements Traceability Tool** as `demo.se.hod`.
+- If the save is refused with "Record the documented gap…", the gap box was cleared. Type a gap or tick "no documented gap".
+
+## Step 6 (5:00–6:00): Current student, `demo.chinedu`: find past work, acknowledge a notice
+
+1. Log in with the **email** `chinedu@bazeuniversity.edu.ng`.
+2. Click **Completed projects** and search for **`queue`**. Ngozi's project, archived one minute ago, is listed. Open it:
+   - the documented gap is there to "continue";
+   - **Project abstract** can be downloaded;
+   - the staff-only final report is not offered to a student.
+3. Search for **`Exam Seating`** and open it: graduated student, verified graduation year, **Earlier supervisor** shown.
+4. Click **Notifications**. The notice **Venue change for Thursday's meeting** asks for acknowledgement. Click **Acknowledge notice**.
+5. **Say:** "The system records when each student first saw and acknowledged a notice, so 'I never got the message' can be checked."
+
+**If it breaks:**
+- If search shows nothing, clear the filters and use the year filter, or open **Student Wellbeing Check-in Chatbot**, which is always archived in the seed.
+- If the download fails, say files are served only through a permission check, then show the file list on the page.
+
+## Step 7 (6:00–7:00): Administrator, `panel.admin`: approve a registration, read the audit log
+
+1. Log in as `panel.admin`, the real admin from the setup.
+2. Click **System administration**. Tolu Ade's registration is pending; new students can't sign in until approved. Click **Approve**.
+3. Click **Audit log**. The newest entry is `account.registration_approve`, with who did it and when.
+4. **Say:**
+   - "The audit log is admin-only and append-only: the database itself refuses UPDATE and DELETE on it.
+   - Demo accounts are deliberately left out of it, which is why everything we clicked as `demo.*` isn't listed.
+   - Real data replaces the demo with one command, `purge_demo`, plus a CSV import of past projects."
+
+**If it breaks:**
+- If Tolu isn't pending (setup skipped), register them now at `/register/` in a private window (20 seconds), then approve.
+- If `panel.admin` doesn't exist, use `demo.admin`. The approval works, but explain that it won't appear in the audit log because demo accounts are excluded.
+
+---
+
+## Timing
+
+| Step | Role | Account | Minutes |
+|---|---|---|---|
+| 1 | Student | `demo.adaeze` (ID `BU/22/CS/4041`) | 0:00–1:00 |
+| 2 | Supervisor | `demo.danjuma` | 1:00–2:00 |
+| 3 | Coordinator | `demo.coordinator` | 2:00–3:00 |
+| 4 | Supervisor | `demo.okoro` | 3:00–4:00 |
+| 5 | HOD | `demo.hod` | 4:00–5:00 |
+| 6 | Student | `chinedu@bazeuniversity.edu.ng` | 5:00–6:00 |
+| 7 | Administrator | `panel.admin` | 6:00–7:00 |
+
+**If the whole app is down:** run `manage.py test apps` on SQLite (about 30 seconds) and show the passing suite, then walk through `docs/diagrams/` for the state machine and the sign-off sequence. Known limits are in `docs/known_limits.md`. Mention them before the panel asks.

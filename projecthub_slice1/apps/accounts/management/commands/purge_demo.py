@@ -4,7 +4,7 @@ from django.db import transaction
 
 from apps.academics.models import Department, Faculty, Programme
 from apps.accounts.models import User
-from apps.projects.models import ArchivedProject, Project
+from apps.projects.models import ArchivedProject, Project, ProjectDocument
 
 
 class Command(BaseCommand):
@@ -14,6 +14,10 @@ class Command(BaseCommand):
     def handle(self, *args, **opts):
         # Order matters: children first (profiles cascade with their users).
         counts = {}
+        # Demo files live on disk; deleting the rows alone would leave them behind. Remove them only
+        # once the row deletes have committed, so a failed purge never loses files.
+        demo_files = [document.file for document in ProjectDocument.objects.filter(is_demo=True).exclude(file="")]
+        transaction.on_commit(lambda: [demo_file.delete(save=False) for demo_file in demo_files])
         counts["archived_projects"] = ArchivedProject.objects.filter(is_demo=True).delete()[0]
         counts["projects"] = Project.objects.filter(is_demo=True).delete()[0]
         counts["users"] = User.objects.filter(is_demo=True).delete()[0]
