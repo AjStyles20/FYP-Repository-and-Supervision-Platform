@@ -486,6 +486,45 @@ class RepositoryTests(TestCase):
             self.assertEqual(b"".join(response.streaming_content), b"public abstract")
             self.assertIn("abstract.pdf", response["Content-Disposition"])
 
+    def test_current_project_files_are_limited_to_the_project_department(self):
+        document = ProjectDocument.objects.create(
+            project=self.current_project,
+            title="Draft report",
+            document_type="report",
+            file=SimpleUploadedFile("draft.pdf", b"draft report"),
+            visibility=ProjectDocument.Visibility.STAFF_ONLY,
+            uploaded_by=self.student,
+        )
+        other_department = Department.objects.create(faculty=self.department.faculty, name="Software Engineering")
+        allowed = {
+            "own student": self.student,
+            "assigned supervisor": self.supervisor,
+            "department coordinator": self.coordinator,
+            "department HOD": self.hod,
+            "administrator": self.admin,
+        }
+        refused = {
+            "another student": self.alumni,
+            "supervisor of another department": User.objects.create(
+                username="doc.other.supervisor", role=Role.SUPERVISOR, department=other_department
+            ),
+            "coordinator of another department": User.objects.create(
+                username="doc.other.coordinator", role=Role.COORDINATOR, department=other_department
+            ),
+            "HOD with no department": User.objects.create(username="doc.nodept.hod", role=Role.HOD),
+        }
+        url = reverse("download_project_document", args=[document.pk])
+
+        for label, user in allowed.items():
+            with self.subTest(user=label):
+                self.client.force_login(user)
+                response = self.client.get(url)
+                self.assertEqual(b"".join(response.streaming_content), b"draft report")
+        for label, user in refused.items():
+            with self.subTest(user=label):
+                self.client.force_login(user)
+                self.assertEqual(self.client.get(url).status_code, 404)
+
     def test_coordinator_can_assign_and_reassign_supervisor_with_history(self):
         self.client.force_login(self.coordinator)
 

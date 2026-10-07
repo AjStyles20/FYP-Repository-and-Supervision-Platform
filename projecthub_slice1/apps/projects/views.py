@@ -149,13 +149,9 @@ def past_project_detail(request, project_id):
 
 @role_required(*REPOSITORY_ROLES)
 def download_project_document(request, document_id):
-    document = get_object_or_404(ProjectDocument, pk=document_id)
-    if (
-        document.project_id
-        and request.user.role == Role.STUDENT
-        and document.project.student_id != request.user.pk
-        and document.uploaded_by_id != request.user.pk
-    ):
+    document = get_object_or_404(ProjectDocument.objects.select_related("project"), pk=document_id)
+    if document.project_id and not _can_open_current_project_files(request.user, document):
+        # 404, not 403, so an ID from another department does not confirm the file exists.
         raise Http404
     if (
         document.visibility == ProjectDocument.Visibility.STAFF_ONLY
@@ -168,6 +164,24 @@ def download_project_document(request, document_id):
         as_attachment=True,
         filename=Path(document.file.name).name,
     )
+
+
+def _can_open_current_project_files(user, document):
+    """Files of a project that is still running (archived files follow the repository rules).
+
+    The project's student or the file's uploader; academic staff only within the project's
+    department (or as its assigned supervisor); administrators for support.
+    """
+    project = document.project
+    if user.pk in (project.student_id, document.uploaded_by_id):
+        return True
+    if user.role == Role.ADMIN:
+        return True
+    if user.role in (Role.SUPERVISOR, Role.COORDINATOR, Role.HOD):
+        return project.supervisor_id == user.pk or (
+            user.department_id is not None and user.department_id == project.department_id
+        )
+    return False
 
 
 def _student_profile(student):
