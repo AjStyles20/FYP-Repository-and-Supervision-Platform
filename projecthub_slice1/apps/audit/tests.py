@@ -1,5 +1,7 @@
+from io import StringIO
 from unittest import skipUnless
 
+from django.core.management import call_command
 from django.db import DatabaseError, connection, transaction
 from django.db.models import ProtectedError
 from django.test import TestCase
@@ -85,6 +87,27 @@ class AuditAppendOnlyTests(TestCase):
         self.assertTrue(AuditEvent.objects.filter(pk=self.event.pk).exists())
 
     def test_user_with_audit_history_cannot_be_deleted(self):
+        # actor is a PROTECT foreign key: Django refuses the delete before any SQL reaches the
+        # audit table, so the triggers are never involved and the history stays intact.
+        # Accounts with history are deactivated instead of deleted.
         with self.assertRaises(ProtectedError):
             self.actor.delete()
-        self.assertTrue(AuditEvent.objects.filter(actor=self.actor).exists())
+        with self.assertRaises(ProtectedError):
+            User.objects.filter(pk=self.actor.pk).delete()
+
+        self.assertTrue(User.objects.filter(pk=self.actor.pk).exists())
+        self.event.refresh_from_db()
+        self.assertEqual((self.event.actor_id, self.event.summary), (self.actor.pk, "Original summary"))
+
+        self.actor.is_active = False
+        self.actor.save(update_fields=["is_active"])
+        self.assertEqual(AuditEvent.objects.filter(actor=self.actor).count(), 1)
+
+    def test_purge_demo_leaves_audit_history_untouched(self):
+        User.objects.create(username="audit.demo.purge", role=Role.STUDENT, is_demo=True)
+
+        call_command("purge_demo", stdout=StringIO())
+
+        self.assertFalse(User.objects.filter(is_demo=True).exists())
+        self._assert_unchanged()
+        self.assertEqual(AuditEvent.objects.count(), 1)
