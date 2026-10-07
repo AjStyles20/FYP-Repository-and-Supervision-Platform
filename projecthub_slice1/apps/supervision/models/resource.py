@@ -12,6 +12,15 @@ def validate_resource_size(upload):
         raise ValidationError("Shared files must be 25 MB or smaller.")
 
 
+def student_resource_scope(student):
+    """Resources a student may see: only those sent to one of their current projects (R-25).
+
+    `projects` is how the supervisor's form targets supervisees; the older single `project` field
+    is still honoured for rows that use it. Nothing is shared with a whole department.
+    """
+    return Q(projects__student=student, projects__archived=False) | Q(project__student=student, project__archived=False)
+
+
 class SharedResource(models.Model):
     author = models.ForeignKey(
         settings.AUTH_USER_MODEL,

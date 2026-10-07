@@ -3,7 +3,7 @@
 from .log import LogKind, SupervisionLogEntry
 from .meeting import MeetingMode, MeetingRecordEdit, MeetingRequest, MeetingStatus, SupervisorAvailability, SupervisionMeeting
 from .notice import Announcement, AnnouncementAcknowledgement
-from .resource import SharedResource, validate_resource_size
+from .resource import SharedResource, student_resource_scope, validate_resource_size
 
 __all__ = [
     "Announcement",
@@ -17,5 +17,6 @@ __all__ = [
     "SupervisionLogEntry",
     "SupervisionMeeting",
     "SupervisorAvailability",
+    "student_resource_scope",
     "validate_resource_size",
 ]

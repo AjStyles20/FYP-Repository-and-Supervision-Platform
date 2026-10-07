@@ -17,7 +17,7 @@ from apps.projects.models import Project
 from .forms import ApprovalPolicyForm, AvailabilityForm, AnnouncementForm, MeetingForm, SharedResourceForm, StudentMeetingResponseForm
 from .models import (
     Announcement, AnnouncementAcknowledgement, MeetingRecordEdit, SharedResource,
-    SupervisorAvailability, SupervisionMeeting,
+    SupervisorAvailability, SupervisionMeeting, student_resource_scope,
 )
 from .services import notify_supervisees
 
@@ -269,6 +269,7 @@ def announcements(request):
 
 
 def _save_shared_resource(form, author):
+    # `department` is kept for staff scoping only; students see a resource through `projects`.
     resource = form.save(commit=False)
     resource.author = author
     resource.project = None
@@ -307,12 +308,7 @@ def download_shared_resource(request, resource_id):
         profile = getattr(request.user, "student_profile", None)
         if not profile or profile.student_status == StudentProfile.Status.GRADUATED:
             raise PermissionDenied
-        can_access = (
-            resource.project_id and resource.project.student_id == request.user.pk
-        ) or resource.projects.filter(student=request.user, archived=False).exists() or (
-            resource.project_id is None
-            and resource.department_id in (None, profile.programme.department_id)
-        )
+        can_access = SharedResource.objects.filter(student_resource_scope(request.user), pk=resource.pk).exists()
     elif request.user.role in (Role.SUPERVISOR, Role.COORDINATOR, Role.HOD):
         can_access = resource.author_id == request.user.pk or resource.department_id == request.user.department_id
     else:

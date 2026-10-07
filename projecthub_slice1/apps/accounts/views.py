@@ -14,7 +14,9 @@ from apps.audit.models import AuditEvent
 from apps.audit.services import log_event
 from apps.projects.models import ArchivedProject, Project, ProjectCompletion, ProjectStage
 from apps.projects.services.counters import staff_with_counters
-from apps.supervision.models import Announcement, AnnouncementAcknowledgement, SharedResource, SupervisionMeeting
+from apps.supervision.models import (
+    Announcement, AnnouncementAcknowledgement, SharedResource, SupervisionMeeting, student_resource_scope,
+)
 from .forms import ProjectAuthenticationForm, StudentRegistrationForm
 from .models import Role, StudentProfile, User
 from .permissions import role_required
@@ -114,17 +116,10 @@ def _student_portal_response(request, profile):
         )),
     ).order_by("-is_pinned", "-created_at")
     unread_notice_count = announcements.filter(already_seen=False).count()
-    department = profile.programme.department if profile else None
-    shared_resources = SharedResource.objects.none()
-    if department:
-        project_scope = Q(project=project) if project else Q(pk__in=[])
-        shared_resources = (
-            SharedResource.objects.filter(project_scope)
-            | SharedResource.objects.filter(projects__student=request.user)
-            | SharedResource.objects.filter(project__isnull=True, department=department)
-            | SharedResource.objects.filter(project__isnull=True, department__isnull=True)
-        )
-        shared_resources = shared_resources.select_related("author").distinct().order_by("-created_at")
+    shared_resources = (
+        SharedResource.objects.filter(student_resource_scope(request.user))
+        .select_related("author").distinct().order_by("-created_at")
+    )
     completed_projects = ArchivedProject.objects.filter(student=request.user).order_by("-year")
     return render(
         request,

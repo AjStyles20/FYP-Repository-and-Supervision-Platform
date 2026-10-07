@@ -142,6 +142,47 @@ class SupervisorStudentWorkflowTests(TestCase):
         self.assertRedirects(edit, reverse("announcements"))
         self.assertTrue(Announcement.objects.filter(title="Shared resource updated: Revised literature review guide").exists())
 
+    def test_resource_reaches_only_the_supervisees_it_was_sent_to(self):
+        other_supervisor = User.objects.create_user(
+            username="supervisor.other", role=Role.SUPERVISOR, department=self.department,
+        )
+        outsider = self.make_student("student.3", "Three")
+        Project.objects.create(
+            student=outsider, title="Student Three project", department=self.department,
+            programme=self.programme, supervisor=other_supervisor, stage=ProjectStage.IN_PROGRESS,
+        )
+        self.client.force_login(self.supervisor)
+        self.client.post(reverse("announcements"), {
+            "action": "publish_resource", "title": "Chapter one template", "description": "", "url": "",
+            "project_targets": [str(self.project.pk)],
+            "file": SimpleUploadedFile("template.docx", b"template", content_type="application/octet-stream"),
+        })
+        resource = SharedResource.objects.get(title="Chapter one template")
+        self.assertEqual(resource.department, self.department)
+        # A department-wide resource with no targets (e.g. added in the admin) reaches no student.
+        untargeted = SharedResource.objects.create(
+            author=self.supervisor, department=self.department, title="Untargeted department file",
+            file=SimpleUploadedFile("dept.pdf", b"dept"),
+        )
+
+        self.client.force_login(self.student)
+        self.assertContains(self.client.get(reverse("guidelines")), "Chapter one template")
+        download = self.client.get(reverse("download_shared_resource", args=[resource.pk]))
+        self.assertEqual(b"".join(download.streaming_content), b"template")
+        self.assertEqual(self.client.get(reverse("download_shared_resource", args=[untargeted.pk])).status_code, 403)
+
+        # Same supervisor but not a target, and same department but another supervisor's student.
+        for user in (self.second_student, outsider):
+            with self.subTest(student=user.username):
+                self.client.force_login(user)
+                self.assertNotContains(self.client.get(reverse("student_portal")), "Chapter one template")
+                guide = self.client.get(reverse("guidelines"))
+                self.assertNotContains(guide, "Chapter one template")
+                self.assertNotContains(guide, "Untargeted department file")
+                self.assertEqual(
+                    self.client.get(reverse("download_shared_resource", args=[resource.pk])).status_code, 403
+                )
+
     def test_approval_criteria_are_editable_visible_and_notified(self):
         self.client.force_login(self.supervisor)
         response = self.client.post(reverse("approval_policy"), {

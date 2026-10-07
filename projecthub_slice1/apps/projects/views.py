@@ -538,17 +538,14 @@ def supervisor_assignments(request):
 
 @role_required(*REPOSITORY_ROLES)
 def guidelines(request):
-    from apps.supervision.models import SharedResource
+    from apps.supervision.models import SharedResource, student_resource_scope
 
     if request.user.role == Role.STUDENT:
         profile = getattr(request.user, "student_profile", None)
         if not profile or profile.student_status == StudentProfile.Status.GRADUATED:
             resources = SharedResource.objects.none()
         else:
-            visible = Q(project__student=request.user) | Q(projects__student=request.user)
-            visible |= Q(project__isnull=True, department=profile.programme.department)
-            visible |= Q(project__isnull=True, department__isnull=True)
-            resources = SharedResource.objects.filter(visible)
+            resources = SharedResource.objects.filter(student_resource_scope(request.user))
     elif request.user.role == Role.SUPERVISOR:
         resources = SharedResource.objects.filter(Q(author=request.user) | Q(projects__supervisor=request.user))
     else:
