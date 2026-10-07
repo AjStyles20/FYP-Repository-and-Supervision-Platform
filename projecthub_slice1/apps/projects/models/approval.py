@@ -173,6 +173,8 @@ class ProjectCompletion(models.Model):
     signed_on = models.DateField()
     completion_note = models.TextField(blank=True, help_text="What was checked before signing off.")
     gap_summary = models.TextField(blank=True, help_text="Carried onto the archived record.")
+    # Sign-off needs either a gap summary or this explicit confirmation that there is none.
+    no_gap_confirmed = models.BooleanField(default=False)
 
     # Graduation is confirmed here and nowhere else (D-15); it is never inferred.
     graduation_verified = models.BooleanField(default=False)

@@ -312,7 +312,7 @@ def project_workflow(request, project_id):
                 messages.success(request, "Defence outcome recorded.")
                 return redirect("project_workflow", project_id=project.pk)
         elif user.role == Role.HOD and stage == ProjectStage.DEFENDED:
-            form = CompletionForm(request.POST or None)
+            form = CompletionForm(request.POST or None, initial={"gap_summary": project.gap_summary})
             if request.method == "POST" and form.is_valid():
                 sign_off_completion(project, user, **form.cleaned_data)
                 messages.success(request, "Completion signed off and the project archived.")

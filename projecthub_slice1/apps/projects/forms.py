@@ -82,9 +82,24 @@ class StageActionForm(forms.Form):
 class CompletionForm(forms.Form):
     signed_on = forms.DateField(widget=forms.DateInput(attrs={"type": "date"}), initial=timezone.localdate)
     completion_note = forms.CharField(required=False, widget=forms.Textarea)
-    gap_summary = forms.CharField(required=False, widget=forms.Textarea)
+    gap_summary = forms.CharField(
+        required=False,
+        widget=forms.Textarea,
+        help_text="The documented gap a future student could pick up.",
+    )
+    no_gap = forms.BooleanField(required=False, label="I confirm there is no documented gap to record")
     graduation_verified = forms.BooleanField(required=False)
     graduation_year = forms.IntegerField(required=False, min_value=1900, max_value=2200)
+
+    def clean(self):
+        # Same rule as sign_off_completion(); checked here too so the HOD sees it beside the fields.
+        cleaned = super().clean()
+        has_gap = bool((cleaned.get("gap_summary") or "").strip())
+        if has_gap and cleaned.get("no_gap"):
+            raise forms.ValidationError("Either record the gap or confirm there is none, not both.")
+        if not has_gap and not cleaned.get("no_gap"):
+            raise forms.ValidationError("Record the documented gap, or confirm that there is none.")
+        return cleaned
 
 
 class ProjectCsvImportForm(forms.Form):

@@ -92,11 +92,20 @@ def sign_off_completion(
     gap_summary="",
     graduation_verified=False,
     graduation_year=None,
+    no_gap=False,
 ):
     """Record the HOD's completion sign-off and archive the project.
 
+    The HOD must either record the documented gap or tick that there is none, so an empty gap on
+    the archived record is always a deliberate statement, never an omission.
+
     Returns (completion, archived_project).
     """
+    gap_summary = (gap_summary or "").strip()
+    if gap_summary and no_gap:
+        raise ValidationError("Either record the gap or confirm there is none, not both.")
+    if not gap_summary and not no_gap:
+        raise ValidationError("Record the documented gap, or confirm that there is none.")
     project = Project.objects.select_for_update().get(pk=project.pk)
     if project.archived:
         raise ValidationError("This project has already been signed off and archived.")
@@ -112,6 +121,7 @@ def sign_off_completion(
             "signed_on": signed_on or timezone.localdate(),
             "completion_note": completion_note,
             "gap_summary": gap_summary,
+            "no_gap_confirmed": no_gap,
             "graduation_verified": graduation_verified,
             "graduation_year": graduation_year if graduation_verified else None,
         },
@@ -139,7 +149,7 @@ def _archive_project(project, completion):
         programme=project.programme,
         student=project.student,
         supervisor=project.supervisor,
-        gap_summary=completion.gap_summary or project.gap_summary,
+        gap_summary=completion.gap_summary,
         continuation_link=project.continuation_link,
         archive_note=completion.completion_note,
         source_project=project,

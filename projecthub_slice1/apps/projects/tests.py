@@ -21,6 +21,7 @@ from .models import (
     Project,
     ProjectApprovalDecision,
     ProjectApprovalForm,
+    ProjectCompletion,
     ProjectDocument,
     ProjectStage,
     ProjectStatusEvent,
@@ -32,6 +33,7 @@ from .services import (
     available_years,
     log_approved_form,
     record_supervisor_decision,
+    sign_off_completion,
     submit_proposal,
     unassign_project_supervisor,
 )
@@ -825,3 +827,71 @@ class ApprovalDecisionHistoryTests(TestCase):
 
         row.refresh_from_db()
         self.assertEqual(row.comments, "Narrow the scope")
+
+
+class CompletionGapCheckTests(TestCase):
+    """HOD sign-off needs a documented gap, or an explicit confirmation that there is none."""
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.project, _, _ = _assignment_fixtures(" signoff")
+        cls.project.stage = ProjectStage.DEFENDED
+        cls.project.gap_summary = "Gap noted by the supervisor"
+        cls.project.save()
+        cls.hod = User.objects.create(username="signoff.hod", role=Role.HOD, department=cls.project.department)
+
+    def _sign_off(self, **kwargs):
+        return sign_off_completion(self.project, self.hod, signed_on=date(2026, 10, 5), **kwargs)
+
+    def _assert_not_archived(self):
+        self.project.refresh_from_db()
+        self.assertFalse(self.project.archived)
+        self.assertEqual(self.project.stage, ProjectStage.DEFENDED)
+        self.assertFalse(ProjectCompletion.objects.filter(project=self.project).exists())
+
+    def test_sign_off_without_gap_or_confirmation_is_refused(self):
+        for blank in ("", "   "):
+            with self.subTest(gap_summary=blank), self.assertRaises(ValidationError):
+                self._sign_off(gap_summary=blank)
+        self._assert_not_archived()
+
+    def test_gap_and_no_gap_together_are_refused(self):
+        with self.assertRaises(ValidationError):
+            self._sign_off(gap_summary="Something", no_gap=True)
+        self._assert_not_archived()
+
+    def test_recorded_gap_is_carried_to_the_archive(self):
+        completion, archived = self._sign_off(gap_summary="  Evaluate with more users  ")
+
+        self.assertEqual(archived.gap_summary, "Evaluate with more users")
+        self.assertFalse(completion.no_gap_confirmed)
+
+    def test_no_gap_confirmation_archives_with_an_empty_gap(self):
+        completion, archived = self._sign_off(no_gap=True)
+
+        self.assertTrue(completion.no_gap_confirmed)
+        self.assertEqual(archived.gap_summary, "")
+        self.project.refresh_from_db()
+        self.assertTrue(self.project.archived)
+
+    def test_sign_off_page_prefills_gap_and_explains_a_refusal(self):
+        self.client.force_login(self.hod)
+        url = reverse("project_workflow", args=[self.project.pk])
+
+        page = self.client.get(url)
+        self.assertEqual(page.context["form"]["gap_summary"].value(), "Gap noted by the supervisor")
+
+        response = self.client.post(url, {"signed_on": "2026-10-05", "gap_summary": ""})
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("Record the documented gap, or confirm that there is none.", response.context["form"].non_field_errors())
+        self._assert_not_archived()
+
+        response = self.client.post(url, {"signed_on": "2026-10-05", "gap_summary": "", "no_gap": "on"})
+        self.project.refresh_from_db()
+        self.assertTrue(self.project.archived)
+        # The past-project page itself stays hidden until graduation is verified, so don't follow it.
+        self.assertRedirects(
+            response,
+            reverse("past_project_detail", args=[self.project.archive_record.pk]),
+            fetch_redirect_response=False,
+        )
