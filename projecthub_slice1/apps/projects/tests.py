@@ -622,6 +622,9 @@ class SupervisorAssignmentMigrationTests(TransactionTestCase):
     def tearDown(self):
         executor = MigrationExecutor(connection)
         executor.migrate(executor.loader.graph.leaf_nodes())
+        # TransactionTestCase empties every table afterwards; the audit triggers would refuse
+        # that on SQLite if this test had written any audit events.
+        self.assertFalse(AuditEvent.objects.exists())
 
     def test_existing_rows_are_converted_and_the_constraint_added(self):
         old_apps = self.executor.loader.project_state(self.before).apps
