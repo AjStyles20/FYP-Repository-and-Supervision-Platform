@@ -350,11 +350,6 @@ def availability(request):
     return render(request, "supervision/availability.html", {"slots": slots, "slot_form": slot_form})
 
 
-@login_required
-def request_meeting(request, project_id):
-    raise PermissionDenied("Students cannot request meeting times; their supervisor schedules sessions.")
-
-
 @role_required(Role.SUPERVISOR, Role.COORDINATOR, Role.HOD)
 def approval_policy(request):
     profile, _ = SupervisorProfile.objects.get_or_create(user=request.user)

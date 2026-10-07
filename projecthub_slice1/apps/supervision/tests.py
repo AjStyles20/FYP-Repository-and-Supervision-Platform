@@ -3,7 +3,7 @@ from datetime import timedelta
 
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase, override_settings
-from django.urls import reverse
+from django.urls import NoReverseMatch, reverse
 from django.utils import timezone
 
 from apps.academics.models import Department, Faculty, Programme
@@ -75,14 +75,19 @@ class SupervisorStudentWorkflowTests(TestCase):
         self.assertContains(portal, "Supervisor availability updated")
         self.assertContains(portal, "1 new update")
 
-    def test_students_cannot_submit_meeting_requests(self):
+    def test_meeting_requests_have_no_entry_point(self):
+        # Booking from availability is not built (docs/known_limits.md). The model is kept for
+        # later, but there is no URL, link or form that reaches it.
+        with self.assertRaises(NoReverseMatch):
+            reverse("request_meeting", args=[self.project.pk])
         self.client.force_login(self.student)
-        response = self.client.post(reverse("request_meeting", args=[self.project.pk]), {
-            "message": "Please meet with me",
-        })
+        response = self.client.post(f"/supervision/projects/{self.project.pk}/request-meeting/", {"message": "Hi"})
 
-        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.status_code, 404)
         self.assertEqual(MeetingRequest.objects.count(), 0)
+        for page in ("student_portal", "my_project", "announcements", "guidelines"):
+            with self.subTest(page=page):
+                self.assertNotContains(self.client.get(reverse(page)), "request-meeting")
 
     def test_supervisor_schedules_meeting_and_student_gets_notice(self):
         when = timezone.localtime(timezone.now() + timedelta(days=2)).strftime("%Y-%m-%dT%H:%M")

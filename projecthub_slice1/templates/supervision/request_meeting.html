@@ -1,3 +1,0 @@
-{% extends "base.html" %}
-{% block title %}Request a meeting · Baze Project Hub{% endblock %}
-{% block content %}<h1>Request a meeting</h1><section class="card"><h2>{{ project.title }}</h2><p>Available weekly slots</p>{% for slot in slots %}<p>{{ slot.get_weekday_display }} · {{ slot.start_time|time:"H:i" }}–{{ slot.end_time|time:"H:i" }} · {{ slot.venue }} · {{ slot.get_mode_display }}</p>{% empty %}<p>Your supervisor has not published any availability yet.</p>{% endfor %}<form method="post" class="stack-form">{% csrf_token %}{% for field in form %}<div class="form-row">{{ field.label_tag }}{{ field }}{{ field.errors }}</div>{% endfor %}<button class="button"{% if not slots %} disabled{% endif %}>Send request</button></form></section>{% endblock %}

@@ -11,5 +11,4 @@ urlpatterns = [
     path("resources/<int:resource_id>/edit/", views.edit_shared_resource, name="edit_shared_resource"),
     path("availability/", views.availability, name="supervisor_availability"),
     path("approval-policy/", views.approval_policy, name="approval_policy"),
-    path("projects/<int:project_id>/request-meeting/", views.request_meeting, name="request_meeting"),
 ]
