@@ -198,3 +198,51 @@ class SupervisorStudentWorkflowTests(TestCase):
         workflow = self.client.get(reverse("project_workflow", args=[self.project.pk]))
         self.assertContains(workflow, "ten recent sources")
 
+    def test_meeting_records_are_visible_only_to_the_people_r33_names(self):
+        meeting = SupervisionMeeting.objects.create(
+            project=self.project, scheduled_for=timezone.now(), status="held",
+            discussion="Private discussion notes", recorded_by=self.supervisor,
+        )
+        other_faculty = Faculty.objects.create(name="Law")
+        other_department = Department.objects.create(faculty=other_faculty, name="Private Law")
+        allowed = {
+            "own student": self.student,
+            "assigned supervisor": self.supervisor,
+            "department coordinator": User.objects.create(
+                username="r33.coordinator", role=Role.COORDINATOR, department=self.department
+            ),
+            "department HOD": User.objects.create(username="r33.hod", role=Role.HOD, department=self.department),
+        }
+        refused = {
+            "another student": self.second_student,
+            "another supervisor in the department": User.objects.create(
+                username="r33.supervisor", role=Role.SUPERVISOR, department=self.department
+            ),
+            "coordinator of another department": User.objects.create(
+                username="r33.outside", role=Role.COORDINATOR, department=other_department
+            ),
+            "HOD of another department": User.objects.create(
+                username="r33.outside.hod", role=Role.HOD, department=other_department
+            ),
+            "coordinator with no department": User.objects.create(username="r33.nodept", role=Role.COORDINATOR),
+            "administrator": User.objects.create(username="r33.admin", role=Role.ADMIN),
+        }
+        # The list links to each record; the record page shows the discussion notes.
+        pages = {
+            reverse("project_meetings", args=[self.project.pk]): reverse("meeting_detail", args=[meeting.pk]),
+            reverse("meeting_detail", args=[meeting.pk]): "Private discussion notes",
+        }
+
+        for label, user in allowed.items():
+            self.client.force_login(user)
+            for url, expected in pages.items():
+                with self.subTest(user=label, url=url):
+                    self.assertContains(self.client.get(url), expected)
+        for label, user in refused.items():
+            self.client.force_login(user)
+            for url in pages:
+                with self.subTest(user=label, url=url):
+                    response = self.client.get(url)
+                    self.assertEqual(response.status_code, 403)
+                    self.assertNotContains(response, "Private discussion notes", status_code=403)
+

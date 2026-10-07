@@ -43,11 +43,20 @@ def _has_schedule_conflict(*, supervisor, scheduled_for, duration_minutes, exclu
 
 
 def _project_access(user, project):
+    """Who may read a project's meeting records (R-33).
+
+    The student, their assigned supervisor, and the coordinator or HOD of the project's
+    department. Other supervisors in the department and system administrators may not.
+    """
     if user.role == Role.STUDENT:
         return project.student_id == user.pk
-    if user.role in (Role.SUPERVISOR, Role.COORDINATOR, Role.HOD):
-        return project.supervisor_id == user.pk or user.department_id == project.department_id
-    return user.role == Role.ADMIN
+    if project.supervisor_id == user.pk:
+        return True
+    return (
+        user.role in (Role.COORDINATOR, Role.HOD)
+        and user.department_id is not None
+        and user.department_id == project.department_id
+    )
 
 
 def _meeting_editor(user, project):
