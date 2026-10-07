@@ -9,7 +9,7 @@
       <span class="tag">{{ project.get_stage_display }}</span>
       <span class="tag">{{ project.department }}</span>
       <span class="tag">{{ project.programme }}</span>
-      <span class="tag">{{ project.supervisor.get_full_name|default:project.supervisor.username }}</span>
+      <span class="tag">{% if project.supervisor %}{{ project.supervisor.get_full_name|default:project.supervisor.username }}{% else %}Supervisor to be assigned{% endif %}</span>
     </div>
     <p>{{ project.description }}</p>
     <p><a class="button" href="{% url 'project_workflow' project.pk %}">Project actions and approval form</a> <a class="button" href="{% url 'project_meetings' project.pk %}">Supervision meetings</a></p>

@@ -5,6 +5,7 @@ from django.core.management import call_command
 from django.db import DatabaseError, connection, transaction
 from django.db.models import ProtectedError
 from django.test import TestCase
+from django.urls import reverse
 
 from apps.accounts.models import Role, User
 
@@ -111,3 +112,14 @@ class AuditAppendOnlyTests(TestCase):
         self.assertFalse(User.objects.filter(is_demo=True).exists())
         self._assert_unchanged()
         self.assertEqual(AuditEvent.objects.count(), 1)
+
+    def test_audit_page_shows_events_without_an_actor(self):
+        # e.g. an assignment made by a management command, with assigned_by=None
+        log_event(actor=None, action="test.system", summary="System action")
+        self.client.force_login(self.actor)
+
+        response = self.client.get(reverse("audit_log"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "System action")
+        self.assertContains(response, "System")

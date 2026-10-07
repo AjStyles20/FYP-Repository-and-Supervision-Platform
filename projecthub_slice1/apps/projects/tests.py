@@ -1069,3 +1069,29 @@ class CoordinatorDepartmentStepTests(TestCase):
         with self.assertRaises(ValidationError):
             record_transition(self.project, ProjectStage.IN_PROGRESS, actor=self.coordinator)
         self.assertEqual(self._stage(), ProjectStage.APPROVED)
+
+
+class UnassignedProjectPagesTests(TestCase):
+    """A proposal with no supervisor yet must not break the pages that list it."""
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.project, _, _ = _assignment_fixtures(" unassigned")
+        cls.coordinator = User.objects.create(
+            username="unassigned.coordinator", role=Role.COORDINATOR, department=cls.project.department
+        )
+
+    def test_approval_register_lists_a_proposal_without_a_supervisor(self):
+        self.client.force_login(self.coordinator)
+
+        response = self.client.get(reverse("approvals"))
+
+        self.assertContains(response, "Assignment project unassigned")
+        self.assertContains(response, "Supervisor: Not assigned")
+
+    def test_student_my_project_page_before_a_supervisor_is_assigned(self):
+        self.client.force_login(self.project.student)
+
+        response = self.client.get(reverse("my_project"))
+
+        self.assertContains(response, "Supervisor to be assigned")
