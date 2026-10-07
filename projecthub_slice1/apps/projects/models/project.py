@@ -142,12 +142,27 @@ class Project(models.Model):
         return rows
 
 
+class StatusEventQuerySet(models.QuerySet):
+    def update(self, **kwargs):
+        raise PermissionError("Project status events are append-only.")
+
+    def delete(self):
+        raise PermissionError("Project status events are append-only.")
+
+
 class ProjectStatusEvent(models.Model):
     """Append-only record of every stage change, who made it and why.
 
     This is the audit trail behind the project status: the department can show exactly when a
     topic was approved, when it was defended and who recorded it.
+
+    Application code can only add rows: changing or deleting one, singly or through a queryset,
+    raises PermissionError. Django's own cascades still work (deleting a project, for example when
+    purge_demo removes demo data, removes its events; deleting a user clears `actor`), because
+    those bypass these methods. That is deliberate: they remove whole records, not rewrite history.
     """
+
+    objects = StatusEventQuerySet.as_manager()
 
     project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name="status_events")
     from_stage = models.CharField(max_length=20, choices=ProjectStage.choices, blank=True)
@@ -168,3 +183,11 @@ class ProjectStatusEvent(models.Model):
 
     def __str__(self):
         return f"{self.project.title}: {self.get_to_stage_display()}"
+
+    def save(self, *args, **kwargs):
+        if self.pk:
+            raise PermissionError("Project status events are append-only.")
+        return super().save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        raise PermissionError("Project status events are append-only.")

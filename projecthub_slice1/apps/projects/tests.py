@@ -19,6 +19,7 @@ from .models import (
     Project,
     ProjectDocument,
     ProjectStage,
+    ProjectStatusEvent,
     ProjectSupervisorAssignment,
 )
 from .services import assign_project_supervisor, available_years, unassign_project_supervisor
@@ -646,3 +647,79 @@ class SupervisorAssignmentMigrationTests(TransactionTestCase):
 
         with self.assertRaises(IntegrityError), transaction.atomic():
             ProjectSupervisorAssignment.objects.create(project=reassigned, supervisor=first)
+
+
+class ProjectStatusEventAppendOnlyTests(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.project, cls.supervisor, _ = _assignment_fixtures(" events")
+        cls.event = ProjectStatusEvent.objects.create(
+            project=cls.project,
+            from_stage=ProjectStage.PROPOSED,
+            to_stage=ProjectStage.SUPERVISOR_ACCEPTED,
+            actor=cls.supervisor,
+            note="Accepted",
+        )
+
+    def test_new_events_can_be_added(self):
+        ProjectStatusEvent.objects.create(
+            project=self.project, from_stage=ProjectStage.SUPERVISOR_ACCEPTED, to_stage=ProjectStage.APPROVED
+        )
+
+        self.assertEqual(self.project.status_events.count(), 2)
+
+    def test_saved_event_cannot_be_changed(self):
+        self.event.note = "Rewritten"
+
+        with self.assertRaises(PermissionError):
+            self.event.save()
+
+        self.event.refresh_from_db()
+        self.assertEqual(self.event.note, "Accepted")
+
+    def test_event_cannot_be_deleted(self):
+        with self.assertRaises(PermissionError):
+            self.event.delete()
+
+        self.assertTrue(ProjectStatusEvent.objects.filter(pk=self.event.pk).exists())
+
+    def test_queryset_update_and_delete_are_refused(self):
+        with self.assertRaises(PermissionError):
+            ProjectStatusEvent.objects.filter(pk=self.event.pk).update(note="Rewritten")
+        with self.assertRaises(PermissionError):
+            self.project.status_events.all().delete()
+
+        self.event.refresh_from_db()
+        self.assertEqual(self.event.note, "Accepted")
+
+    def test_admin_is_view_only(self):
+        admin_user = User.objects.create_superuser(username="events.admin", password="test-password")
+        self.client.force_login(admin_user)
+
+        change = self.client.post(
+            reverse("admin:projects_projectstatusevent_change", args=[self.event.pk]), {"note": "Rewritten"}
+        )
+        delete = self.client.post(
+            reverse("admin:projects_projectstatusevent_delete", args=[self.event.pk]), {"post": "yes"}
+        )
+
+        self.assertEqual(change.status_code, 403)
+        self.assertEqual(delete.status_code, 403)
+        self.event.refresh_from_db()
+        self.assertEqual(self.event.note, "Accepted")
+
+    def test_deleting_a_project_or_user_still_cascades(self):
+        # purge_demo deletes demo projects and users; the events go with the project,
+        # and a deleted user's events keep their history with the actor cleared.
+        other_project, other_actor, _ = _assignment_fixtures(" cascade")
+        kept = ProjectStatusEvent.objects.create(
+            project=self.project, to_stage=ProjectStage.APPROVED, actor=other_actor
+        )
+        ProjectStatusEvent.objects.create(project=other_project, to_stage=ProjectStage.PROPOSED)
+
+        other_actor.delete()
+        other_project.delete()
+
+        kept.refresh_from_db()
+        self.assertIsNone(kept.actor)
+        self.assertFalse(ProjectStatusEvent.objects.filter(project_id=other_project.pk).exists())
