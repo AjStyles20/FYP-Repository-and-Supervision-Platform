@@ -40,6 +40,14 @@ TRANSITION_ROLES = {
     (ProjectStage.SUBMITTED, ProjectStage.DEFENDED): (Role.COORDINATOR,),
 }
 
+# Steps taken in the capacity of the project's supervisor. Only the assigned supervisor may take
+# these; the departmental steps (logging approval, recording the defence) belong to any
+# coordinator in the project's department, whether or not they supervise it.
+SUPERVISOR_TRANSITIONS = {
+    (ProjectStage.PROPOSED, ProjectStage.SUPERVISOR_ACCEPTED),
+    (ProjectStage.APPROVED, ProjectStage.IN_PROGRESS),
+}
+
 
 @transaction.atomic
 def record_transition(project, to_stage, actor=None, note="", when=None):
@@ -53,7 +61,7 @@ def record_transition(project, to_stage, actor=None, note="", when=None):
         raise ValidationError("That project stage transition is not allowed.")
     if actor is None or actor.role not in allowed_roles:
         raise ValidationError("Your role cannot record this project stage transition.")
-    if actor.role in (Role.SUPERVISOR, Role.COORDINATOR, Role.HOD) and project.supervisor_id != actor.pk:
+    if (from_stage, to_stage) in SUPERVISOR_TRANSITIONS and project.supervisor_id != actor.pk:
         raise ValidationError("Only the assigned supervisor can record this transition.")
     if actor.role == Role.COORDINATOR and actor.department_id != project.department_id:
         raise ValidationError("Only a coordinator in the project's department can record this transition.")

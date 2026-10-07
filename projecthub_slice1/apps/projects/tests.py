@@ -33,6 +33,7 @@ from .services import (
     available_years,
     log_approved_form,
     record_supervisor_decision,
+    record_transition,
     sign_off_completion,
     submit_proposal,
     unassign_project_supervisor,
@@ -898,3 +899,97 @@ class CompletionGapCheckTests(TestCase):
             reverse("past_project_detail", args=[self.project.archive_record.pk]),
             fetch_redirect_response=False,
         )
+
+
+class CoordinatorDepartmentStepTests(TestCase):
+    """Logging approval and recording the defence belong to any coordinator in the department."""
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.project, cls.supervisor, _ = _assignment_fixtures(" coordinator")
+        cls.project.supervisor = cls.supervisor
+        cls.project.save()
+        cls.coordinator = User.objects.create(
+            username="dept.coordinator", role=Role.COORDINATOR, department=cls.project.department
+        )
+        other_project, _, _ = _assignment_fixtures(" elsewhere")
+        cls.outside_coordinator = User.objects.create(
+            username="outside.coordinator", role=Role.COORDINATOR, department=other_project.department
+        )
+
+    def _accepted_by_supervisor(self):
+        submit_proposal(
+            self.project, proposed_title="Idea", problem_statement="P", objectives="O",
+            methodology="M", tools_and_technologies="Django",
+        )
+        record_supervisor_decision(
+            Project.objects.get(pk=self.project.pk), supervisor=self.supervisor,
+            decision=SupervisorDecision.ACCEPTED, comments="", name_on_form="S", signed_on=date(2026, 10, 1),
+        )
+
+    def _set_stage(self, stage):
+        Project.objects.filter(pk=self.project.pk).update(stage=stage)
+
+    def _stage(self):
+        return Project.objects.get(pk=self.project.pk).stage
+
+    def test_department_coordinator_logs_approval_on_a_project_they_do_not_supervise(self):
+        self._accepted_by_supervisor()
+
+        log_approved_form(
+            Project.objects.get(pk=self.project.pk), coordinator=self.coordinator,
+            notes="Filed", logged_on=date(2026, 10, 2),
+        )
+
+        project = Project.objects.get(pk=self.project.pk)
+        self.assertEqual((project.stage, project.approval_date), (ProjectStage.APPROVED, date(2026, 10, 2)))
+        self.assertEqual(project.status_events.first().actor, self.coordinator)
+
+    def test_department_coordinator_records_defence_on_a_project_they_do_not_supervise(self):
+        self._set_stage(ProjectStage.SUBMITTED)
+
+        record_transition(self.project, ProjectStage.DEFENDED, actor=self.coordinator, when=date(2026, 10, 4))
+
+        project = Project.objects.get(pk=self.project.pk)
+        self.assertEqual((project.stage, project.defence_date), (ProjectStage.DEFENDED, date(2026, 10, 4)))
+
+    def test_department_coordinator_can_do_both_through_the_workflow_page(self):
+        self._accepted_by_supervisor()
+        self.client.force_login(self.coordinator)
+        url = reverse("project_workflow", args=[self.project.pk])
+
+        self.client.post(url, {"notes": "Filed", "logged_on": "2026-10-02"})
+        self.assertEqual(self._stage(), ProjectStage.APPROVED)
+
+        self._set_stage(ProjectStage.SUBMITTED)
+        self.client.post(url, {"note": "Passed", "when": "2026-10-04"})
+        self.assertEqual(self._stage(), ProjectStage.DEFENDED)
+
+    def test_coordinator_from_another_department_cannot_log_approval_or_record_defence(self):
+        self._accepted_by_supervisor()
+
+        with self.assertRaises(ValidationError):
+            log_approved_form(
+                Project.objects.get(pk=self.project.pk), coordinator=self.outside_coordinator,
+                notes="", logged_on=date(2026, 10, 2),
+            )
+        self.assertEqual(self._stage(), ProjectStage.SUPERVISOR_ACCEPTED)
+
+        self._set_stage(ProjectStage.SUBMITTED)
+        with self.assertRaises(ValidationError):
+            record_transition(self.project, ProjectStage.DEFENDED, actor=self.outside_coordinator)
+        self.assertEqual(self._stage(), ProjectStage.SUBMITTED)
+
+        self.client.force_login(self.outside_coordinator)
+        response = self.client.post(
+            reverse("project_workflow", args=[self.project.pk]), {"note": "Passed", "when": "2026-10-04"}
+        )
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(self._stage(), ProjectStage.SUBMITTED)
+
+    def test_supervisor_steps_still_need_the_assigned_supervisor(self):
+        self._set_stage(ProjectStage.APPROVED)
+
+        with self.assertRaises(ValidationError):
+            record_transition(self.project, ProjectStage.IN_PROGRESS, actor=self.coordinator)
+        self.assertEqual(self._stage(), ProjectStage.APPROVED)
