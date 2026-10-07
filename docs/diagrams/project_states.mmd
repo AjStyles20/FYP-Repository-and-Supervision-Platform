@@ -1,0 +1,24 @@
+%% Project stage state machine, from projecthub_slice1/apps/projects/services/lifecycle.py
+%% (TRANSITION_ROLES, SUPERVISOR_TRANSITIONS, record_transition, sign_off_completion),
+%% apps/projects/services/approval.py (record_supervisor_decision, log_approved_form) and
+%% apps/projects/views.py (start_project). Stage values are apps/projects/models/project.py:13-22.
+%% There are no backward transitions: no corrections loop, no withdrawal (docs/known_limits.md).
+stateDiagram-v2
+    direction LR
+    state "Topic proposed (0)" as Proposed
+    state "Supervisor accepted (1)" as SupervisorAccepted
+    state "Approved by the department (2)" as Approved
+    state "In progress (3)" as InProgress
+    state "Submitted for examination (4)" as Submitted
+    state "Defended (5)" as Defended
+    state "Completed and signed off (6)" as Completed
+
+    [*] --> Proposed: student starts a project (start_project)
+    Proposed --> Proposed: assigned supervisor declines,<br/>student revises and resubmits (submit_proposal)
+    Proposed --> SupervisorAccepted: assigned supervisor accepts or accepts with changes<br/>(record_supervisor_decision, needs the evidence his or her method requires)
+    SupervisorAccepted --> Approved: coordinator of the project's department logs the signed form<br/>(log_approved_form, sets approval_date)
+    Approved --> InProgress: assigned supervisor marks work started
+    InProgress --> Submitted: the project's student, only if a REPORT document exists<br/>(sets submission_date)
+    Submitted --> Defended: coordinator of the project's department records the defence<br/>(sets defence_date)
+    Defended --> Completed: HOD of the project's department signs off<br/>(sign_off_completion, needs a gap summary or the "no gap" box)
+    Completed --> [*]: ArchivedProject created, files moved, project.archived = True

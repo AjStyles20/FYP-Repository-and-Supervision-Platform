@@ -1,0 +1,46 @@
+%% Architecture as implemented in projecthub_slice1/. One Django project, server-rendered HTML,
+%% no JavaScript framework, no external services (no email, no object storage, no queue).
+%% Sources: config/settings.py, config/urls.py, apps/*/urls.py, apps/*/views.py, apps/*/services*,
+%% apps/accounts/management/commands/, apps/audit/migrations/0003_append_only_triggers.py.
+flowchart LR
+    Browser["Browser<br/>HTML forms + CSRF token<br/>static/js/navigation.js"]
+
+    subgraph Django["Django 5.2 project (config/)"]
+        URLs["config/urls.py<br/>/ · /projects/ · /supervision/ · /academics/ · /admin/"]
+        Guard["accounts/permissions.py<br/>role_required / login_required<br/>+ object checks in each view"]
+        subgraph Apps["Apps"]
+            Accounts["accounts<br/>login, registration, portals,<br/>admin tools, audit page"]
+            Academics["academics<br/>faculty → department → programme"]
+            Projects["projects<br/>workflow, repository,<br/>allocation, documents, CSV import"]
+            Supervision["supervision<br/>meetings, notices, resources,<br/>availability, approval criteria"]
+            AuditApp["audit<br/>AuditEvent + log_event()"]
+        end
+        Services["projects/services/<br/>approval · assignment · lifecycle<br/>repository · counters"]
+        Templates["templates/ (Django templates)<br/>static/css"]
+        Admin["Django admin /admin/"]
+        Commands["manage.py seed_demo · purge_demo"]
+    end
+
+    DB[("MySQL 8.4 (production, port from .env)<br/>SQLite (quick tests)")]
+    Triggers["audit_auditevent triggers<br/>block UPDATE and DELETE"]
+    Media[("media/ on disk<br/>project_documents/ · shared_resources/")]
+
+    Browser -->|HTTP| URLs --> Guard --> Apps
+    Accounts --> Templates
+    Projects --> Templates
+    Supervision --> Templates
+    Projects --> Services
+    Accounts -->|portal counters| Services
+    Services --> AuditApp
+    Projects --> AuditApp
+    Supervision --> AuditApp
+    Accounts --> AuditApp
+    Apps -->|Django ORM| DB
+    Services -->|ORM, select_for_update| DB
+    AuditApp --> DB
+    DB --- Triggers
+    Projects -->|FileResponse after permission check| Media
+    Supervision -->|FileResponse after permission check| Media
+    Admin --> DB
+    Commands --> Services
+    Commands --> DB

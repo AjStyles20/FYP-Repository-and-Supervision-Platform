@@ -1,0 +1,228 @@
+%% Generated from the Django models by introspection (apps.get_models()); do not edit by hand.
+%% Cardinality: a non-null FK is ||--o{, a nullable FK is |o--o{, a one-to-one is --o|, a many-to-many is }o--o{.
+%% Only key, foreign-key and status fields are listed per entity, to keep the diagram readable.
+erDiagram
+    Faculty {
+        bigauto id PK
+        char name UK
+        boolean is_demo
+    }
+    Department {
+        bigauto id PK
+        foreignkey faculty_id FK
+        boolean is_demo
+    }
+    Programme {
+        bigauto id PK
+        foreignkey department_id FK
+        char level
+        boolean is_demo
+    }
+    User {
+        bigauto id PK
+        boolean is_superuser
+        char username UK
+        boolean is_staff
+        boolean is_active
+        char role
+        foreignkey department_id FK
+        boolean is_demo
+    }
+    StudentProfile {
+        bigauto id PK
+        onetoone user_id FK
+        char student_number UK
+        foreignkey programme_id FK
+        char student_status
+        char registration_status
+    }
+    SupervisorProfile {
+        bigauto id PK
+        onetoone user_id FK
+        char approval_method
+        boolean is_accepting_students
+        boolean is_active
+    }
+    Project {
+        bigauto id PK
+        foreignkey student_id FK
+        foreignkey department_id FK
+        foreignkey programme_id FK
+        foreignkey supervisor_id FK
+        char stage
+        boolean is_demo
+    }
+    ProjectStatusEvent {
+        bigauto id PK
+        foreignkey project_id FK
+        char from_stage
+        char to_stage
+        foreignkey actor_id FK
+    }
+    ProjectSupervisorAssignment {
+        bigauto id PK
+        foreignkey project_id FK
+        foreignkey supervisor_id FK
+        foreignkey assigned_by_id FK
+        boolean is_current
+    }
+    ProjectMilestone {
+        bigauto id PK
+        foreignkey project_id FK
+    }
+    ArchivedProject {
+        bigauto id PK
+        positivesmallinteger year
+        foreignkey department_id FK
+        foreignkey programme_id FK
+        foreignkey student_id FK
+        foreignkey supervisor_id FK
+        onetoone source_project_id FK
+        boolean is_demo
+    }
+    ProjectDocument {
+        bigauto id PK
+        foreignkey project_id FK
+        foreignkey archived_project_id FK
+        char document_type
+        char visibility
+        foreignkey uploaded_by_id FK
+        boolean is_demo
+    }
+    ProjectApprovalForm {
+        bigauto id PK
+        onetoone project_id FK
+        char approval_method
+        char supervisor_decision
+        foreignkey coordinator_logged_by_id FK
+    }
+    ProjectApprovalDecision {
+        bigauto id PK
+        foreignkey project_id FK
+        char step
+        char decision
+        foreignkey decided_by_id FK
+    }
+    ProjectCompletion {
+        bigauto id PK
+        onetoone project_id FK
+        foreignkey hod_id FK
+        onetoone archived_project_id FK
+    }
+    %% SupervisionLogEntry: no view reads or writes it (docs/known_limits.md)
+    SupervisionLogEntry {
+        bigauto id PK
+        foreignkey project_id FK
+        foreignkey author_id FK
+        char kind
+    }
+    SupervisorAvailability {
+        bigauto id PK
+        foreignkey supervisor_id FK
+        positivesmallinteger weekday
+        char mode
+        boolean is_active
+    }
+    %% MeetingRequest: no view reads or writes it (docs/known_limits.md)
+    MeetingRequest {
+        bigauto id PK
+        foreignkey project_id FK
+        foreignkey student_id FK
+        foreignkey availability_id FK
+        char status
+        foreignkey reviewed_by_id FK
+        onetoone meeting_id FK
+    }
+    SupervisionMeeting {
+        bigauto id PK
+        foreignkey project_id FK
+        positivesmallinteger duration_minutes
+        char mode
+        char status
+        foreignkey scheduled_by_id FK
+        foreignkey recorded_by_id FK
+    }
+    MeetingRecordEdit {
+        bigauto id PK
+        foreignkey meeting_id FK
+        foreignkey edited_by_id FK
+    }
+    Announcement {
+        bigauto id PK
+        foreignkey author_id FK
+        foreignkey project_id FK
+        foreignkey department_id FK
+        boolean is_pinned
+    }
+    AnnouncementAcknowledgement {
+        bigauto id PK
+        foreignkey announcement_id FK
+        foreignkey user_id FK
+    }
+    SharedResource {
+        bigauto id PK
+        foreignkey author_id FK
+        foreignkey project_id FK
+        foreignkey department_id FK
+    }
+    AuditEvent {
+        bigauto id PK
+        foreignkey actor_id FK
+    }
+    Announcement ||--o{ AnnouncementAcknowledgement : "announcement (CASCADE)"
+    ArchivedProject |o--o{ ProjectDocument : "archived_project (CASCADE)"
+    ArchivedProject |o--o| ProjectCompletion : "archived_project (SET_NULL)"
+    ArchivedProject }o--o{ User : "previous_supervisors"
+    Department |o--o{ Announcement : "department (CASCADE)"
+    Department |o--o{ SharedResource : "department (CASCADE)"
+    Department |o--o{ User : "department (SET_NULL)"
+    Department ||--o{ ArchivedProject : "department (PROTECT)"
+    Department ||--o{ Programme : "department (PROTECT)"
+    Department ||--o{ Project : "department (PROTECT)"
+    Faculty ||--o{ Department : "faculty (PROTECT)"
+    Programme ||--o{ ArchivedProject : "programme (PROTECT)"
+    Programme ||--o{ Project : "programme (PROTECT)"
+    Programme ||--o{ StudentProfile : "programme (PROTECT)"
+    Project |o--o{ Announcement : "project (CASCADE)"
+    Project |o--o{ ProjectDocument : "project (CASCADE)"
+    Project |o--o{ SharedResource : "project (CASCADE)"
+    Project |o--o| ArchivedProject : "source_project (SET_NULL)"
+    Project ||--o{ MeetingRequest : "project (CASCADE)"
+    Project ||--o{ ProjectApprovalDecision : "project (CASCADE)"
+    Project ||--o{ ProjectMilestone : "project (CASCADE)"
+    Project ||--o{ ProjectStatusEvent : "project (CASCADE)"
+    Project ||--o{ ProjectSupervisorAssignment : "project (CASCADE)"
+    Project ||--o{ SupervisionLogEntry : "project (CASCADE)"
+    Project ||--o{ SupervisionMeeting : "project (CASCADE)"
+    Project ||--o| ProjectApprovalForm : "project (CASCADE)"
+    Project ||--o| ProjectCompletion : "project (CASCADE)"
+    SharedResource }o--o{ Project : "projects"
+    SupervisionMeeting |o--o| MeetingRequest : "meeting (SET_NULL)"
+    SupervisionMeeting ||--o{ MeetingRecordEdit : "meeting (CASCADE)"
+    SupervisorAvailability ||--o{ MeetingRequest : "availability (PROTECT)"
+    User |o--o{ ArchivedProject : "supervisor (SET_NULL)"
+    User |o--o{ AuditEvent : "actor (PROTECT)"
+    User |o--o{ MeetingRecordEdit : "edited_by (SET_NULL)"
+    User |o--o{ MeetingRequest : "reviewed_by (SET_NULL)"
+    User |o--o{ Project : "supervisor (SET_NULL)"
+    User |o--o{ ProjectApprovalDecision : "decided_by (SET_NULL)"
+    User |o--o{ ProjectApprovalForm : "coordinator_logged_by (SET_NULL)"
+    User |o--o{ ProjectDocument : "uploaded_by (SET_NULL)"
+    User |o--o{ ProjectStatusEvent : "actor (SET_NULL)"
+    User |o--o{ ProjectSupervisorAssignment : "assigned_by (SET_NULL)"
+    User |o--o{ SupervisionMeeting : "recorded_by (SET_NULL)"
+    User |o--o{ SupervisionMeeting : "scheduled_by (SET_NULL)"
+    User ||--o{ Announcement : "author (CASCADE)"
+    User ||--o{ AnnouncementAcknowledgement : "user (CASCADE)"
+    User ||--o{ ArchivedProject : "student (PROTECT)"
+    User ||--o{ MeetingRequest : "student (CASCADE)"
+    User ||--o{ Project : "student (CASCADE)"
+    User ||--o{ ProjectCompletion : "hod (PROTECT)"
+    User ||--o{ ProjectSupervisorAssignment : "supervisor (PROTECT)"
+    User ||--o{ SharedResource : "author (CASCADE)"
+    User ||--o{ SupervisionLogEntry : "author (CASCADE)"
+    User ||--o{ SupervisorAvailability : "supervisor (CASCADE)"
+    User ||--o| StudentProfile : "user (CASCADE)"
+    User ||--o| SupervisorProfile : "user (CASCADE)"
+    User }o--o{ Group : "groups"
+    User }o--o{ Permission : "user_permissions"

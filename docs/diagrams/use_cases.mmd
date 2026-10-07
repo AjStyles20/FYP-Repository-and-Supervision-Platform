@@ -1,0 +1,114 @@
+%% Use cases as implemented. Mermaid has no use-case diagram type, so this is a flowchart:
+%% actors on the left, use cases as rounded nodes. Every use case is a URL + view in
+%% projecthub_slice1/apps/*/urls.py and is only linked to the roles its view allows.
+%% docs/diagrams/README.md lists the view and guard behind each node.
+%% Solid line: the role can always do it (subject to department or ownership checks).
+%% Dotted line: only under the condition written on the line.
+flowchart LR
+    Visitor(["Visitor (not signed in)"])
+    Student(["Student"])
+    Supervisor(["Supervisor"])
+    Coordinator(["Coordinator"])
+    HOD(["Head of Department"])
+    Admin(["Administrator"])
+
+    subgraph Accounts["Accounts"]
+        UC_Register("Register as a student<br/>(pending until approved)")
+        UC_Login("Sign in with email,<br/>student ID or username")
+        UC_Review("Approve or reject<br/>a registration")
+        UC_Audit("Read the audit log")
+    end
+    subgraph Repository["Repository"]
+        UC_Search("Search and filter current<br/>topics and archived projects")
+        UC_Download("Download a permitted<br/>project file")
+        UC_Import("Import past projects<br/>from CSV")
+        UC_Structure("View faculty and<br/>programme structure")
+    end
+    subgraph Workflow["Project workflow"]
+        UC_Start("Start a project")
+        UC_Propose("Submit or revise<br/>the proposal")
+        UC_Upload("Upload a project file")
+        UC_Decide("Accept, accept with changes<br/>or decline a proposal")
+        UC_Log("Log the signed<br/>approval form")
+        UC_Started("Mark work started")
+        UC_Submit("Submit the final project")
+        UC_Defence("Record the defence")
+        UC_SignOff("Sign off and archive")
+        UC_History("See status history and<br/>approval decisions")
+        UC_Allocate("Assign or change<br/>a supervisor")
+        UC_Roster("Add or remove an<br/>unassigned student")
+    end
+    subgraph Supervision["Supervision"]
+        UC_Meet("Schedule and edit<br/>meeting records")
+        UC_ReadMeet("Read meeting records")
+        UC_Respond("Confirm or dispute<br/>a meeting record")
+        UC_Notice("Post a notice /<br/>share a resource")
+        UC_Ack("Read and acknowledge<br/>notices, open resources")
+        UC_Avail("Publish availability")
+        UC_Criteria("Set approval criteria")
+    end
+
+    Visitor --> UC_Register
+    Visitor --> UC_Login
+
+    Student --> UC_Search
+    Student --> UC_Download
+    Student --> UC_Start
+    Student --> UC_Propose
+    Student --> UC_Upload
+    Student --> UC_Submit
+    Student --> UC_History
+    Student --> UC_ReadMeet
+    Student --> UC_Respond
+    Student --> UC_Ack
+
+    Supervisor --> UC_Search
+    Supervisor --> UC_Download
+    Supervisor --> UC_Structure
+    Supervisor --> UC_Decide
+    Supervisor --> UC_Started
+    Supervisor --> UC_History
+    Supervisor --> UC_Meet
+    Supervisor --> UC_ReadMeet
+    Supervisor --> UC_Respond
+    Supervisor --> UC_Notice
+    Supervisor --> UC_Roster
+    Supervisor --> UC_Avail
+    Supervisor --> UC_Criteria
+
+    Coordinator --> UC_Search
+    Coordinator --> UC_Download
+    Coordinator --> UC_Structure
+    Coordinator --> UC_Log
+    Coordinator --> UC_Defence
+    Coordinator --> UC_History
+    Coordinator --> UC_ReadMeet
+    Coordinator --> UC_Avail
+    Coordinator --> UC_Criteria
+    Coordinator -.->|"if granted allocation permission"| UC_Allocate
+    Coordinator -.->|"only as the assigned supervisor"| UC_Decide
+    Coordinator -.->|"only as the assigned supervisor"| UC_Started
+    Coordinator -.->|"only as the assigned supervisor"| UC_Meet
+
+    HOD --> UC_Search
+    HOD --> UC_Download
+    HOD --> UC_Structure
+    HOD --> UC_SignOff
+    HOD --> UC_History
+    HOD --> UC_ReadMeet
+    HOD --> UC_Avail
+    HOD --> UC_Criteria
+    HOD -.->|"only as the assigned supervisor"| UC_Decide
+    HOD -.->|"only as the assigned supervisor"| UC_Started
+    HOD -.->|"only as the assigned supervisor"| UC_Meet
+    HOD -.->|"if granted allocation permission"| UC_Allocate
+    Supervisor -.->|"if granted allocation permission"| UC_Allocate
+    Admin -.->|"if granted allocation permission"| UC_Allocate
+
+    Admin --> UC_Review
+    Admin --> UC_Audit
+    Admin --> UC_Import
+    Admin --> UC_Search
+    Admin --> UC_Download
+    Admin --> UC_Structure
+    Admin --> UC_History
