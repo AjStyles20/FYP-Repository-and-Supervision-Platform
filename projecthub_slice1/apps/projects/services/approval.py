@@ -15,7 +15,13 @@ from django.db import transaction
 
 from apps.audit.services import log_event
 from apps.accounts.models import Role
-from ..models import ProjectApprovalForm, ProjectStage, SupervisorDecision
+from ..models import (
+    ApprovalDecisionStep,
+    ProjectApprovalDecision,
+    ProjectApprovalForm,
+    ProjectStage,
+    SupervisorDecision,
+)
 from .lifecycle import record_transition
 
 APPROVING_DECISIONS = (SupervisorDecision.ACCEPTED, SupervisorDecision.ACCEPTED_WITH_CHANGES)
@@ -98,6 +104,8 @@ def record_supervisor_decision(project, *, supervisor, decision, comments, name_
         "supervisor_signed_on",
         "updated_at",
     ])
+    _record_decision(form, ApprovalDecisionStep.SUPERVISOR, supervisor, decision=decision,
+                     name_on_form=name_on_form, decided_on=signed_on, comments=comments)
     log_event(actor=supervisor, action="project.supervisor_decision", summary=f"Supervisor decision recorded for {project.title}", obj=project, details={"decision": decision})
 
     if decision in APPROVING_DECISIONS and project.stage == ProjectStage.PROPOSED:
@@ -125,6 +133,9 @@ def log_approved_form(project, *, coordinator, notes, logged_on):
     form.coordinator_logged_on = logged_on
     form.coordinator_notes = notes
     form.save(update_fields=["coordinator_logged_by", "coordinator_logged_on", "coordinator_notes", "updated_at"])
+    _record_decision(form, ApprovalDecisionStep.COORDINATOR_LOG, coordinator,
+                     name_on_form=coordinator.get_full_name() or coordinator.username,
+                     decided_on=logged_on, comments=notes)
     log_event(actor=coordinator, action="project.approval_logged", summary=f"Approval form logged for {project.title}", obj=project)
 
     if not project.is_approved:
@@ -136,6 +147,22 @@ def log_approved_form(project, *, coordinator, notes, logged_on):
             when=logged_on,
         )
     return form
+
+
+def _record_decision(form, step, user, *, decision="", name_on_form="", decided_on=None, comments=""):
+    """Append a permanent copy of this decision; the form itself is reset if the student resubmits."""
+    return ProjectApprovalDecision.objects.create(
+        project=form.project,
+        step=step,
+        decision=decision,
+        decided_by=user,
+        name_on_form=name_on_form,
+        decided_on=decided_on,
+        proposed_title=form.proposed_title,
+        approval_method=form.approval_method,
+        approval_criteria_snapshot=form.approval_criteria_snapshot,
+        comments=comments,
+    )
 
 
 def _open_form(project):

@@ -22,15 +22,23 @@ from .document import (
     ProjectDocument,
     validate_project_document_size,
 )
-from .approval import ProjectApprovalForm, ProjectCompletion, SupervisorDecision
+from .approval import (
+    ApprovalDecisionStep,
+    ProjectApprovalDecision,
+    ProjectApprovalForm,
+    ProjectCompletion,
+    SupervisorDecision,
+)
 
 __all__ = [
     "ACTIVE_STAGES",
     "ALLOWED_DOCUMENT_EXTENSIONS",
+    "ApprovalDecisionStep",
     "ArchivedProject",
     "DocumentType",
     "MAXIMUM_DOCUMENT_BYTES",
     "Project",
+    "ProjectApprovalDecision",
     "ProjectApprovalForm",
     "ProjectCompletion",
     "ProjectDocument",

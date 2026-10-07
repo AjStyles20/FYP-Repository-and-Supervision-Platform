@@ -9,6 +9,7 @@ from django.contrib import admin
 from .models import (
     ArchivedProject,
     Project,
+    ProjectApprovalDecision,
     ProjectApprovalForm,
     ProjectCompletion,
     ProjectDocument,
@@ -78,6 +79,22 @@ class ProjectStatusEventAdmin(admin.ModelAdmin):
     list_filter = ("to_stage", "created_at")
     search_fields = ("project__title",)
     readonly_fields = ("project", "from_stage", "to_stage", "actor", "note", "created_at")
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+
+@admin.register(ProjectApprovalDecision)
+class ProjectApprovalDecisionAdmin(admin.ModelAdmin):
+    list_display = ("project", "step", "decision", "decided_by", "decided_on", "created_at")
+    list_filter = ("step", "decision", "created_at")
+    search_fields = ("project__title", "proposed_title")
 
     def has_add_permission(self, request):
         return False

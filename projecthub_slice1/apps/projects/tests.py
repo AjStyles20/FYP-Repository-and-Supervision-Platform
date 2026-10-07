@@ -1,6 +1,7 @@
 import tempfile
-from datetime import datetime, timedelta, timezone as dt_timezone
+from datetime import date, datetime, timedelta, timezone as dt_timezone
 
+from django.core.exceptions import ValidationError
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.db import IntegrityError, connection, transaction
 from django.db.migrations.executor import MigrationExecutor
@@ -15,14 +16,25 @@ from apps.audit.models import AuditEvent
 from apps.supervision.models import Announcement
 
 from .models import (
+    ApprovalDecisionStep,
     ArchivedProject,
     Project,
+    ProjectApprovalDecision,
+    ProjectApprovalForm,
     ProjectDocument,
     ProjectStage,
     ProjectStatusEvent,
     ProjectSupervisorAssignment,
+    SupervisorDecision,
 )
-from .services import assign_project_supervisor, available_years, unassign_project_supervisor
+from .services import (
+    assign_project_supervisor,
+    available_years,
+    log_approved_form,
+    record_supervisor_decision,
+    submit_proposal,
+    unassign_project_supervisor,
+)
 
 
 class RepositoryTests(TestCase):
@@ -723,3 +735,93 @@ class ProjectStatusEventAppendOnlyTests(TestCase):
         kept.refresh_from_db()
         self.assertIsNone(kept.actor)
         self.assertFalse(ProjectStatusEvent.objects.filter(project_id=other_project.pk).exists())
+
+
+class ApprovalDecisionHistoryTests(TestCase):
+    """Every decision on the approval form is kept, even after the student revises and resubmits."""
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.project, cls.supervisor, cls.other = _assignment_fixtures(" decisions")
+        # A coordinator who also supervises, so one person can decide and then log the form.
+        cls.supervisor.role = Role.COORDINATOR
+        cls.supervisor.first_name, cls.supervisor.last_name = "Ngozi", "Eze"
+        cls.supervisor.save()
+        cls.project.supervisor = cls.supervisor
+        cls.project.save()
+
+    def _submit(self, title):
+        submit_proposal(
+            self.project,
+            proposed_title=title,
+            problem_statement="Problem",
+            objectives="Objectives",
+            methodology="Method",
+            tools_and_technologies="Django",
+        )
+
+    def _decide(self, decision, comments, user=None):
+        record_supervisor_decision(
+            Project.objects.get(pk=self.project.pk),
+            supervisor=user or self.supervisor,
+            decision=decision,
+            comments=comments,
+            name_on_form="N. Eze",
+            signed_on=date(2026, 10, 1),
+        )
+
+    def test_rejection_survives_resubmission_and_full_history_is_kept(self):
+        self._submit("First idea")
+        self._decide(SupervisorDecision.REJECTED, "Narrow the scope")
+        self.project.refresh_from_db()
+        self._submit("Second idea")
+        self._decide(SupervisorDecision.ACCEPTED, "Good")
+        log_approved_form(
+            Project.objects.get(pk=self.project.pk),
+            coordinator=self.supervisor,
+            notes="Filed in register",
+            logged_on=date(2026, 10, 3),
+        )
+
+        form = ProjectApprovalForm.objects.get(project=self.project)
+        self.assertEqual((form.proposed_title, form.supervisor_decision), ("Second idea", SupervisorDecision.ACCEPTED))
+        history = list(self.project.approval_decisions.all())
+        self.assertEqual(
+            [(row.step, row.decision, row.proposed_title, row.comments) for row in history],
+            [
+                (ApprovalDecisionStep.SUPERVISOR, SupervisorDecision.REJECTED, "First idea", "Narrow the scope"),
+                (ApprovalDecisionStep.SUPERVISOR, SupervisorDecision.ACCEPTED, "Second idea", "Good"),
+                (ApprovalDecisionStep.COORDINATOR_LOG, "", "Second idea", "Filed in register"),
+            ],
+        )
+        self.assertEqual([row.decided_by for row in history], [self.supervisor] * 3)
+        self.assertEqual(history[0].decided_on, date(2026, 10, 1))
+        self.assertEqual(history[2].decided_on, date(2026, 10, 3))
+        self.assertEqual(history[2].name_on_form, "Ngozi Eze")
+        self.assertEqual(history[0].approval_method, "topic_only")
+
+    def test_refused_decision_leaves_no_record(self):
+        self._submit("First idea")
+
+        with self.assertRaises(ValidationError):
+            self._decide(SupervisorDecision.ACCEPTED, "Not mine to decide", user=self.other)
+
+        self.assertFalse(self.project.approval_decisions.exists())
+
+    def test_decisions_cannot_be_changed_or_deleted(self):
+        self._submit("First idea")
+        self._decide(SupervisorDecision.REJECTED, "Narrow the scope")
+        row = self.project.approval_decisions.get()
+
+        row.comments = "Rewritten"
+        with self.assertRaises(PermissionError):
+            row.save()
+        with self.assertRaises(PermissionError):
+            row.delete()
+        with self.assertRaises(PermissionError):
+            ProjectApprovalDecision.objects.filter(pk=row.pk).update(comments="Rewritten")
+        with self.assertRaises(PermissionError):
+            self.project.approval_decisions.all().delete()
+
+        row.refresh_from_db()
+        self.assertEqual(row.comments, "Narrow the scope")

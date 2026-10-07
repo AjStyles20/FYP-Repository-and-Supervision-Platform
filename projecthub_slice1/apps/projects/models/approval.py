@@ -102,6 +102,64 @@ class ProjectApprovalForm(models.Model):
         return "Draft"
 
 
+class ApprovalDecisionStep(models.TextChoices):
+    SUPERVISOR = "supervisor", "Supervisor decision"
+    COORDINATOR_LOG = "coordinator_log", "Logged by the department"
+
+
+class ApprovalDecisionQuerySet(models.QuerySet):
+    def update(self, **kwargs):
+        raise PermissionError("Approval decisions are append-only.")
+
+    def delete(self):
+        raise PermissionError("Approval decisions are append-only.")
+
+
+class ProjectApprovalDecision(models.Model):
+    """Append-only history of every decision taken on a project's approval form.
+
+    ProjectApprovalForm holds the form as it is now, and is reset when a student revises and
+    resubmits. This keeps one row per supervisor decision and per departmental log entry, with a
+    copy of what was decided on, so earlier "not accepted" decisions and their comments survive.
+    Rows can be added but never changed or deleted by application code.
+    """
+
+    objects = ApprovalDecisionQuerySet.as_manager()
+
+    project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name="approval_decisions")
+    step = models.CharField(max_length=24, choices=ApprovalDecisionStep.choices)
+    # The supervisor's decision; blank for a departmental log entry.
+    decision = models.CharField(max_length=30, choices=SupervisorDecision.choices, blank=True)
+    decided_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="approval_decisions",
+    )
+    name_on_form = models.CharField(max_length=150, blank=True)
+    decided_on = models.DateField(null=True, blank=True, help_text="Date signed or logged, as written on the form.")
+    proposed_title = models.CharField(max_length=255)
+    approval_method = models.CharField(max_length=24, blank=True)
+    approval_criteria_snapshot = models.TextField(blank=True)
+    comments = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["created_at", "id"]
+
+    def __str__(self):
+        return f"{self.get_step_display()} · {self.project.title}"
+
+    def save(self, *args, **kwargs):
+        if self.pk:
+            raise PermissionError("Approval decisions are append-only.")
+        return super().save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        raise PermissionError("Approval decisions are append-only.")
+
+
 class ProjectCompletion(models.Model):
     """The HOD's completion sign-off. Archiving follows from this, not from the defence."""
 
