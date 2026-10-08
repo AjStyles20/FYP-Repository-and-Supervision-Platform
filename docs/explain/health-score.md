@@ -69,7 +69,7 @@ A HOD or coordinator who is the assigned supervisor of a project sees its score 
 
 ## Known limits
 
-- **Milestones can only be added in Django admin** today, and `seed_demo` creates none. Until a milestone page exists, that term is 0 for almost every project.
-- **Stage time uses the moment the change was recorded**, not the date typed on the form. `seed_demo` records every change at seed time, so a freshly seeded demo shows nearly every project as On track.
+- **Milestones can only be added in Django admin** today. `seed_demo` adds them to four demo projects; elsewhere the term is 0 until a milestone page exists.
+- **Stage time uses the moment the change was recorded**, not the date typed on the form. `seed_demo` back-dates the history of a few demo projects so that all three bands appear (Amina at risk 75, Yemi watch 50, Sadiq watch 39, Chinedu on track 20); the rest are stamped at seed time and score near 0.
 - **A quiet period is not always a problem.** Exam weeks and holidays raise the meeting term for everyone at once.
 - The score reads the database but never writes. A list page prefetches the four related tables, so the number of queries stays the same however many projects are listed.

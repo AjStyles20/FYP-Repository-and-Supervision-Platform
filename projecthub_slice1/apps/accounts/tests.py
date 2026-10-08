@@ -17,6 +17,7 @@ from apps.projects.models import (
     Project,
     ProjectApprovalDecision,
     ProjectDocument,
+    ProjectMilestone,
     ProjectStage,
     ProjectSupervisorAssignment,
 )
@@ -171,30 +172,30 @@ class LoginAndRolesTests(TestCase):
 class SeedAndPurgeTests(TestCase):
     def test_seed_creates_expected_demo_data(self):
         run("seed_demo")
-        self.assertEqual(User.objects.filter(is_demo=True, role=Role.STUDENT).count(), 20)
+        self.assertEqual(User.objects.filter(is_demo=True, role=Role.STUDENT).count(), 21)
         self.assertEqual(User.objects.filter(is_demo=True, role=Role.SUPERVISOR).count(), 6)
         self.assertEqual(SupervisorProfile.objects.count(), 6)
-        self.assertEqual(StudentProfile.objects.count(), 20)
+        self.assertEqual(StudentProfile.objects.count(), 21)
         self.assertEqual(Faculty.objects.filter(is_demo=True).count(), 1)
         self.assertEqual(Department.objects.filter(is_demo=True).count(), 2)
         self.assertEqual(User.objects.get(username="demo.amina").email, "amina@bazeuniversity.edu.ng")
-        self.assertEqual(Project.objects.filter(is_demo=True).count(), 20)
+        self.assertEqual(Project.objects.filter(is_demo=True).count(), 21)
         # One project is deliberately unassigned; one was reassigned, so its first row is closed.
-        self.assertEqual(ProjectSupervisorAssignment.objects.filter(ended_at__isnull=True).count(), 19)
-        self.assertEqual(ArchivedProject.objects.filter(is_demo=True).count(), 3)
+        self.assertEqual(ProjectSupervisorAssignment.objects.filter(ended_at__isnull=True).count(), 20)
+        self.assertEqual(ArchivedProject.objects.filter(is_demo=True).count(), 4)
 
     def test_seed_tells_the_demo_story(self):
         run("seed_demo")
         stages = Counter(Project.objects.filter(is_demo=True).values_list("stage", flat=True))
         self.assertEqual(set(stages), set(ProjectStage.values), "every stage has at least one project")
-        self.assertEqual(stages[ProjectStage.COMPLETED], 3)
+        self.assertEqual(stages[ProjectStage.COMPLETED], 4)
         for department in Department.objects.filter(is_demo=True):
             methods = set(SupervisorProfile.objects.filter(user__department=department).values_list("approval_method", flat=True))
             self.assertEqual(methods, {"topic_only", "literature_review", "working_project"}, department.name)
         archived = ArchivedProject.objects.filter(is_demo=True)
         self.assertTrue(all(project.gap_summary for project in archived))
         statuses = Counter(archived.values_list("student__student_profile__student_status", flat=True))
-        self.assertEqual(statuses, {StudentProfile.Status.GRADUATED: 1, StudentProfile.Status.FYP_COMPLETED: 2})
+        self.assertEqual(statuses, {StudentProfile.Status.GRADUATED: 2, StudentProfile.Status.FYP_COMPLETED: 2})
         self.assertTrue(archived.filter(previous_supervisors__isnull=False).exists())
         # Every project moved through the real workflow, so each stage change has a history row.
         for project in Project.objects.filter(is_demo=True):
@@ -216,12 +217,39 @@ class SeedAndPurgeTests(TestCase):
         self.assertContains(page, "Timetable Clash Checker for the Whole University")
         self.assertContains(page, "The scope is too broad")
 
+    def test_seed_shows_every_health_band(self):
+        from apps.projects.services.health import health_score
+
+        run("seed_demo")
+        scores = {
+            project.student.username: health_score(project)
+            for project in Project.objects.filter(is_demo=True, archived=False).select_related("student")
+        }
+        self.assertEqual({name: (scores[name].score, scores[name].band) for name in
+                          ("demo.amina", "demo.yemi", "demo.sadiq", "demo.chinedu")}, {
+            "demo.amina": (75, "at_risk"), "demo.yemi": (50, "watch"),
+            "demo.sadiq": (39, "watch"), "demo.chinedu": (20, "on_track"),
+        })
+        self.assertEqual({health.band for health in scores.values() if health}, {"on_track", "watch", "at_risk"})
+        self.assertTrue(ProjectMilestone.objects.filter(project__student__username="demo.amina", done=False,
+                                                        due_date__lt=timezone.localdate()).exists())
+
+    def test_seed_has_an_archived_project_similar_to_a_running_topic(self):
+        from apps.projects.services.similarity import similar_archived_projects
+
+        run("seed_demo")
+        running = Project.objects.get(title="Campus Shuttle Delay Tracker")
+        matches = similar_archived_projects(running.title, running.description)
+        self.assertEqual([match["title"] for match in matches], ["Campus Shuttle Tracker"])
+        self.assertGreaterEqual(matches[0]["score"], 0.35)
+
     def test_seed_is_repeatable(self):
         run("seed_demo")
         before = (User.objects.count(), Project.objects.count(), ProjectApprovalDecision.objects.count())
         run("seed_demo")
         self.assertEqual((User.objects.count(), Project.objects.count(), ProjectApprovalDecision.objects.count()), before)
-        self.assertEqual(ProjectSupervisorAssignment.objects.filter(ended_at__isnull=True).count(), 19)
+        self.assertEqual(ProjectSupervisorAssignment.objects.filter(ended_at__isnull=True).count(), 20)
+        self.assertEqual(ProjectMilestone.objects.count(), 10)
 
     @override_settings(DEBUG=False)
     def test_seed_refuses_without_force_when_not_debug(self):

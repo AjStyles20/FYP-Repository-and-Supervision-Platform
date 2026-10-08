@@ -37,7 +37,9 @@ From `projecthub_slice1/`, in PowerShell:
   | literature review | `demo.okoro` | `demo.nwosu` |
   | working project | `demo.eze` | `demo.lawal` |
 
-- 20 projects across every stage, including 3 archived projects with documented gaps. Only one of those students is graduated, which shows that completion and graduation are separate.
+- 21 projects across every stage, including 4 archived projects with documented gaps. Only two of those students are graduated, which shows that completion and graduation are separate.
+- "Campus Shuttle Tracker" (archived, 2024) overlaps the running "Campus Shuttle Delay Tracker", so the similar-topic panel has a match to show.
+- Health score bands: `demo.amina` at risk (75), `demo.yemi` and `demo.sadiq` watch (50 and 39), `demo.chinedu` on track (20). Their history, milestones and meetings are back-dated for this.
 
 ---
 

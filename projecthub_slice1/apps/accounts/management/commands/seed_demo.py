@@ -1,8 +1,10 @@
 """Create a demo department story (all rows flagged is_demo=True). Safe to run more than once.
 
 The story: one faculty, two departments, six supervisors with different approval methods, and
-twenty student projects spread across every stage, from an unassigned proposal to three archived
-projects with documented gaps. Each project is moved forward through the same services the web
+twenty-one student projects spread across every stage, from an unassigned proposal to four archived
+projects with documented gaps. One archived project ("Campus Shuttle Tracker") overlaps a running
+topic, so the similar-topic checker has a match to show, and a few projects are given back-dated
+history, meetings and milestones so the health score shows all three bands (see _health_story). Each project is moved forward through the same services the web
 pages use (proposal, supervisor decision, coordinator log, stage changes, HOD sign-off), so its
 status history, approval form and decision history are real, not typed in.
 
@@ -23,6 +25,7 @@ from apps.projects.models import (
     DocumentType,
     Project,
     ProjectDocument,
+    ProjectMilestone,
     ProjectStage,
     ProjectStatusEvent,
     SupervisorDecision,
@@ -93,6 +96,7 @@ STUDENTS = [
     ("demo.kunle", "Kunle", "Afolabi", "BU/22/SE/4160", SE),
     ("demo.bisi", "Bisi", "Akande", "BU/22/SE/4171", SE),
     ("demo.ikenna", "Ikenna", "Obi", "BU/22/SE/4188", SE),
+    ("demo.tobi", "Tobi", "Okon", "BU/20/CS/3720", CS),
 ]
 
 # Target stages. "proposed" variants all end at PROPOSED; "history" ends APPROVED with a
@@ -176,7 +180,19 @@ PROJECTS = [
     ("demo.ikenna", "Microservice Template for Student Projects",
      "A starter template with logging, tests and deployment for student microservices.",
      "microservices, templates", "demo.lawal", PENDING, {}),
+    # Overlaps the running "Campus Shuttle Delay Tracker" (Jaccard 0.50), for the similar-topic checker.
+    ("demo.tobi", "Campus Shuttle Tracker",
+     "A tool for tracking campus shuttle delays and reporting them to students.",
+     "transport, tracking", "demo.danjuma", ARCHIVED,
+     {"graduated": True, "signed": "2024-07-15",
+      "gap": "Arrival predictions were never added; a follow-up could estimate delays from past reports."}),
 ]
+
+# Days ago for each stage change in the story, matching the dates the seed types into the forms.
+STORY_DAYS_AGO = {
+    ProjectStage.PROPOSED: 62, ProjectStage.SUPERVISOR_ACCEPTED: 55, ProjectStage.APPROVED: 45,
+    ProjectStage.IN_PROGRESS: 44, ProjectStage.SUBMITTED: 10, ProjectStage.DEFENDED: 5,
+}
 
 
 class Command(BaseCommand):
@@ -221,6 +237,7 @@ class Command(BaseCommand):
                 built += 1
         if built:
             self._supervision_records()
+            self._health_story()
 
         self.stdout.write(self.style.SUCCESS(f"Demo data ready ({built} new projects)."))
         self.stdout.write(f"Log in as any demo.* user. Password: {opts['password']}")
@@ -427,6 +444,54 @@ class Command(BaseCommand):
         SupervisorAvailability.objects.create(
             supervisor=okoro, weekday=1, start_time="10:00", end_time="12:00", venue="Room B12",
         )
+
+    # --- health score story ---------------------------------------------------------------------
+
+    def _health_story(self):
+        """Milestones, back-dated history and meetings so the health bands all appear.
+
+        Expected: Amina at risk (75), Yemi watch (50), Sadiq watch (39), Chinedu on track (20), the
+        rest on track. Everything else in the seed is stamped "now", which would score almost 0.
+        """
+        projects = {name: Project.objects.get(student=self.users[name], is_demo=True)
+                    for name in ("demo.amina", "demo.chinedu", "demo.sadiq", "demo.yemi")}
+        milestones = {
+            "demo.amina": [("Chapter one draft", -21, False), ("Chapter two draft", -7, False),
+                           ("Prototype demonstration", 14, False)],
+            "demo.chinedu": [("Chapter one draft", -14, True), ("Survey design", 5, False),
+                             ("Chapter two draft", 21, False)],
+            "demo.sadiq": [("Final report", -12, True), ("Defence slides", 7, False)],
+            "demo.yemi": [("Dashboard first build", -3, False), ("Evaluation plan", 10, False)],
+        }
+        for name, items in milestones.items():
+            for position, (title, due_in_days, done) in enumerate(items):
+                ProjectMilestone.objects.create(
+                    project=projects[name], name=title, due_date=self.today + timedelta(days=due_in_days),
+                    done=done, position=position,
+                )
+        # At risk: no held meeting since the supervisor was assigned 62 days ago, two overdue
+        # milestones, 44 days in progress.
+        self._backdate_history(projects["demo.amina"])
+        # Watch: a meeting 10 days ago and 10 days since submission.
+        self._backdate_history(projects["demo.sadiq"])
+        self._meeting(projects["demo.sadiq"], self.users["demo.eze"], timezone.now() - timedelta(days=10), "held",
+                      discussion="Walked through the final report before submission.",
+                      corrective_action="Prepare defence slides.")
+
+    def _backdate_history(self, project):
+        """Move a demo project's status events and supervisor assignment to the story's dates.
+
+        Status events are append-only: their default manager refuses update(). This seed is the one
+        place that rewrites them, through the plain base manager, and only for demo projects, so the
+        synthetic history looks lived-in. Real projects are never touched.
+        """
+        assert project.is_demo
+        now = timezone.now()
+        for event in project.status_events.all():
+            ProjectStatusEvent._base_manager.filter(pk=event.pk).update(
+                created_at=now - timedelta(days=STORY_DAYS_AGO[event.to_stage])
+            )
+        project.supervisor_assignments.filter(ended_at__isnull=True).update(assigned_at=now - timedelta(days=62))
 
     def _meeting(self, project, supervisor, when, status, **notes):
         meeting = SupervisionMeeting.objects.create(
