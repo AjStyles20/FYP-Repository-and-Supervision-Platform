@@ -42,7 +42,7 @@
         <tbody>
           {% for staff in staff_accounts %}
             <tr>
-              <td data-label="Name">{{ staff.get_full_name|default:staff.username }}{% if staff.is_demo %} <span class="tag tag-quiet">Sample</span>{% endif %}</td>
+              <td data-label="Name"><a href="{% url 'manage_staff_account' staff.pk %}">{{ staff.get_full_name|default:staff.username }}</a>{% if staff.is_demo %} <span class="tag tag-quiet">Sample</span>{% endif %}</td>
               <td data-label="Baze email">{{ staff.email|default:"—" }}</td>
               <td data-label="Role">{{ staff.get_role_display }}</td>
               <td data-label="Department">{{ staff.department.name|default:"—" }}</td>

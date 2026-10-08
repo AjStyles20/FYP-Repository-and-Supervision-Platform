@@ -19,8 +19,11 @@ from apps.projects.services.health import HEALTH_PREFETCH, health_score
 from apps.supervision.models import (
     Announcement, AnnouncementAcknowledgement, Notification, SharedResource, SupervisionMeeting, student_resource_scope,
 )
-from .forms import ProjectAuthenticationForm, StaffAccountForm, StudentRegistrationForm
-from .models import Role, StudentProfile, User
+from .forms import (
+    ProjectAuthenticationForm, StaffAccountForm, StaffEditForm, StudentRegistrationForm, active_admin_count,
+    generate_temporary_password,
+)
+from .models import STAFF_ROLES, Role, StudentProfile, User
 from .permissions import role_required
 
 
@@ -321,6 +324,60 @@ def add_staff_account(request):
         response["Cache-Control"] = "no-store"  # the page holds a password: keep it out of the browser cache
         return response
     return render(request, "accounts/staff_form.html", {"form": form})
+
+
+@role_required(Role.ADMIN)
+def manage_staff_account(request, user_id):
+    """Edit a staff account, deactivate or reactivate it, or reset its password."""
+    staff = get_object_or_404(User.objects.select_related("department"), pk=user_id, role__in=STAFF_ROLES)
+    action = request.POST.get("action", "") if request.method == "POST" else ""
+    form = StaffEditForm(request.POST if action == "save" else None, staff=staff, editor=request.user)
+    name = staff.get_full_name() or staff.username
+
+    if action == "save" and form.is_valid():
+        changes = form.save()
+        if changes:
+            log_event(actor=request.user, action="account.staff_updated", summary=f"Updated staff account {staff.username}", obj=staff, details=changes)
+            messages.success(request, f"Saved the changes to {name}.")
+        else:
+            messages.info(request, "Nothing changed.")
+        return redirect("manage_staff_account", user_id=staff.pk)
+
+    if action == "deactivate":
+        if staff.pk == request.user.pk:
+            messages.error(request, "You cannot deactivate your own account.")
+        elif staff.role == Role.ADMIN and active_admin_count(exclude=staff) == 0:
+            messages.error(request, "This is the only active administrator; create another one first.")
+        elif staff.is_active:
+            staff.is_active = False
+            staff.save(update_fields=["is_active"])
+            log_event(actor=request.user, action="account.staff_deactivated", summary=f"Deactivated staff account {staff.username}", obj=staff)
+            messages.success(request, f"{name} can no longer sign in. Their records are kept.")
+        return redirect("manage_staff_account", user_id=staff.pk)
+
+    if action == "reactivate" and not staff.is_active:
+        staff.is_active = True
+        staff.save(update_fields=["is_active"])
+        log_event(actor=request.user, action="account.staff_reactivated", summary=f"Reactivated staff account {staff.username}", obj=staff)
+        messages.success(request, f"{name} can sign in again.")
+        return redirect("manage_staff_account", user_id=staff.pk)
+
+    if action == "reset_password":
+        password = generate_temporary_password()
+        staff.set_password(password)
+        staff.must_change_password = True
+        staff.save(update_fields=["password", "must_change_password"])
+        log_event(actor=request.user, action="account.password_reset", summary=f"Reset the password for {staff.username}", obj=staff)
+        response = render(request, "accounts/staff_created.html", {"staff": staff, "temporary_password": password, "is_reset": True})
+        response["Cache-Control"] = "no-store"
+        return response
+
+    if request.method == "POST" and action not in {"save"}:
+        return HttpResponseBadRequest("Unknown action.")
+    return render(request, "accounts/staff_manage.html", {
+        "staff": staff, "form": form, "is_self": staff.pk == request.user.pk,
+        "active_supervisions": staff.supervised_projects.filter(archived=False).count(),
+    })
 
 
 class FirstPasswordChangeView(PasswordChangeView):

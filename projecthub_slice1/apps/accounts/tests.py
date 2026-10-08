@@ -712,3 +712,112 @@ class StaffAccountTests(TestCase):
         self.assertContains(response, "Add staff account")
         self.assertContains(response, "ngozi.eze@bazeuniversity.edu.ng")
         self.assertContains(response, "Waiting for first sign-in")
+
+
+class ManageStaffAccountTests(TestCase):
+    """Admins edit, deactivate, reactivate and reset staff accounts, without locking themselves out."""
+
+    @classmethod
+    def setUpTestData(cls):
+        faculty = Faculty.objects.create(name="Manage Faculty")
+        cls.department = Department.objects.create(faculty=faculty, name="Manage Department")
+        cls.other_department = Department.objects.create(faculty=faculty, name="Other Manage Department")
+        cls.admin = User.objects.create_user("manage.admin", password="Admin-pass-2026!", role=Role.ADMIN)
+        cls.supervisor = User.objects.create_user(
+            "lecturer@bazeuniversity.edu.ng", email="lecturer@bazeuniversity.edu.ng", password="Old-pass-2026!",
+            first_name="Kemi", last_name="Lecturer", role=Role.SUPERVISOR, department=cls.department,
+        )
+        SupervisorProfile.objects.create(user=cls.supervisor, title="Mr.")
+        cls.student = User.objects.create(username="manage.student", role=Role.STUDENT)
+
+    def _post(self, user, action, **data):
+        self.client.force_login(self.admin)
+        return self.client.post(reverse("manage_staff_account", args=[user.pk]), {"action": action, **data})
+
+    def _details(self, **overrides):
+        data = {"first_name": "Kemi", "last_name": "Lecturer", "role": Role.SUPERVISOR,
+                "department": self.department.pk, "title": "Mr."}
+        data.update(overrides)
+        return data
+
+    def test_only_admins_and_only_staff_accounts(self):
+        url = reverse("manage_staff_account", args=[self.supervisor.pk])
+        self.client.force_login(self.supervisor)
+        self.assertEqual(self.client.get(url).status_code, 403)
+        self.client.force_login(self.admin)
+        self.assertEqual(self.client.get(url).status_code, 200)
+        self.assertEqual(self.client.get(reverse("manage_staff_account", args=[self.student.pk])).status_code, 404)
+
+    def test_promote_to_coordinator_in_another_department_is_saved_and_audited(self):
+        response = self._post(self.supervisor, "save", **self._details(
+            role=Role.COORDINATOR, department=self.other_department.pk, title="Dr.", can_assign_supervisors="on",
+        ))
+
+        self.assertRedirects(response, reverse("manage_staff_account", args=[self.supervisor.pk]))
+        self.supervisor.refresh_from_db()
+        self.assertEqual((self.supervisor.role, self.supervisor.department, self.supervisor.can_assign_supervisors),
+                         (Role.COORDINATOR, self.other_department, True))
+        self.assertEqual(self.supervisor.supervisor_profile.title, "Dr.")
+        event = AuditEvent.objects.get(action="account.staff_updated")
+        self.assertEqual(set(event.details), {"role", "department", "can_assign_supervisors", "title"})
+        self.assertEqual(event.details["role"], {"from": "supervisor", "to": "coordinator"})
+
+    def test_deactivated_staff_cannot_sign_in_and_reactivation_restores_it(self):
+        self._post(self.supervisor, "deactivate")
+        self.supervisor.refresh_from_db()
+        self.assertFalse(self.supervisor.is_active)
+        self.client.logout()
+        self.assertFalse(self.client.login(username="lecturer@bazeuniversity.edu.ng", password="Old-pass-2026!"))
+
+        self._post(self.supervisor, "reactivate")
+        self.client.logout()
+        self.assertTrue(self.client.login(username="lecturer@bazeuniversity.edu.ng", password="Old-pass-2026!"))
+        self.assertEqual(
+            list(AuditEvent.objects.filter(object_id=str(self.supervisor.pk)).values_list("action", flat=True).order_by("pk")),
+            ["account.staff_deactivated", "account.staff_reactivated"],
+        )
+
+    def test_deactivation_ends_an_open_session(self):
+        session = self.client_class()
+        session.force_login(self.supervisor)
+        self.assertEqual(session.get(reverse("dashboard")).status_code, 200)
+
+        self._post(self.supervisor, "deactivate")
+
+        self.assertIn("/login/", session.get(reverse("dashboard"))["Location"])
+
+    def test_reset_password_shows_a_new_one_time_password(self):
+        response = self._post(self.supervisor, "reset_password")
+
+        password = response.context["temporary_password"]
+        self.assertContains(response, "Password reset")
+        self.assertEqual(response["Cache-Control"], "no-store")
+        self.supervisor.refresh_from_db()
+        self.assertTrue(self.supervisor.check_password(password))
+        self.assertFalse(self.supervisor.check_password("Old-pass-2026!"))
+        self.assertTrue(self.supervisor.must_change_password)
+        event = AuditEvent.objects.get(action="account.password_reset")
+        self.assertNotIn(password, f"{event.summary} {event.details}")
+
+    def test_an_admin_cannot_lock_themselves_out(self):
+        self._post(self.admin, "deactivate")
+        response = self._post(self.admin, "save", first_name="", last_name="Admin", role=Role.SUPERVISOR,
+                              department=self.department.pk)
+        self.admin.refresh_from_db()
+        self.assertEqual((self.admin.is_active, self.admin.role), (True, Role.ADMIN))
+        self.assertIn("role", response.context["form"].errors)
+
+    def test_the_last_active_admin_cannot_be_removed_by_another_admin(self):
+        other = User.objects.create(username="other.admin", role=Role.ADMIN)
+        User.objects.filter(pk=self.admin.pk).update(is_active=True)
+        # With two admins, one may deactivate the other ...
+        self._post(other, "deactivate")
+        other.refresh_from_db()
+        self.assertFalse(other.is_active)
+        # ... but a second admin account that is the only *active* one stays protected.
+        User.objects.filter(pk=other.pk).update(is_active=True)
+        User.objects.filter(pk=self.admin.pk).update(is_active=False)
+        self.client.force_login(other)
+        self.client.post(reverse("manage_staff_account", args=[other.pk]), {"action": "deactivate"})
+        other.refresh_from_db()
+        self.assertTrue(other.is_active)

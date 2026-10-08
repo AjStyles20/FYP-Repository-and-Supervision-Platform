@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block title %}{{ staff.get_full_name|default:staff.username }} · Staff account · Baze Project Hub{% endblock %}
+{% block content %}
+<p class="breadcrumb"><a href="{% url 'admin_tools' %}">← Admin tools</a></p>
+<section class="page-heading">
+  <p class="eyebrow">Staff account</p>
+  <h1>{{ staff.get_full_name|default:staff.username }}</h1>
+  <div class="tag-row">
+    <span class="tag">{{ staff.get_role_display }}</span>
+    {% if not staff.is_active %}<span class="tag">Inactive</span>{% elif staff.must_change_password %}<span class="tag">Waiting for first sign-in</span>{% else %}<span class="tag tag-live">Active</span>{% endif %}
+    {% if staff.is_demo %}<span class="tag tag-quiet">Sample</span>{% endif %}
+  </div>
+  <p class="muted">Sign-in: {{ staff.email|default:staff.username }}{% if staff.last_login %} · Last signed in {{ staff.last_login|date:"j M Y, H:i" }}{% else %} · Never signed in{% endif %}</p>
+</section>
+
+<div class="grid-2">
+  <section class="card">
+    <h2>Details and access</h2>
+    <form method="post" class="stack-form">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="save">
+      {{ form.non_field_errors }}
+      {% for field in form %}
+        <div class="form-row">
+          {% if field.widget_type == "checkbox" %}<label for="{{ field.id_for_label }}">{{ field }} {{ field.label }}</label>{% else %}{{ field.label_tag }}{{ field }}{% endif %}
+          {% if field.help_text %}<small class="muted">{{ field.help_text }}</small>{% endif %}
+          {% for error in field.errors %}<p class="error">{{ error }}</p>{% endfor %}
+        </div>
+      {% endfor %}
+      <p class="muted">The email address is the sign-in username, so it is not changed here.</p>
+      <button type="submit" class="primary">Save changes</button>
+    </form>
+  </section>
+
+  <div class="stack">
+    <section class="card">
+      <h2>Password</h2>
+      <p class="muted">Creates a new temporary password, shown once. They must choose their own at their next sign-in; the old password stops working straight away.</p>
+      <form method="post">{% csrf_token %}<input type="hidden" name="action" value="reset_password"><button type="submit">Reset password</button></form>
+    </section>
+    <section class="card">
+      <h2>Sign-in access</h2>
+      {% if staff.is_active %}
+        <p class="muted">Deactivating stops them signing in and ends any session they have open. Nothing is deleted: their projects, meetings and audit history stay.</p>
+        {% if active_supervisions %}<p class="form-note">They currently supervise {{ active_supervisions }} active project{{ active_supervisions|pluralize }}. Reassign {{ active_supervisions|pluralize:"it,them" }} from the allocation board first.</p>{% endif %}
+        {% if is_self %}<p class="muted">You cannot deactivate your own account.</p>
+        {% else %}<form method="post">{% csrf_token %}<input type="hidden" name="action" value="deactivate"><button type="submit">Deactivate account</button></form>{% endif %}
+      {% else %}
+        <p class="muted">This account cannot sign in.</p>
+        <form method="post">{% csrf_token %}<input type="hidden" name="action" value="reactivate"><button type="submit" class="primary">Reactivate account</button></form>
+      {% endif %}
+    </section>
+  </div>
+</div>
+{% endblock %}
