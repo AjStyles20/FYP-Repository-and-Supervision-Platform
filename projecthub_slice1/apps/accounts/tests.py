@@ -243,6 +243,15 @@ class SeedAndPurgeTests(TestCase):
         self.assertEqual([match["title"] for match in matches], ["Campus Shuttle Tracker"])
         self.assertGreaterEqual(matches[0]["score"], 0.35)
 
+    def test_seed_upgrades_an_older_demo_database_without_duplicates(self):
+        run("seed_demo")
+        before = (Announcement.objects.count(), SharedResource.objects.count())
+        # An older seed had no milestones and no back-dated history.
+        ProjectMilestone.objects.all().delete()
+        run("seed_demo")
+        self.assertEqual((Announcement.objects.count(), SharedResource.objects.count()), before)
+        self.assertEqual(ProjectMilestone.objects.count(), 10)
+
     def test_seed_is_repeatable(self):
         run("seed_demo")
         before = (User.objects.count(), Project.objects.count(), ProjectApprovalDecision.objects.count())

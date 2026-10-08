@@ -235,8 +235,11 @@ class Command(BaseCommand):
             if not Project.objects.filter(student=self.users[spec[0]], is_demo=True).exists():
                 self._build_project(*spec)
                 built += 1
-        if built:
+        # Each step runs once per database, judged by its own rows, so re-running the seed on an
+        # older demo database adds only what is missing instead of duplicating meetings and notices.
+        if not SupervisionMeeting.objects.filter(project__is_demo=True).exists():
             self._supervision_records()
+        if not ProjectMilestone.objects.filter(project__is_demo=True).exists():
             self._health_story()
 
         self.stdout.write(self.style.SUCCESS(f"Demo data ready ({built} new projects)."))
