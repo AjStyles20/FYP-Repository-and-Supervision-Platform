@@ -39,7 +39,7 @@ from .services import (
     submit_proposal,
     unassign_project_supervisor,
 )
-from .services.similarity import similar_archived_projects, similarity, tokens
+from .services.similarity import similar_archived_projects, similarity, stem, tokens
 from .services.health import AT_RISK, ON_TRACK, WATCH, health_band, health_score
 
 
@@ -1107,8 +1107,24 @@ class SimilarityScoreTests(SimpleTestCase):
         self.assertEqual(similarity("Exam Seating Allocation Tool", "Exam Seating Allocation Tool"), 1.0)
 
     def test_case_punctuation_and_stop_words_are_ignored(self):
-        self.assertEqual(tokens("The Exam-Seating tool, for halls!"), {"exam", "seating", "tool", "halls"})
+        self.assertEqual(tokens("The Exam-Seating tool, for halls!"), {"exam", "seat", "tool", "hall"})
         self.assertEqual(similarity("The Exam-Seating Tool!", "exam seating tool"), 1.0)
+
+    def test_plural_and_ing_endings_are_stripped(self):
+        self.assertEqual({stem(word) for word in ("seat", "seats", "seating")}, {"seat"})
+        self.assertEqual([stem(word) for word in ("studies", "delays", "booking", "running")],
+                         ["study", "delay", "book", "run"])
+        # Left alone: ss/us/is endings, and -ing words that would lose their only vowel or get too short.
+        self.assertEqual([stem(word) for word in ("class", "bus", "analysis", "string", "thing")],
+                         ["class", "bus", "analysis", "string", "thing"])
+
+    def test_suffix_stripping_lifts_the_seat_example_over_the_threshold(self):
+        score = similarity(
+            "Exam Seat Allocation for Lecture Halls",
+            "Exam Seating Allocation Tool A decision-support tool for allocating examination seats across halls.",
+        )
+        self.assertAlmostEqual(score, 4 / 11)  # {allocation, exam, hall, seat} of 11 words; was 3/13 without
+        self.assertGreaterEqual(score, 0.35)
 
     def test_partly_overlapping_text_scores_shared_over_all_words(self):
         # {campus, shuttle, delay, tracker} vs {campus, shuttle, booking, app}: 2 shared of 6 words.

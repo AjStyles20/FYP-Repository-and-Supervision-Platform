@@ -1,9 +1,10 @@
 """Similar-topic checker: compare a topic with the archived projects by shared words.
 
 The score is the Jaccard index of two word sets, J = |A ∩ B| / |A ∪ B|, where each set holds the
-words of a title plus its abstract after lowercasing, removing punctuation and dropping common
-English stop-words. 1.0 means the same words, 0.0 means none in common. It is a warning aid for
-students and supervisors, never a rule: nothing is blocked because of a score.
+words of a title plus its abstract after lowercasing, removing punctuation, dropping common
+English stop-words and stripping plural and -ing endings (so seat, seats and seating match).
+1.0 means the same words, 0.0 means none in common. It is a warning aid for students and
+supervisors, never a rule: nothing is blocked because of a score.
 See docs/explain/similarity.md for the formula and a worked example.
 """
 
@@ -27,11 +28,31 @@ why will with would you your yours yourself yourselves
 """.split())
 
 WORD = re.compile(r"[a-z0-9]+")
+VOWELS = frozenset("aeiouy")
+
+
+def stem(word):
+    """Strip a plural and then an -ing ending: studies -> study, seats -> seat, seating -> seat.
+
+    Deliberately small, not a full stemmer. Plurals: -ies becomes -y; a final s is dropped unless
+    the word ends in ss, us or is (class, bus, analysis). -ing is dropped only when at least three
+    letters with a vowel remain (string and thing stay), and a doubled last letter is undone
+    (running -> run).
+    """
+    if len(word) > 4 and word.endswith("ies"):
+        word = word[:-3] + "y"
+    elif len(word) > 3 and word.endswith("s") and not word.endswith(("ss", "us", "is")):
+        word = word[:-1]
+    if len(word) > 5 and word.endswith("ing") and VOWELS & set(word[:-3]):
+        word = word[:-3]
+        if len(word) >= 4 and word[-1] == word[-2] and word[-1] not in "lsz":
+            word = word[:-1]
+    return word
 
 
 def tokens(text):
-    """The set of meaningful words in text: lowercased, punctuation removed, stop-words dropped."""
-    return {word for word in WORD.findall((text or "").lower()) if word not in STOP_WORDS}
+    """The set of meaningful words in text: lowercased, punctuation and stop-words removed, stemmed."""
+    return {stem(word) for word in WORD.findall((text or "").lower()) if word not in STOP_WORDS}
 
 
 def jaccard(a_tokens, b_tokens):
