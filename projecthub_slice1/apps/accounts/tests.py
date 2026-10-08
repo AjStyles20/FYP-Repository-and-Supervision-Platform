@@ -471,7 +471,7 @@ class RegistrationFlowTests(TestCase):
 
 
 class SummaryApiTests(TestCase):
-    """/api/summary/: counts only, for admins and coordinators; 403 for other roles, 401 when signed out."""
+    """/api/summary/: counters for admins and coordinators, only the unread count for other roles, 401 signed out."""
 
     @classmethod
     def setUpTestData(cls):
@@ -551,11 +551,18 @@ class SummaryApiTests(TestCase):
                 self.assertEqual(page.context[name], value, f"{user.username}: {name}")
                 self.assertContains(page, f'data-counter="{name}">{value}<')
 
-    def test_other_roles_are_forbidden(self):
-        for user in (self.supervisor, self.hod, self.student):
+    def test_other_roles_get_only_their_own_unread_count(self):
+        Notification.objects.create(
+            recipient=self.supervisor, kind=NotificationKind.AT_RISK_PROJECT, object_type="projects.Project",
+            object_id="1", title="Project at risk",
+        )
+        for user, unread in ((self.supervisor, 1), (self.hod, 0), (self.student, 0)):
             response = self._get(user)
-            self.assertEqual(response.status_code, 403, user.username)
-            self.assertEqual(response.json(), {"detail": "Your role has no live counters."})
+            self.assertEqual(response.status_code, 200, user.username)
+            body = response.json()
+            self.assertEqual(set(body), {"role", "unread_notifications", "generated_at"}, user.username)
+            self.assertEqual((body["role"], body["unread_notifications"]), (user.role, unread))
+            self.assertNotIn("Project at risk", response.content.decode())
 
     def test_signed_out_gets_401_json_not_a_login_redirect(self):
         response = self._get()
@@ -568,8 +575,8 @@ class SummaryApiTests(TestCase):
 
         self.assertEqual(self.client.post(reverse("api_summary")).status_code, 405)
 
-    def test_polling_script_is_loaded_only_for_admins_and_coordinators(self):
-        for user, expected in ((self.admin, True), (self.coordinator, True), (self.supervisor, False), (self.student, False)):
+    def test_polling_script_is_loaded_for_every_signed_in_user(self):
+        self.assertNotContains(self.client.get(reverse("login")), "js/live-counters.js")
+        for user in (self.admin, self.coordinator, self.supervisor, self.hod, self.student):
             self.client.force_login(user)
-            page = self.client.get(reverse("announcements")).content.decode()
-            self.assertEqual("js/live-counters.js" in page, expected, user.username)
+            self.assertContains(self.client.get(reverse("announcements")), "js/live-counters.js", msg_prefix=user.username)

@@ -1,6 +1,6 @@
 # Live counters: `/api/summary/`
 
-The admin and coordinator portals refresh their four counters, and the Alerts count in the menu, every 30 seconds without reloading the page.
+Every signed-in page refreshes the Alerts count in the menu every 30 seconds without reloading. The admin and coordinator portals also refresh their four counters.
 
 Code: `api_summary`, `admin_counts` and `department_counts` in `projecthub_slice1/apps/accounts/views.py`; the poller is `projecthub_slice1/static/js/live-counters.js`. Tests: `SummaryApiTests` in `projecthub_slice1/apps/accounts/tests.py`.
 
@@ -16,12 +16,12 @@ It is signed in with the normal session cookie; there is no token. Only `GET` is
 
 | Status | When | Body |
 |---|---|---|
-| 200 | Signed in as an **admin** or a **coordinator** | See below |
+| 200 | Signed in as an **admin** or a **coordinator** | `role`, `counters`, `unread_notifications`, `generated_at` |
+| 200 | Signed in with **any other role** (student, supervisor, HOD) | `role`, `unread_notifications`, `generated_at`; no `counters` |
 | 401 | Not signed in | `{"detail": "Sign in required."}` |
-| 403 | Signed in as a student, supervisor or HOD | `{"detail": "Your role has no live counters."}` |
 | 405 | Any method other than GET | empty |
 
-The 401 is JSON on purpose, not a redirect to the login page, so the script can tell "signed out" apart from an error and stop.
+The 401 is JSON on purpose, not a redirect to the login page, so the script can tell "signed out" apart from an error and stop. No signed-in role is refused. Each role sees only numbers it is allowed to see: its own unread count, plus portal counters for the two roles that have them.
 
 ### 200 for an admin
 
@@ -69,21 +69,33 @@ The 401 is JSON on purpose, not a redirect to the login page, so the script can 
 | `approval_count` | Projects at "Supervisor accepted", whose signed form the coordinator must log |
 | `defence_count` | Projects at "Submitted for examination", whose defence outcome must be recorded |
 
-### Fields common to both
+### 200 for every other role (student, supervisor, HOD)
 
-- `role`: `"admin"` or `"coordinator"`.
-- `counters`: integers only. The keys are exactly the context names the portal templates use, and the page marks each number with `data-counter="<key>"`. That is how the script finds what to update. The numbers come from the same functions the portal page uses, so the page and the API cannot disagree (tested: `test_counters_match_the_portal_page`).
-- `unread_notifications`: the signed-in user's unread Alerts (see [automation](automation.md)).
+```json
+{
+  "role": "supervisor",
+  "unread_notifications": 1,
+  "generated_at": "2026-10-08T10:15:30.123456+00:00"
+}
+```
+
+There is no `counters` key at all: these roles have no portal counters to refresh.
+
+### Fields
+
+- `role`: the caller's own role.
+- `counters` (admins and coordinators only): integers only. The keys are exactly the context names the portal templates use, and the page marks each number with `data-counter="<key>"`. That is how the script finds what to update. The numbers come from the same functions the portal page uses, so the page and the API cannot disagree (tested: `test_counters_match_the_portal_page`).
+- `unread_notifications`: the caller's own unread Alerts (see [automation](automation.md)). Never anyone else's.
 - `generated_at`: server time in ISO 8601 (UTC).
 
-**No personal data:** the body never contains names, usernames, emails or student numbers. Only the counts and the caller's own role are included (tested: `test_response_contains_numbers_only_and_no_personal_data`).
+**No personal data:** the body never contains names, usernames, emails, student numbers or alert titles. Only counts and the caller's own role are included (tested: `test_response_contains_numbers_only_and_no_personal_data`, `test_other_roles_get_only_their_own_unread_count`).
 
 ## The poller (`static/js/live-counters.js`)
 
-`base.html` loads it only for admin and coordinator accounts. It:
+`base.html` loads it for every signed-in user. It:
 
 1. waits 30 seconds after the page loads, since the page already has fresh numbers;
-2. fetches `/api/summary/` and writes each counter into its `[data-counter]` element, and the unread count into the Alerts badge. The badge is hidden at 0, and the link's `aria-label` is updated for screen readers;
+2. fetches `/api/summary/`, writes each counter (if any) into its `[data-counter]` element, and writes the unread count into the Alerts badge. The badge is hidden at 0, and the link's `aria-label` is updated for screen readers;
 3. schedules the next request 30 seconds later;
 4. **stops while the tab is hidden** (`visibilitychange`): no requests are made until the tab is visible again, and then one request is sent straight away;
 5. stops for good on 401 or 403. On a network or server error it keeps the old numbers and tries again at the next tick.
@@ -95,5 +107,5 @@ This was checked in a real browser (headless Chromium) against the demo server:
 
 ## Not covered
 
-- Students, supervisors and HODs get 403, so their Alerts count refreshes only when a page loads. Extending the endpoint to them would mean returning just `unread_notifications` for those roles.
 - It is polling, not push. A change can take up to 30 seconds to appear.
+- Every open signed-in tab makes one small request every 30 seconds while visible. That is fine at department scale; a large deployment would want a longer interval or server push.

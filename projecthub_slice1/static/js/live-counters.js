@@ -1,6 +1,6 @@
-// Live counters: refresh the portal counters and the Alerts count without reloading the page.
-// Loaded only for admin and coordinator accounts. Asks /api/summary/ every 30 seconds while the
-// tab is visible, pauses while it is hidden, and stops for good on 401/403 (signed out or no access).
+// Live counters: refresh the Alerts count, and for admins and coordinators the portal counters,
+// without reloading the page. Loaded for every signed-in user. Asks /api/summary/ every 30 seconds
+// while the tab is visible, pauses while it is hidden, and stops for good on 401/403.
 (function () {
   "use strict";
   var script = document.currentScript;

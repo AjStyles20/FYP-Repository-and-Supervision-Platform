@@ -66,6 +66,6 @@
 </main>
 <footer class="site-footer"><div class="footer-inner">Baze Project Hub <span>·</span> Final-year project repository and supervision platform</div></footer>
 <script src="{% static 'js/navigation.js' %}?v=2" defer></script>
-{% if user.role == 'admin' or user.role == 'coordinator' %}<script src="{% static 'js/live-counters.js' %}?v=1" data-summary-url="{% url 'api_summary' %}" defer></script>{% endif %}
+{% if user.is_authenticated %}<script src="{% static 'js/live-counters.js' %}?v=2" data-summary-url="{% url 'api_summary' %}" defer></script>{% endif %}
 </body>
 </html>

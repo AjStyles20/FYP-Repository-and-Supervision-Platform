@@ -267,22 +267,21 @@ SUMMARY_COUNTERS = {Role.ADMIN: lambda user: admin_counts(), Role.COORDINATOR: d
 
 @require_GET
 def api_summary(request):
-    """Live counters for the admin and coordinator portals: numbers only, never names or emails.
+    """Live numbers for the signed-in user: counts only, never names or emails.
 
-    200 for admins and coordinators, 401 when signed out, 403 for every other role. The shape is
-    documented in docs/explain/live-counters.md; static/js/live-counters.js polls it every 30 seconds.
+    Admins and coordinators get their portal counters plus their unread alerts; every other role
+    gets only its own unread alert count. 401 when signed out. The shape is documented in
+    docs/explain/live-counters.md; static/js/live-counters.js polls it every 30 seconds.
     """
     if not request.user.is_authenticated:
         response = JsonResponse({"detail": "Sign in required."}, status=401)
-    elif request.user.role not in SUMMARY_COUNTERS:
-        response = JsonResponse({"detail": "Your role has no live counters."}, status=403)
     else:
-        response = JsonResponse({
-            "role": request.user.role,
-            "counters": SUMMARY_COUNTERS[request.user.role](request.user),
-            "unread_notifications": Notification.objects.filter(recipient=request.user, read_at__isnull=True).count(),
-            "generated_at": timezone.now().isoformat(),
-        })
+        summary = {"role": request.user.role}
+        if request.user.role in SUMMARY_COUNTERS:
+            summary["counters"] = SUMMARY_COUNTERS[request.user.role](request.user)
+        summary["unread_notifications"] = Notification.objects.filter(recipient=request.user, read_at__isnull=True).count()
+        summary["generated_at"] = timezone.now().isoformat()
+        response = JsonResponse(summary)
     response["Cache-Control"] = "no-store"
     return response
 
