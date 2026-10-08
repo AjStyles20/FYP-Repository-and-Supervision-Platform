@@ -6,6 +6,7 @@ from .models import (
     Announcement,
     AnnouncementAcknowledgement,
     MeetingRecordEdit,
+    Notification,
     SharedResource,
     SupervisionLogEntry,
     SupervisionMeeting,
@@ -68,3 +69,14 @@ class SupervisionLogEntryAdmin(admin.ModelAdmin):
     list_display = ("project", "kind", "author", "created_at")
     list_filter = ("kind", "created_at")
     search_fields = ("project__title", "body")
+
+
+@admin.register(Notification)
+class NotificationAdmin(admin.ModelAdmin):
+    list_display = ("created_at", "recipient", "kind", "title", "read_at")
+    list_filter = ("kind", "created_at", "read_at")
+    search_fields = ("title", "recipient__username", "object_id")
+    readonly_fields = ("recipient", "kind", "object_type", "object_id", "title", "body", "url", "created_at")
+
+    def has_add_permission(self, request):
+        return False  # created by run_automation through notify(), not by hand

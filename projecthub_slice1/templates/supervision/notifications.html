@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}Alerts · Baze Project Hub{% endblock %}
+{% block content %}
+<section class="page-heading"><p class="eyebrow">Alerts</p><h1>Your alerts</h1><p class="muted">Automatic reminders from the platform: projects at risk, registrations waiting for review and notices you still need to acknowledge. The same reminder is sent at most once a day.</p>
+  {% if unread_notification_count %}<form method="post" class="actions">{% csrf_token %}<input type="hidden" name="action" value="read_all"><button type="submit">Mark all as read</button></form>{% endif %}
+</section>
+{% for notification in notifications %}
+  <article class="card alert-card{% if not notification.is_read %} is-unread{% endif %}">
+    <p class="eyebrow">{{ notification.get_kind_display }} · {{ notification.created_at|date:"j M Y H:i" }}{% if not notification.is_read %} · <strong>New</strong>{% endif %}</p>
+    <h2>{{ notification.title }}</h2>
+    {% if notification.body %}<div class="muted">{{ notification.body|linebreaksbr }}</div>{% endif %}
+    <div class="actions">
+      {% if notification.url %}<a class="btn btn-sm" href="{{ notification.url }}">Open</a>{% endif %}
+      {% if not notification.is_read %}<form method="post" class="inline-form">{% csrf_token %}<input type="hidden" name="action" value="read"><input type="hidden" name="notification_id" value="{{ notification.pk }}"><button type="submit" class="btn btn-sm btn-quiet">Mark as read</button></form>{% endif %}
+    </div>
+  </article>
+{% empty %}
+  <div class="card"><p>No alerts yet.</p></div>
+{% endfor %}
+{% endblock %}

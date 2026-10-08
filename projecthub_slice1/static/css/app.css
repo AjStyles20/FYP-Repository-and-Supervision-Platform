@@ -539,3 +539,7 @@ td form { display: flex; flex-wrap: wrap; gap: var(--space-2); margin: 0; }
 .health-on_track .health-badge { background: var(--gray-100); border-color: transparent; color: var(--gray-700); }
 .health-watch .health-badge { background: var(--accent-soft); border-color: var(--accent); color: var(--accent-hover); }
 .health-at_risk .health-badge { background: var(--danger-soft); border-color: var(--danger); color: var(--danger); }
+
+/* Alerts (notifications from run_automation) */
+.nav-count { display: inline-block; min-width: 1.25rem; padding: 0 var(--space-1); border-radius: 999px; background: var(--accent); color: var(--on-accent); font-size: var(--text-xs); line-height: 1.25rem; text-align: center; }
+.alert-card.is-unread { border-left: 3px solid var(--accent); }

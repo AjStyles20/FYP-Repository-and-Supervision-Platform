@@ -7,6 +7,7 @@ urlpatterns = [
     path("meetings/<int:meeting_id>/", views.meeting_detail, name="meeting_detail"),
     path("meetings/<int:meeting_id>/edit/", views.edit_meeting, name="edit_meeting"),
     path("announcements/", views.announcements, name="announcements"),
+    path("alerts/", views.notifications, name="notifications"),
     path("resources/<int:resource_id>/download/", views.download_shared_resource, name="download_shared_resource"),
     path("resources/<int:resource_id>/edit/", views.edit_shared_resource, name="edit_shared_resource"),
     path("availability/", views.availability, name="supervisor_availability"),

@@ -16,7 +16,7 @@ from apps.projects.models import Project
 
 from .forms import ApprovalPolicyForm, AvailabilityForm, AnnouncementForm, MeetingForm, SharedResourceForm, StudentMeetingResponseForm
 from .models import (
-    Announcement, AnnouncementAcknowledgement, MeetingRecordEdit, SharedResource,
+    Announcement, AnnouncementAcknowledgement, MeetingRecordEdit, Notification, SharedResource,
     SupervisorAvailability, SupervisionMeeting, student_resource_scope,
 )
 from .services import notify_supervisees
@@ -374,3 +374,17 @@ def approval_policy(request):
         messages.success(request, message)
         return redirect("approval_policy")
     return render(request, "supervision/approval_policy.html", {"form": form})
+
+
+@login_required
+def notifications(request):
+    """The signed-in user's own alerts from run_automation, newest first; mark one or all as read."""
+    own = Notification.objects.filter(recipient=request.user)
+    if request.method == "POST":
+        unread = own.filter(read_at__isnull=True)
+        if request.POST.get("action") == "read_all":
+            unread.update(read_at=timezone.now())
+        elif request.POST.get("action") == "read" and request.POST.get("notification_id", "").isdigit():
+            unread.filter(pk=request.POST["notification_id"]).update(read_at=timezone.now())
+        return redirect("notifications")
+    return render(request, "supervision/notifications.html", {"notifications": own[:100]})

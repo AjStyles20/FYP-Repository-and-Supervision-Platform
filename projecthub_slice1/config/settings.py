@@ -66,6 +66,7 @@ TEMPLATES = [
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
+                "apps.supervision.context_processors.notifications",
             ],
         },
     },
@@ -151,6 +152,29 @@ HEALTH_EXPECTED_DAYS = {  # keyed by ProjectStage value; completed projects get 
     "3": 90,  # In progress
     "4": 30,  # Submitted for examination
     "5": 21,  # Defended
+}
+
+# Automation (python manage.py run_automation, apps/supervision/automation.py). Nothing runs on its
+# own: a scheduler or a --loop process must be running (docs/explain/automation.md).
+AUTOMATION_PENDING_REGISTRATION_HOURS = 48
+AUTOMATION_NOTICE_ACK_HOURS = 48
+NOTIFICATION_DEDUP_HOURS = 24  # same recipient + kind + object: at most one notification in this window
+
+# Each automation run logs a one-line summary to standard output; schedulers redirect it to a file.
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {"timestamped": {"format": "%(asctime)s %(levelname)s %(message)s"}},
+    "handlers": {
+        "automation_console": {
+            "class": "logging.StreamHandler",
+            "stream": "ext://sys.stdout",
+            "formatter": "timestamped",
+        },
+    },
+    "loggers": {
+        "projecthub.automation": {"handlers": ["automation_console"], "level": "INFO", "propagate": False},
+    },
 }
 
 # Security defaults. Production deployment must also serve over HTTPS.

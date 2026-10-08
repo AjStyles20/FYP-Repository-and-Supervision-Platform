@@ -1,16 +1,23 @@
 import tempfile
-from datetime import timedelta
+from datetime import date, timedelta
+from io import StringIO
+from unittest import mock
 
 from django.core.files.uploadedfile import SimpleUploadedFile
+from django.core.management import CommandError, call_command
 from django.test import TestCase, override_settings
 from django.urls import NoReverseMatch, reverse
 from django.utils import timezone
 
 from apps.academics.models import Department, Faculty, Programme
 from apps.accounts.models import Role, StudentProfile, SupervisorProfile, User
-from apps.projects.models import Project, ProjectStage
+from apps.projects.models import Project, ProjectMilestone, ProjectStage, ProjectStatusEvent, ProjectSupervisorAssignment
 
-from .models import Announcement, MeetingRequest, SharedResource, SupervisionMeeting, SupervisorAvailability
+from .models import (
+    Announcement, AnnouncementAcknowledgement, MeetingRequest, Notification, NotificationKind, SharedResource,
+    SupervisionMeeting, SupervisorAvailability,
+)
+from .services import notify
 
 
 class SupervisorStudentWorkflowTests(TestCase):
@@ -251,3 +258,183 @@ class SupervisorStudentWorkflowTests(TestCase):
                     self.assertEqual(response.status_code, 403)
                     self.assertNotContains(response, "Private discussion notes", status_code=403)
 
+
+class RunAutomationTests(TestCase):
+    """run_automation flags three things, notifies the right people, and never repeats itself within 24 h."""
+
+    COMMAND = "apps.supervision.management.commands.run_automation"
+
+    @classmethod
+    def setUpTestData(cls):
+        now = timezone.now()
+        faculty = Faculty.objects.create(name="Automation Faculty")
+        cls.department = Department.objects.create(faculty=faculty, name="Automation Department")
+        other_department = Department.objects.create(faculty=faculty, name="Other Automation Department")
+        cls.programme = Programme.objects.create(department=cls.department, name="Computer Science", degree_type="BSc")
+        cls.supervisor = User.objects.create(username="auto.supervisor", role=Role.SUPERVISOR, department=cls.department)
+        cls.coordinator = User.objects.create(username="auto.coordinator", role=Role.COORDINATOR, department=cls.department)
+        User.objects.create(username="auto.other.coordinator", role=Role.COORDINATOR, department=other_department)
+        cls.admin = User.objects.create(username="auto.admin", role=Role.ADMIN)
+        User.objects.create(username="auto.retired.admin", role=Role.ADMIN, is_active=False)
+
+        def student(username, number, status=StudentProfile.RegistrationStatus.APPROVED, joined_hours_ago=500,
+                    is_demo=False, **profile):
+            user = User.objects.create(
+                username=username, role=Role.STUDENT, date_joined=now - timedelta(hours=joined_hours_ago), is_demo=is_demo,
+            )
+            StudentProfile.objects.create(
+                user=user, student_number=number, programme=cls.programme, registration_status=status, **profile
+            )
+            return user
+
+        pending = StudentProfile.RegistrationStatus.PENDING
+        cls.waiting_long = student("auto.waiting.long", "BU/26/A/1", pending, joined_hours_ago=49)
+        student("auto.waiting.short", "BU/26/A/2", pending, joined_hours_ago=47)
+        student("auto.waiting.demo", "BU/26/A/3", pending, joined_hours_ago=200, is_demo=True)
+        cls.at_risk_student = student("auto.at.risk", "BU/26/A/4")
+        cls.reader = student("auto.reader", "BU/26/A/5")
+        cls.acknowledged = student("auto.acknowledged", "BU/26/A/6")
+        student("auto.graduate", "BU/26/A/7", student_status=StudentProfile.Status.GRADUATED)
+
+        # At risk: no held meeting in the 30 days since assignment (+40) and 3 overdue milestones (+30) = 70.
+        cls.at_risk = Project.objects.create(
+            student=cls.at_risk_student, title="Stalled project", department=cls.department,
+            programme=cls.programme, supervisor=cls.supervisor, stage=ProjectStage.IN_PROGRESS,
+        )
+        ProjectStatusEvent.objects.create(project=cls.at_risk, to_stage=ProjectStage.IN_PROGRESS)
+        assignment = ProjectSupervisorAssignment.objects.create(project=cls.at_risk, supervisor=cls.supervisor)
+        ProjectSupervisorAssignment.objects.filter(pk=assignment.pk).update(assigned_at=now - timedelta(days=30))
+        for number in range(3):
+            ProjectMilestone.objects.create(project=cls.at_risk, name=f"Chapter {number}", due_date=date(2020, 1, 1))
+        # On track: brand new, nothing overdue.
+        Project.objects.create(
+            student=cls.reader, title="Healthy project", department=cls.department, programme=cls.programme,
+            supervisor=cls.supervisor, stage=ProjectStage.IN_PROGRESS,
+        )
+
+        def notice(title, hours_ago, requires_acknowledgement=True, project=None):
+            item = Announcement.objects.create(
+                author=cls.supervisor, department=cls.department, project=project, title=title, body="Read me.",
+                requires_acknowledgement=requires_acknowledgement,
+            )
+            Announcement.objects.filter(pk=item.pk).update(created_at=now - timedelta(hours=hours_ago))
+            return item
+
+        cls.department_notice = notice("Department deadline", 72)
+        cls.project_notice = notice("Your chapter two", 72, project=cls.at_risk)
+        notice("Fresh notice", 2)
+        notice("No acknowledgement needed", 72, requires_acknowledgement=False)
+        AnnouncementAcknowledgement.objects.create(
+            announcement=cls.department_notice, user=cls.acknowledged, acknowledged_at=now
+        )
+
+    def _run(self, *args):
+        with self.assertLogs("projecthub.automation", "INFO") as logs:
+            call_command("run_automation", *args, stdout=StringIO())
+        return logs.output
+
+    def _keep_connection(self):
+        # The loop drops stale connections between runs. Inside a test transaction that would close the
+        # connection the test is using (MySQL does; SQLite's in-memory test database ignores it).
+        return mock.patch(f"{self.COMMAND}.close_old_connections")
+
+    def _sent(self):
+        return {
+            (n.recipient.username, n.kind, n.object_type, n.object_id)
+            for n in Notification.objects.select_related("recipient")
+        }
+
+    def test_first_run_notifies_the_right_people_for_each_flag(self):
+        logs = self._run()
+
+        project, user, notice = "projects.Project", "accounts.User", "supervision.Announcement"
+        self.assertEqual(self._sent(), {
+            ("auto.supervisor", NotificationKind.AT_RISK_PROJECT, project, str(self.at_risk.pk)),
+            ("auto.coordinator", NotificationKind.AT_RISK_PROJECT, project, str(self.at_risk.pk)),
+            ("auto.admin", NotificationKind.PENDING_REGISTRATION, user, str(self.waiting_long.pk)),
+            ("auto.at.risk", NotificationKind.UNACKNOWLEDGED_NOTICE, notice, str(self.department_notice.pk)),
+            ("auto.reader", NotificationKind.UNACKNOWLEDGED_NOTICE, notice, str(self.department_notice.pk)),
+            ("auto.at.risk", NotificationKind.UNACKNOWLEDGED_NOTICE, notice, str(self.project_notice.pk)),
+        })
+        self.assertIn("run_automation: 6 new notifications", logs[-1])
+        self.assertIn("at_risk_project: 1 flagged, 2 new, 0 already sent", logs[-1])
+        self.assertIn("pending_registration: 1 flagged, 1 new, 0 already sent", logs[-1])
+        self.assertIn("unacknowledged_notice: 2 flagged, 3 new, 0 already sent", logs[-1])
+        alert = Notification.objects.get(recipient=self.supervisor)
+        self.assertEqual(alert.title, "At risk (70/100): Stalled project")
+        self.assertIn("3 overdue milestones (limit 3): +30", alert.body)
+        self.assertEqual(alert.url, reverse("project_workflow", args=[self.at_risk.pk]))
+
+    def test_second_run_creates_nothing_new(self):
+        self._run()
+        first = list(Notification.objects.order_by("pk").values_list("pk", flat=True))
+
+        logs = self._run()
+
+        self.assertEqual(list(Notification.objects.order_by("pk").values_list("pk", flat=True)), first)
+        self.assertIn("run_automation: 0 new notifications", logs[-1])
+        self.assertIn("at_risk_project: 1 flagged, 0 new, 2 already sent", logs[-1])
+
+    def test_a_reminder_is_sent_again_once_24_hours_have_passed(self):
+        self._run()
+        Notification.objects.update(created_at=timezone.now() - timedelta(hours=25))
+
+        self._run()
+
+        self.assertEqual(Notification.objects.count(), 12)
+
+    def test_acknowledging_stops_the_reminder(self):
+        AnnouncementAcknowledgement.objects.create(
+            announcement=self.department_notice, user=self.reader, acknowledged_at=timezone.now()
+        )
+
+        self._run()
+
+        self.assertFalse(Notification.objects.filter(recipient=self.reader).exists())
+
+    def test_notify_skips_only_the_same_recipient_kind_and_object_within_24_hours(self):
+        now = timezone.now()
+        kind = NotificationKind.PENDING_REGISTRATION
+
+        self.assertIsNotNone(notify(self.admin, kind, self.waiting_long, title="First", now=now))
+        self.assertIsNone(notify(self.admin, kind, self.waiting_long, title="Again", now=now + timedelta(hours=23)))
+        self.assertIsNotNone(notify(self.coordinator, kind, self.waiting_long, title="Other recipient", now=now))
+        self.assertIsNotNone(notify(self.admin, NotificationKind.AT_RISK_PROJECT, self.waiting_long, title="Other kind", now=now))
+        self.assertIsNotNone(notify(self.admin, kind, self.reader, title="Other object", now=now))
+        self.assertIsNotNone(notify(self.admin, kind, self.waiting_long, title="Next day", now=now + timedelta(hours=25)))
+
+    def test_loop_runs_until_stopped(self):
+        with mock.patch(f"{self.COMMAND}.time.sleep", side_effect=KeyboardInterrupt) as sleep, self._keep_connection():
+            logs = self._run("--loop", "--interval", "5")
+
+        sleep.assert_called_once_with(5)
+        self.assertIn("looping every 5 seconds", logs[0])
+        self.assertIn("run_automation: 6 new notifications", logs[1])
+        self.assertIn("run_automation: stopped", logs[-1])
+
+    def test_loop_keeps_going_after_a_failed_run(self):
+        with mock.patch(f"{self.COMMAND}.run_once", side_effect=[RuntimeError("database away"), {}]) as run_once, \
+                mock.patch(f"{self.COMMAND}.time.sleep", side_effect=[None, KeyboardInterrupt]), self._keep_connection():
+            logs = self._run("--loop")
+
+        self.assertEqual(run_once.call_count, 2)
+        self.assertTrue(any("run failed" in line for line in logs))
+
+    def test_interval_must_be_positive(self):
+        with self.assertRaises(CommandError):
+            call_command("run_automation", "--loop", "--interval", "0", stdout=StringIO())
+
+    def test_alerts_page_shows_only_your_own_and_marks_them_read(self):
+        self._run()
+        self.client.force_login(self.coordinator)
+
+        response = self.client.get(reverse("notifications"))
+
+        self.assertContains(response, "At risk (70/100): Stalled project")
+        self.assertNotContains(response, "Registration waiting")
+        self.assertContains(response, '<span class="nav-count">1</span>')
+
+        self.client.post(reverse("notifications"), {"action": "read_all"})
+
+        self.assertFalse(Notification.objects.filter(recipient=self.coordinator, read_at__isnull=True).exists())
+        self.assertFalse(Notification.objects.filter(recipient=self.supervisor, read_at__isnull=False).exists())
