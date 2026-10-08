@@ -2,12 +2,12 @@
 {% block title %}Project workflow · {{ project.title }}{% endblock %}
 {% block content %}
 <p class="breadcrumb"><a href="{% url 'current_project_detail' project.pk %}">← Project summary</a></p>
-<h1>Project workflow</h1>
 <section class="card">
-  <p class="eyebrow">{{ project.get_stage_display }}</p>
-  <h2>{{ project.title }}</h2>
+  <p class="eyebrow">Project workflow</p>
+  <h1>{{ project.title }}</h1>
+  <div class="tag-row"><span class="tag tag-live">{{ project.get_stage_display }}</span></div>
   <p>{{ project.student.get_full_name|default:project.student.username }} · {{ project.department.name }}</p>
-  {% if project.supervisor_id %}<section class="form-note"><strong>Supervisor approval criteria:</strong> {{ approval_method|title }}{% if approval_criteria %}<br>{{ approval_criteria|linebreaksbr }}{% else %}<br><span class="muted">No additional criteria have been posted.</span>{% endif %}</section>{% endif %}
+  {% if project.supervisor_id %}<section class="form-note"><strong>Supervisor approval criteria:</strong> {% if approval_method == "literature_review" %}Literature review and research gap{% elif approval_method == "working_project" %}Working project demonstration{% else %}Topic, aim and methodology{% endif %}{% if approval_criteria %}<br>{{ approval_criteria|linebreaksbr }}{% else %}<br><span class="muted">No additional criteria have been posted.</span>{% endif %}</section>{% endif %}
   {% if project.approval_form %}
     <p>Approval form status: <strong>{{ project.approval_form.state_label }}</strong></p>
     {% if project.approval_form.supervisor_comments %}<p>Supervisor comments: {{ project.approval_form.supervisor_comments|linebreaksbr }}</p>{% endif %}
@@ -26,14 +26,14 @@
 <section class="card">
   <h2>History</h2>
   {% if project.status_events.all %}
-    <ol>{% for event in project.status_events.all %}<li>{{ event.get_to_stage_display }} · {{ event.created_at|date:"j M Y H:i" }}{% if event.actor %} · {{ event.actor.get_full_name|default:event.actor.username }}{% endif %}{% if event.note %}<br>{{ event.note|linebreaksbr }}{% endif %}</li>{% endfor %}</ol>
+    <ol class="timeline">{% for event in project.status_events.all %}<li><strong>{{ event.get_to_stage_display }}</strong><span class="timeline-meta">{{ event.created_at|date:"j M Y H:i" }}{% if event.actor %} · {{ event.actor.get_full_name|default:event.actor.username }}{% endif %}</span>{% if event.note %}<span class="timeline-note">{{ event.note|linebreaksbr }}</span>{% endif %}</li>{% endfor %}</ol>
   {% else %}<p>No status changes recorded yet.</p>{% endif %}
 </section>
 <section class="card">
   <h2>Approval decisions</h2>
   <p class="muted">Every supervisor decision and departmental log entry is kept, including ones a later resubmission replaced. Entries cannot be edited or deleted.</p>
   {% if project.approval_decisions.all %}
-    <ol>{% for decision in project.approval_decisions.all %}<li><strong>{{ decision.get_step_display }}</strong>{% if decision.decision %}: {{ decision.get_decision_display }}{% endif %} · “{{ decision.proposed_title }}” · {{ decision.decided_on|date:"j M Y"|default:"no date" }}{% if decision.decided_by %} · {{ decision.decided_by.get_full_name|default:decision.decided_by.username }}{% endif %}{% if decision.approval_method %} · method: {{ decision.approval_method }}{% endif %}{% if decision.comments %}<br>{{ decision.comments|linebreaksbr }}{% endif %}</li>{% endfor %}</ol>
+    <ol class="timeline">{% for decision in project.approval_decisions.all %}<li><strong>{{ decision.get_step_display }}{% if decision.decision %}: {{ decision.get_decision_display }}{% endif %}</strong><span class="timeline-meta">“{{ decision.proposed_title }}” · {{ decision.decided_on|date:"j M Y"|default:"no date" }}{% if decision.decided_by %} · {{ decision.decided_by.get_full_name|default:decision.decided_by.username }}{% endif %}{% if decision.approval_method %} · method: {{ decision.approval_method }}{% endif %}</span>{% if decision.comments %}<span class="timeline-note">{{ decision.comments|linebreaksbr }}</span>{% endif %}</li>{% endfor %}</ol>
   {% else %}<p>No approval decisions recorded yet.</p>{% endif %}
 </section>
 {% endblock %}

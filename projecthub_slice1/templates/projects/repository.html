@@ -14,10 +14,10 @@
   </div>
 </section>
 
-<div class="hero-actions repository-switcher">
-  {% if is_running_topics %}<a class="btn btn-quiet" href="{% url 'repository' %}">Browse completed projects</a>
-  {% else %}<a class="btn btn-quiet" href="{% url 'running_topics' %}">Search running topics</a>{% endif %}
-</div>
+<nav class="repository-tabs" aria-label="Repository sections">
+  <a href="{% url 'repository' %}"{% if not is_running_topics %} aria-current="page"{% endif %}>Completed projects</a>
+  <a href="{% url 'running_topics' %}"{% if is_running_topics %} aria-current="page"{% endif %}>Running topics</a>
+</nav>
 
 <form method="get" class="repository-filter card">
   {% if is_running_topics %}<input type="hidden" name="section" value="current">{% else %}<input type="hidden" name="section" value="past">{% endif %}
@@ -76,7 +76,7 @@
 
 <div class="results-heading">
   <div>
-    <h2>{% if is_running_topics %}Current students{% else %}Graduated students{% endif %}</h2>
+    <h2>{% if is_running_topics %}Current students{% else %}Archived projects{% endif %}</h2>
     <p class="muted">Project summaries are available to signed-in Baze Project Hub users.</p>
   </div>
   <span class="result-count">{{ items|length }} result{{ items|length|pluralize }}</span>

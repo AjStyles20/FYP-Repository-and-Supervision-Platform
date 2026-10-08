@@ -11,10 +11,10 @@
 </section>
 
 <section class="bento" aria-label="Alumni information">
-  <div class="bento-cell"><span class="bento-label">Programme</span><strong class="bento-value" style="font-size:1.35rem">{{ student_profile.programme.award }}</strong></div>
+  <div class="bento-cell"><span class="bento-label">Programme</span><strong class="bento-value bento-value-small">{{ student_profile.programme.award }}</strong></div>
   <div class="bento-cell"><span class="bento-label">Graduation year</span><strong class="bento-value">{{ student_profile.graduation_year|default:"—" }}</strong></div>
   <div class="bento-cell"><span class="bento-label">Archived projects</span><strong class="bento-value">{{ archived_projects|length }}</strong></div>
-  <div class="bento-cell"><span class="bento-label">Contact preference</span><strong class="bento-value" style="font-size:1.35rem">{% if student_profile.contact_consent %}Opted in{% else %}Private{% endif %}</strong></div>
+  <div class="bento-cell"><span class="bento-label">Contact preference</span><strong class="bento-value bento-value-small">{% if student_profile.contact_consent %}Opted in{% else %}Private{% endif %}</strong></div>
 </section>
 
 <section class="stack">

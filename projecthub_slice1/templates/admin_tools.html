@@ -1,9 +1,8 @@
 {% extends "base.html" %}
 {% block title %}Admin tools · Baze Project Hub{% endblock %}
 {% block content %}
-<h1>Admin tools</h1>
-<p><a class="button" href="{% url 'audit_log' %}">View audit log</a></p>
-<p><a class="button" href="{% url 'import_projects' %}">Import past projects from CSV</a></p>
+<section class="page-heading"><p class="eyebrow">System administration</p><h1>Admin tools</h1>
+<div class="actions"><a class="btn" href="{% url 'audit_log' %}">View audit log</a><a class="btn" href="{% url 'import_projects' %}">Import past projects from CSV</a></div></section>
 <section class="card">
   <h2>Student account approvals</h2>
   {% if pending_students %}
@@ -13,12 +12,12 @@
         <tbody>
           {% for student in pending_students %}
             <tr>
-              <td>{{ student.get_full_name|default:student.username }}</td>
-              <td>{{ student.email }}</td>
-              <td>{{ student.student_profile.student_number }}</td>
-              <td>{{ student.student_profile.programme }}</td>
-              <td>{{ student.student_profile.get_student_status_display }}</td>
-              <td>
+              <td data-label="Student">{{ student.get_full_name|default:student.username }}</td>
+              <td data-label="Baze email">{{ student.email }}</td>
+              <td data-label="Student ID">{{ student.student_profile.student_number }}</td>
+              <td data-label="Programme">{{ student.student_profile.programme }}</td>
+              <td data-label="Status">{{ student.student_profile.get_student_status_display }}</td>
+              <td data-label="Action">
                 <form method="post" action="{% url 'review_student_registration' student.pk %}">
                   {% csrf_token %}
                   <button type="submit" name="action" value="approve" class="primary">Approve</button>

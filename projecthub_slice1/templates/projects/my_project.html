@@ -5,18 +5,20 @@
 {% if project %}
   <section class="card">
     <h2>{{ project.title }}</h2>
-    <div class="muted" style="display:flex; flex-wrap:wrap; gap:12px; margin:8px 0 10px;">
+    <div class="tag-row">
       <span class="tag">{{ project.get_stage_display }}</span>
       <span class="tag">{{ project.department }}</span>
       <span class="tag">{{ project.programme }}</span>
       <span class="tag">{% if project.supervisor %}{{ project.supervisor.get_full_name|default:project.supervisor.username }}{% else %}Supervisor to be assigned{% endif %}</span>
     </div>
     <p>{{ project.description }}</p>
-    <p><a class="button" href="{% url 'project_workflow' project.pk %}">Project actions and approval form</a> <a class="button" href="{% url 'project_meetings' project.pk %}">Supervision meetings</a></p>
+    <div class="actions">
+      <a class="button" href="{% url 'project_workflow' project.pk %}">Project actions and approval form</a>
+      <a class="btn" href="{% url 'project_meetings' project.pk %}">Supervision meetings</a>
+      <a class="btn" href="{% url 'upload_project_document' project.pk %}">Upload project document</a>
+    </div>
     <p class="muted">Your supervisor schedules meetings and notifies you when a session is set.</p>
-    <p><a class="button" href="{% url 'upload_project_document' project.pk %}">Upload project document</a></p>
     {% if documents %}<h3>Your project files</h3><ul>{% for document in documents %}<li>{{ document.title }} · {{ document.get_document_type_display }} · <a href="{% url 'download_project_document' document.pk %}">Download</a>{% if document.visibility == 'staff_only' %} (staff only){% endif %}</li>{% endfor %}</ul>{% endif %}
-    <p><a class="button" href="{% url 'project_workflow' project.pk %}">Project actions and approval form</a></p>
 
     {% if project.milestones.all %}
       <h3>Milestones</h3>
@@ -34,7 +36,7 @@
     {% if project.meetings.all %}
       <h3>Recent meeting logs</h3>
       {% for log in project.meetings.all %}
-        <div class="card" style="margin-top:10px;">
+        <div class="card">
           <strong>{{ log.scheduled_for }}</strong>
           <p>Status: {{ log.get_status_display }}</p>
           <p><strong>Discussion:</strong> {{ log.discussion|default:"—" }}</p>
