@@ -3,22 +3,27 @@
    uses: card, button and badge. Page layouts live in app.css and use these variables only. */
 
 :root {
-  /* Colour: one accent, neutral greys, one functional red for errors */
-  --accent: #1d5f91;
-  --accent-hover: #174d76;
-  --accent-soft: #e9f1f8;
+  /* Colour: Baze University palette. Crimson accent, off-white page, white cards, neutral greys,
+     charcoal and medium-grey bands (header, footer, heroes), one functional red for errors.
+     Every text pair used meets WCAG AA (4.5:1); the weakest is light text on the mid band at 5.5:1. */
+  --accent: #a00000;        /* crimson: buttons, links, brand mark */
+  --accent-hover: #c00000;
+  --accent-soft: #fbecec;
   --on-accent: #ffffff;
-  --gray-0: #ffffff;
-  --gray-25: #fafbfc;
-  --gray-50: #f4f6f8;
-  --gray-100: #eaeef2;
-  --gray-200: #dbe1e7;
-  --gray-300: #c3ccd5;
-  --gray-500: #66727e;
-  --gray-700: #3a4550;
-  --gray-900: #141c24;
+  --gray-0: #ffffff;        /* surfaces: cards, fields */
+  --gray-25: #fcfcfd;
+  --gray-50: #f8f9fa;       /* page background */
+  --gray-100: #eceef0;
+  --gray-200: #dfe2e5;
+  --gray-300: #c5c9cd;
+  --gray-500: #5f6368;
+  --gray-700: #3a3d40;
+  --gray-900: #1e1e1e;
   --danger: #b42318;
   --danger-soft: #fdeceb;
+  --band-dark: #1e1e1e;     /* header and hero bands */
+  --band-footer: #222222;
+  --band-mid: #555555;      /* alternating band: project detail header */
 
   /* Spacing scale (4px base) */
   --space-1: 0.25rem;
@@ -49,9 +54,9 @@
   --radius-lg: 14px;
   --radius-full: 999px;
   --border: 1px solid var(--gray-200);
-  --shadow-sm: 0 1px 2px rgba(20, 28, 36, 0.05);
-  --shadow: 0 1px 3px rgba(20, 28, 36, 0.07), 0 1px 2px rgba(20, 28, 36, 0.04);
-  --focus: 0 0 0 3px rgba(29, 95, 145, 0.28);
+  --shadow-sm: 0 1px 2px rgba(30, 30, 30, 0.06);
+  --shadow: 0 1px 3px rgba(30, 30, 30, 0.08), 0 1px 2px rgba(30, 30, 30, 0.05);
+  --focus: 0 0 0 3px rgba(160, 0, 0, 0.28);
 
   /* Layout */
   --content-width: 72rem;
@@ -162,3 +167,29 @@
   color: var(--gray-500);
   font-weight: 500;
 }
+
+/* ---------- Dark bands ----------
+   The header, footer and hero bands re-map the colour tokens instead of restyling each element:
+   inside a band, text tokens turn light, surfaces turn translucent, and the accent turns white, so
+   links are white and primary buttons are white with crimson text ("APPLY NOW" style). */
+.top, .site-footer, .hero-band, .repository-hero, .supervisor-welcome, .detail-hero {
+  --gray-900: #ffffff;
+  --gray-700: #e6e6e6;
+  --gray-500: #dddddd;
+  --gray-300: rgba(255, 255, 255, 0.45);
+  --gray-200: rgba(255, 255, 255, 0.28);
+  --gray-100: rgba(255, 255, 255, 0.14);
+  --gray-50: rgba(255, 255, 255, 0.08);
+  --gray-25: rgba(255, 255, 255, 0.06);
+  --gray-0: transparent;
+  --accent: #ffffff;
+  --accent-hover: #ffe0e0;
+  --accent-soft: rgba(255, 255, 255, 0.14);
+  --on-accent: #a00000;
+  --border: 1px solid rgba(255, 255, 255, 0.28);
+  --focus: 0 0 0 3px rgba(255, 255, 255, 0.45);
+  color: #ffffff;
+}
+.top, .hero-band, .repository-hero, .supervisor-welcome { background: var(--band-dark); }
+.site-footer { background: var(--band-footer); }
+.detail-hero { background: var(--band-mid); }

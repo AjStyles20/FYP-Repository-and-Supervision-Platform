@@ -48,8 +48,7 @@ small { font-size: var(--text-sm); }
   position: sticky;
   top: 0;
   z-index: 10;
-  background: var(--gray-0);
-  border-bottom: var(--border);
+  border-top: 3px solid #a00000; /* the crimson brand bar; tokens are re-mapped inside .top */
 }
 .top-inner {
   max-width: var(--content-wide);
@@ -75,8 +74,8 @@ small { font-size: var(--text-sm); }
   width: 2rem;
   height: 2rem;
   border-radius: var(--radius-sm);
-  background: var(--accent);
-  color: var(--on-accent);
+  background: #a00000;
+  color: #ffffff;
   font-size: var(--text-xs);
   font-weight: 700;
 }
@@ -144,14 +143,16 @@ small { font-size: var(--text-sm); }
   margin: 0;
   padding: var(--space-3) var(--space-4);
   border-radius: var(--radius);
-  background: var(--accent-soft);
-  color: var(--accent-hover);
+  border-left: 3px solid var(--accent);
+  background: var(--gray-0);
+  color: var(--gray-900);
   font-weight: 500;
+  box-shadow: var(--shadow-sm);
 }
-.msg.warning { background: var(--gray-50); color: var(--gray-900); border-left: 3px solid var(--accent); }
+.msg.warning { background: var(--gray-0); color: var(--gray-900); border-left: 3px solid var(--danger); }
 .breadcrumb { margin: 0; font-size: var(--text-sm); }
 .breadcrumb a { text-decoration: none; }
-.site-footer { border-top: var(--border); background: var(--gray-0); }
+.site-footer { border-top: 0; }
 .footer-inner {
   max-width: var(--content-wide);
   margin: 0 auto;
@@ -168,10 +169,9 @@ small { font-size: var(--text-sm); }
   flex-direction: column;
   gap: var(--space-5);
   padding: var(--space-6) var(--space-5);
-  background: var(--gray-0);
-  border: var(--border);
+  border: 0;
   border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-sm);
+  box-shadow: var(--shadow);
 }
 .hero-copy { max-width: 44rem; }
 .hero-copy > p:not(.eyebrow), .repository-hero p:not(.eyebrow), .supervisor-welcome p:not(.eyebrow) { color: var(--gray-700); max-width: 40rem; }
@@ -520,10 +520,20 @@ td form { display: flex; flex-wrap: wrap; gap: var(--space-2); margin: 0; }
 .filter-row { display: flex; flex-wrap: wrap; align-items: flex-end; gap: var(--space-3); }
 .filter-row > div { flex: 1 1 14rem; min-width: 0; }
 
-/* Header fit: keep the brand on one line; the name label returns on wide screens */
+/* Header fit: one row on desktop for every role (the coordinator has the most links). Links are
+   tightened and never wrap; the name label only returns on very wide screens. */
 .brand { white-space: nowrap; flex-shrink: 0; }
-@media (min-width: 1100px) and (max-width: 1359px) {
+@media (min-width: 1100px) {
+  .top-nav, .nav-js .top-nav:not(.is-open) { flex-wrap: nowrap; gap: 0; }
+  .top-nav a { padding: var(--space-2) 0.45rem; font-size: 0.8125rem; white-space: nowrap; }
+  .top-nav .inline-form { margin-left: var(--space-2); }
   .top-nav .who { display: none; }
+}
+@media (min-width: 1100px) and (max-width: 1199px) {
+  .top-nav a { padding: var(--space-2) 0.3rem; font-size: 0.78rem; }
+}
+@media (min-width: 1600px) {
+  .top-nav .who { display: inline; white-space: nowrap; }
 }
 .detail-hero .sample-label { align-self: flex-start; }
 
@@ -537,7 +547,7 @@ td form { display: flex; flex-wrap: wrap; gap: var(--space-2); margin: 0; }
 .health-reasons { margin: 0; padding-left: var(--space-5); color: var(--gray-700); font-size: var(--text-sm); overflow-wrap: anywhere; }
 .health-reasons li + li { margin-top: var(--space-1); }
 .health-on_track .health-badge { background: var(--gray-100); border-color: transparent; color: var(--gray-700); }
-.health-watch .health-badge { background: var(--accent-soft); border-color: var(--accent); color: var(--accent-hover); }
+.health-watch .health-badge { background: var(--gray-100); border-color: var(--gray-700); color: var(--gray-900); }
 .health-at_risk .health-badge { background: var(--danger-soft); border-color: var(--danger); color: var(--danger); }
 
 /* Alerts (notifications from run_automation) */
