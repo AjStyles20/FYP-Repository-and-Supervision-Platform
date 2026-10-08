@@ -29,6 +29,7 @@
       <h3>{{ project.student.get_full_name|default:project.student.username }}</h3>
       {% if project.student.student_profile %}<p class="muted">Student ID: {{ project.student.student_profile.student_number }}</p>{% endif %}
       <p><strong>{{ project.title }}</strong> · {{ project.get_stage_display }}</p>
+      {% include "projects/_health.html" with health=row.health %}
       <p class="muted">{{ project.description|default:"No project summary has been added yet."|truncatewords:36 }}</p>
       <p class="muted">Project record updated {{ project.updated_at|date:"j M Y, H:i" }}</p>
       <a class="card-link" href="{% url 'current_project_detail' project.pk %}">View project summary</a>

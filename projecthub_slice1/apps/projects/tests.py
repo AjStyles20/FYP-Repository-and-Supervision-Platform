@@ -23,6 +23,7 @@ from .models import (
     ProjectApprovalForm,
     ProjectCompletion,
     ProjectDocument,
+    ProjectMilestone,
     ProjectStage,
     ProjectStatusEvent,
     ProjectSupervisorAssignment,
@@ -39,6 +40,7 @@ from .services import (
     unassign_project_supervisor,
 )
 from .services.similarity import similar_archived_projects, similarity, tokens
+from .services.health import AT_RISK, ON_TRACK, WATCH, health_band, health_score
 
 
 class RepositoryTests(TestCase):
@@ -1212,3 +1214,144 @@ class SimilarTopicPagesTests(TestCase):
     def test_threshold_comes_from_settings(self):
         self.assertEqual(similar_archived_projects("Exam Seating Allocation Tool for Halls"), [])
         self.assertEqual(len(similar_archived_projects("Exam Seating Allocation Tool", "Allocating examination seats across halls.")), 1)
+
+
+class ProjectHealthScoreTests(TestCase):
+    """health_score(project, now): edge cases with records created now and `now` moved forward."""
+
+    @classmethod
+    def setUpTestData(cls):
+        faculty = Faculty.objects.create(name="Health Faculty")
+        cls.department = Department.objects.create(faculty=faculty, name="Health Department")
+        cls.other_department = Department.objects.create(faculty=faculty, name="Other Health Department")
+        cls.programme = Programme.objects.create(department=cls.department, name="Computer Science", degree_type="BSc")
+        cls.supervisor = User.objects.create(username="health.supervisor", role=Role.SUPERVISOR, department=cls.department)
+        cls.coordinator = User.objects.create(username="health.coordinator", role=Role.COORDINATOR, department=cls.department)
+        cls.other_coordinator = User.objects.create(
+            username="health.other.coordinator", role=Role.COORDINATOR, department=cls.other_department
+        )
+        cls.hod = User.objects.create(username="health.hod", role=Role.HOD, department=cls.department)
+        cls.student = User.objects.create(username="health.student", role=Role.STUDENT)
+
+    def _project(self, stage=ProjectStage.IN_PROGRESS, supervised=True):
+        project = Project.objects.create(
+            student=self.student, title="Health project", department=self.department, programme=self.programme,
+            stage=stage, supervisor=self.supervisor if supervised else None,
+        )
+        ProjectStatusEvent.objects.create(project=project, to_stage=stage, note="Created for the health tests.")
+        if supervised:
+            ProjectSupervisorAssignment.objects.create(project=project, supervisor=self.supervisor)
+        return project
+
+    def _meeting(self, project, when, status):
+        from apps.supervision.models import SupervisionMeeting
+
+        return SupervisionMeeting.objects.create(project=project, scheduled_for=when, status=status)
+
+    def _later(self, days):
+        return timezone.now() + timedelta(days=days)
+
+    def test_brand_new_project_is_on_track_with_every_reason_listed(self):
+        project = self._project(stage=ProjectStage.PROPOSED, supervised=False)
+
+        health = health_score(project)
+
+        self.assertEqual(health.score, 0)
+        self.assertEqual(health.band, ON_TRACK)
+        self.assertEqual(health.reasons, [
+            "No held meeting yet; project created 0 days ago (limit 14 days): +0",
+            "No milestones set: +0",
+            "0 days at Topic proposed (expected 14 days): +0",
+        ])
+
+    def test_no_meetings_counts_from_the_supervisor_assignment(self):
+        project = self._project()
+
+        health = health_score(project, now=self._later(20))
+
+        # meeting 0.4 * min(20/14, 1) = 0.4; stage 0.3 * 20/90 = 0.0667; no milestones.
+        self.assertEqual(health.score, 47)
+        self.assertEqual(health.band, WATCH)
+        self.assertIn("No held meeting yet; supervisor assigned 20 days ago (limit 14 days): +40", health.reasons)
+        self.assertIn("No milestones set: +0", health.reasons)
+
+    def test_only_held_meetings_reset_the_clock(self):
+        project = self._project()
+        now = self._later(30)
+        self._meeting(project, now - timedelta(days=7), "held")
+        self._meeting(project, now - timedelta(days=1), "missed")
+        self._meeting(project, now - timedelta(days=2), "scheduled")
+
+        health = health_score(project, now=now)
+
+        self.assertIn("Last held meeting 7 days ago (limit 14 days): +20", health.reasons)
+
+    def test_every_term_is_capped_and_the_total_is_at_risk(self):
+        project = self._project()
+        now = self._later(120)
+        self._meeting(project, now - timedelta(days=60), "held")
+        for number in range(4):
+            ProjectMilestone.objects.create(project=project, name=f"Chapter {number}", due_date=date(2020, 1, 1))
+
+        health = health_score(project, now=now)
+
+        self.assertEqual(health.score, 100)
+        self.assertEqual(health.band, AT_RISK)
+        self.assertIn("4 overdue milestones (limit 3): +30", health.reasons)
+        self.assertIn("120 days at In progress (expected 90 days): +30", health.reasons)
+
+    def test_done_undated_and_future_milestones_are_not_overdue(self):
+        project = self._project()
+        ProjectMilestone.objects.create(project=project, name="Done", due_date=date(2020, 1, 1), done=True)
+        ProjectMilestone.objects.create(project=project, name="Undated")
+        ProjectMilestone.objects.create(project=project, name="Future", due_date=timezone.localdate() + timedelta(days=30))
+
+        health = health_score(project)
+
+        self.assertIn("0 overdue milestones (limit 3): +0", health.reasons)
+
+    def test_completed_and_archived_projects_have_no_score(self):
+        self.assertIsNone(health_score(self._project(stage=ProjectStage.COMPLETED)))
+        archived = self._project()
+        archived.archived = True
+        self.assertIsNone(health_score(archived))
+
+    def test_band_edges(self):
+        self.assertEqual([health_band(score) for score in (0, 29, 30, 60, 61, 100)],
+                         [ON_TRACK, ON_TRACK, WATCH, WATCH, AT_RISK, AT_RISK])
+
+    @override_settings(HEALTH_WEIGHTS={"meeting": 1.0, "milestones": 0.0, "stage": 0.0}, HEALTH_BANDS={"watch": 10, "at_risk": 20})
+    def test_weights_and_bands_come_from_settings(self):
+        health = health_score(self._project(), now=self._later(7))
+
+        self.assertEqual(health.score, 50)
+        self.assertEqual(health.band, AT_RISK)
+
+    def test_supervisor_and_department_coordinator_see_health_on_the_workflow_page(self):
+        project = self._project()
+        for viewer in (self.supervisor, self.coordinator):
+            self.client.force_login(viewer)
+            response = self.client.get(reverse("project_workflow", args=[project.pk]))
+            self.assertContains(response, "Project health (heuristic)", msg_prefix=viewer.username)
+            self.assertContains(response, "No milestones set: +0", msg_prefix=viewer.username)
+
+    def test_hod_and_student_do_not_see_health(self):
+        project = self._project()
+        for viewer in (self.hod, self.student):
+            self.client.force_login(viewer)
+            response = self.client.get(reverse("project_workflow", args=[project.pk]))
+            self.assertEqual(response.status_code, 200, viewer.username)
+            self.assertNotContains(response, "Project health", msg_prefix=viewer.username)
+
+    def test_supervision_page_and_coordinator_portal_list_health(self):
+        self._project()
+        self.client.force_login(self.supervisor)
+        self.assertContains(self.client.get(reverse("supervision")), "On track · 0/100")
+
+        self.client.force_login(self.coordinator)
+        response = self.client.get(reverse("dashboard"))
+        self.assertContains(response, "Projects by health score")
+        self.assertContains(response, "On track · 0/100")
+
+        self.client.force_login(self.other_coordinator)
+        self.assertNotContains(self.client.get(reverse("dashboard")), "On track · 0/100")

@@ -135,6 +135,24 @@ REPOSITORY_PAGE_SIZE = 12
 # word-overlap score with a topic is at or above this value are shown as a warning, never a block.
 SIMILARITY_THRESHOLD = 0.35
 
+# Project health score (apps/projects/services/health.py), shown to supervisors and coordinators.
+# risk = meeting * min(days since last held meeting / 14, 1)
+#      + milestones * min(overdue milestones / 3, 1)
+#      + stage * min(days at current stage / expected days for that stage, 1), scaled to 0-100.
+# Heuristics chosen by hand, NOT validated against real outcomes (docs/explain/health-score.md).
+HEALTH_WEIGHTS = {"meeting": 0.4, "milestones": 0.3, "stage": 0.3}
+HEALTH_MEETING_LIMIT_DAYS = 14
+HEALTH_OVERDUE_MILESTONE_LIMIT = 3
+HEALTH_BANDS = {"watch": 30, "at_risk": 60}  # below 30 on track, 30 to 60 watch, above 60 at risk
+HEALTH_EXPECTED_DAYS = {  # keyed by ProjectStage value; completed projects get no score
+    "0": 14,  # Topic proposed
+    "1": 14,  # Supervisor accepted
+    "2": 7,   # Approved by the department
+    "3": 90,  # In progress
+    "4": 30,  # Submitted for examination
+    "5": 21,  # Defended
+}
+
 # Security defaults. Production deployment must also serve over HTTPS.
 SESSION_COOKIE_HTTPONLY = True
 CSRF_COOKIE_HTTPONLY = False

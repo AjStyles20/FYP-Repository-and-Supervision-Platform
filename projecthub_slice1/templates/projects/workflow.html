@@ -7,6 +7,7 @@
   <h1>{{ project.title }}</h1>
   <div class="tag-row"><span class="tag tag-live">{{ project.get_stage_display }}</span></div>
   <p>{{ project.student.get_full_name|default:project.student.username }} · {{ project.department.name }}</p>
+  {% include "projects/_health.html" %}
   {% if project.supervisor_id %}<section class="form-note"><strong>Supervisor approval criteria:</strong> {% if approval_method == "literature_review" %}Literature review and research gap{% elif approval_method == "working_project" %}Working project demonstration{% else %}Topic, aim and methodology{% endif %}{% if approval_criteria %}<br>{{ approval_criteria|linebreaksbr }}{% else %}<br><span class="muted">No additional criteria have been posted.</span>{% endif %}</section>{% endif %}
   {% if project.approval_form %}
     <p>Approval form status: <strong>{{ project.approval_form.state_label }}</strong></p>

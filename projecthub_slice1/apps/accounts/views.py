@@ -14,6 +14,7 @@ from apps.audit.models import AuditEvent
 from apps.audit.services import log_event
 from apps.projects.models import ArchivedProject, Project, ProjectCompletion, ProjectStage
 from apps.projects.services.counters import staff_with_counters
+from apps.projects.services.health import HEALTH_PREFETCH, health_score
 from apps.supervision.models import (
     Announcement, AnnouncementAcknowledgement, SharedResource, SupervisionMeeting, student_resource_scope,
 )
@@ -159,6 +160,14 @@ def _department_projects(user):
     return projects.select_related("student", "supervisor", "programme", "department")
 
 
+def _department_health_rows(projects, limit=8):
+    """The coordinator's view of project health: highest risk first."""
+    rows = [{"project": project, "health": health_score(project)} for project in projects.prefetch_related(*HEALTH_PREFETCH)]
+    rows = [row for row in rows if row["health"] is not None]
+    rows.sort(key=lambda row: (-row["health"].score, row["project"].title))
+    return rows[:limit]
+
+
 def _department_portal_context(user):
     projects = _department_projects(user)
     pending_proposals = projects.filter(stage=ProjectStage.PROPOSED)
@@ -173,6 +182,7 @@ def _department_portal_context(user):
         "approval_count": awaiting_logging.count(),
         "defence_count": awaiting_defence_record.count(),
         "queue_projects": (pending_proposals | awaiting_logging | awaiting_defence_record).order_by("updated_at")[:6],
+        "health_rows": _department_health_rows(projects),
         "supervisor_load": staff_with_counters(department=user.department)[:6] if user.department_id else [],
     }
 

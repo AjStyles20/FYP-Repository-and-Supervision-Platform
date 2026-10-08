@@ -17,6 +17,7 @@ from .forms import (
 )
 from .models import ArchivedProject, Project, ProjectDocument, ProjectStage, ProjectStatusEvent
 from .imports import import_archived_projects
+from .services.health import HEALTH_PREFETCH, can_see_health, health_score
 from .services.similarity import similar_archived_projects, similarity_threshold
 from .services import (
     assign_project_supervisor, unassign_project_supervisor, log_approved_form, record_supervisor_decision,
@@ -353,6 +354,7 @@ def project_workflow(request, project_id):
         "form": form,
         "approval_method": approval_method,
         "approval_criteria": approval_criteria,
+        "health": health_score(project) if can_see_health(user, project) else None,
         "show_similar": show_similar,
         "similar_projects": similar_archived_projects(project.title, project.description) if show_similar else [],
         "similarity_threshold": similarity_threshold(),
@@ -364,6 +366,7 @@ def supervision(request):
     current_projects = (
         Project.objects.filter(supervisor=request.user, archived=False)
         .select_related("student", "department", "programme", "supervisor")
+        .prefetch_related(*HEALTH_PREFETCH)
         .order_by("-updated_at")
     )
     former_projects = (
@@ -467,7 +470,7 @@ def supervision(request):
             if project.pk == bound_project_id
             else SupervisorProjectEditForm(instance=project)
         ) if can_manage_roster else None
-        project_rows.append({"project": project, "edit_form": edit_form})
+        project_rows.append({"project": project, "edit_form": edit_form, "health": health_score(project)})
     return render(
         request,
         "projects/supervision.html",

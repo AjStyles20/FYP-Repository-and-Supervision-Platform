@@ -17,6 +17,15 @@
   <div class="bento-cell"><span class="bento-label">Defence outcomes to record</span><strong class="bento-value">{{ defence_count }}</strong></div>
 </section>
 
+<section class="stack" aria-labelledby="health-heading">
+  <div class="section-title"><div><p class="eyebrow">Supervision health</p><h2 id="health-heading">Projects by health score</h2><p class="muted">Highest risk first. A hand-tuned heuristic from meetings, overdue milestones and time at the current stage; use it to decide where to look, not to judge a student.</p></div></div>
+  {% for row in health_rows %}
+    <article class="card card-pad-sm"><h3><a href="{% url 'project_workflow' row.project.pk %}">{{ row.project.title }}</a></h3><p class="muted">{{ row.project.student.get_full_name|default:row.project.student.username }} · {{ row.project.get_stage_display }} · Supervisor: {{ row.project.supervisor.get_full_name|default:"Unassigned" }}</p>{% include "projects/_health.html" with health=row.health %}</article>
+  {% empty %}
+    <div class="card"><p class="muted">No active projects in your department.</p></div>
+  {% endfor %}
+</section>
+
 <section class="grid-2">
   <div class="stack">
     <div class="section-title"><div><p class="eyebrow">Department queue</p><h2>Projects needing a next step</h2></div><a href="{% url 'approvals' %}">See all approvals</a></div>

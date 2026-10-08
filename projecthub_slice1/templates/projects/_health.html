@@ -1,0 +1,4 @@
+{% if health %}<div class="health health-{{ health.band }}">
+  <p class="health-head"><span class="tag health-badge">{{ health.band_label }} · {{ health.score }}/100</span><span class="muted">Project health (heuristic)</span></p>
+  <ul class="health-reasons">{% for reason in health.reasons %}<li>{{ reason }}</li>{% endfor %}</ul>
+</div>{% endif %}

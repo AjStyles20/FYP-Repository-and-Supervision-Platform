@@ -530,3 +530,12 @@ td form { display: flex; flex-wrap: wrap; gap: var(--space-2); margin: 0; }
 /* Similar past projects panel (workflow and repository detail) */
 .similar-list li { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--space-2) var(--space-3); }
 .similar-list li a { flex: 1 1 14rem; overflow-wrap: anywhere; }
+
+/* Project health badge and reasons (supervisors and coordinators only) */
+.health { margin: var(--space-3) 0; }
+.health-head { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); margin: 0 0 var(--space-2); font-size: var(--text-sm); }
+.health-reasons { margin: 0; padding-left: var(--space-5); color: var(--gray-700); font-size: var(--text-sm); overflow-wrap: anywhere; }
+.health-reasons li + li { margin-top: var(--space-1); }
+.health-on_track .health-badge { background: var(--gray-100); border-color: transparent; color: var(--gray-700); }
+.health-watch .health-badge { background: var(--accent-soft); border-color: var(--accent); color: var(--accent-hover); }
+.health-at_risk .health-badge { background: var(--danger-soft); border-color: var(--danger); color: var(--danger); }
