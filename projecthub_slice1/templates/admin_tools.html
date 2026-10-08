@@ -2,7 +2,7 @@
 {% block title %}Admin tools · Baze Project Hub{% endblock %}
 {% block content %}
 <section class="page-heading"><p class="eyebrow">System administration</p><h1>Admin tools</h1>
-<div class="actions"><a class="btn" href="{% url 'audit_log' %}">View audit log</a><a class="btn" href="{% url 'import_projects' %}">Import past projects from CSV</a></div></section>
+<div class="actions"><a class="btn btn-primary" href="{% url 'add_staff_account' %}">Add staff account</a><a class="btn" href="{% url 'audit_log' %}">View audit log</a><a class="btn" href="{% url 'import_projects' %}">Import past projects from CSV</a></div></section>
 <section class="card">
   <h2>Student account approvals</h2>
   {% if pending_students %}
@@ -31,6 +31,30 @@
     </div>
   {% else %}
     <p class="muted">There are no student accounts awaiting approval.</p>
+  {% endif %}
+</section>
+<section class="card">
+  <div class="section-title"><h2>Staff accounts</h2><a class="btn btn-sm" href="{% url 'add_staff_account' %}">Add staff account</a></div>
+  {% if staff_accounts %}
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Name</th><th>Baze email</th><th>Role</th><th>Department</th><th>Allocation</th><th>Status</th></tr></thead>
+        <tbody>
+          {% for staff in staff_accounts %}
+            <tr>
+              <td data-label="Name">{{ staff.get_full_name|default:staff.username }}{% if staff.is_demo %} <span class="tag tag-quiet">Sample</span>{% endif %}</td>
+              <td data-label="Baze email">{{ staff.email|default:"—" }}</td>
+              <td data-label="Role">{{ staff.get_role_display }}</td>
+              <td data-label="Department">{{ staff.department.name|default:"—" }}</td>
+              <td data-label="Allocation">{% if staff.can_assign_supervisors %}Can assign{% else %}—{% endif %}</td>
+              <td data-label="Status">{% if not staff.is_active %}Inactive{% elif staff.must_change_password %}Waiting for first sign-in{% else %}Active{% endif %}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <p class="muted">No staff accounts yet.</p>
   {% endif %}
 </section>
 {% endblock %}

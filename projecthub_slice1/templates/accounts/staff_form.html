@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}Add staff account · Baze Project Hub{% endblock %}
+{% block content %}
+<p class="breadcrumb"><a href="{% url 'admin_tools' %}">← Admin tools</a></p>
+<section class="card narrow">
+  <h1>Add staff account</h1>
+  <p class="muted">For supervisors, coordinators, Heads of Department and administrators. A temporary password is generated and shown once; the person must choose their own at first sign-in.</p>
+  <form method="post" class="stack-form">
+    {% csrf_token %}
+    {{ form.non_field_errors }}
+    {% for field in form %}
+      <div class="form-row">
+        {% if field.widget_type == "checkbox" %}<label for="{{ field.id_for_label }}">{{ field }} {{ field.label }}</label>{% else %}{{ field.label_tag }}{{ field }}{% endif %}
+        {% if field.help_text %}<small class="muted">{{ field.help_text }}</small>{% endif %}
+        {% for error in field.errors %}<p class="error">{{ error }}</p>{% endfor %}
+      </div>
+    {% endfor %}
+    <button type="submit" class="primary">Create account</button>
+  </form>
+</section>
+{% endblock %}

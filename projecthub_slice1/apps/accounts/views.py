@@ -1,11 +1,12 @@
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth.views import LoginView
+from django.contrib.auth.views import LoginView, PasswordChangeView
 from django.db import IntegrityError, transaction
 from django.db.models import Exists, OuterRef, Q
 from django.http import HttpResponseBadRequest, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse_lazy
 from django.utils import timezone
 from django.views.decorators.http import require_GET, require_POST
 
@@ -18,7 +19,7 @@ from apps.projects.services.health import HEALTH_PREFETCH, health_score
 from apps.supervision.models import (
     Announcement, AnnouncementAcknowledgement, Notification, SharedResource, SupervisionMeeting, student_resource_scope,
 )
-from .forms import ProjectAuthenticationForm, StudentRegistrationForm
+from .forms import ProjectAuthenticationForm, StaffAccountForm, StudentRegistrationForm
 from .models import Role, StudentProfile, User
 from .permissions import role_required
 
@@ -297,7 +298,45 @@ def admin_tools(request):
         .select_related("department", "student_profile__programme")
         .order_by("date_joined")
     )
-    return render(request, "admin_tools.html", {"pending_students": pending_students})
+    staff_accounts = (
+        User.objects.filter(role__in=(Role.SUPERVISOR, Role.COORDINATOR, Role.HOD, Role.ADMIN))
+        .select_related("department").order_by("role", "last_name", "first_name", "username")
+    )
+    return render(request, "admin_tools.html", {"pending_students": pending_students, "staff_accounts": staff_accounts})
+
+
+@role_required(Role.ADMIN)
+def add_staff_account(request):
+    """Create a staff account. The temporary password is shown once on the result page, never logged."""
+    form = StaffAccountForm(request.POST or None)
+    if request.method == "POST" and form.is_valid():
+        user, password = form.save()
+        log_event(
+            actor=request.user, action="account.staff_created",
+            summary=f"Created {user.get_role_display()} account for {user.email}", obj=user,
+            details={"role": user.role, "department": user.department.name if user.department else "",
+                     "can_assign_supervisors": user.can_assign_supervisors},
+        )
+        response = render(request, "accounts/staff_created.html", {"staff": user, "temporary_password": password})
+        response["Cache-Control"] = "no-store"  # the page holds a password: keep it out of the browser cache
+        return response
+    return render(request, "accounts/staff_form.html", {"form": form})
+
+
+class FirstPasswordChangeView(PasswordChangeView):
+    """Any signed-in user can change their password here; a temporary password must be changed first."""
+
+    template_name = "registration/password_change.html"
+    success_url = reverse_lazy("dashboard")
+
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        if self.request.user.must_change_password:
+            self.request.user.must_change_password = False
+            self.request.user.save(update_fields=["must_change_password"])
+            log_event(actor=self.request.user, action="account.password_set", summary="Replaced the temporary password", obj=self.request.user)
+        messages.success(self.request, "Your password has been changed.")
+        return response
 
 
 @role_required(Role.ADMIN)

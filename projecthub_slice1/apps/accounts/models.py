@@ -31,6 +31,11 @@ class User(AbstractUser):
         help_text="Allows this staff member to assign or reassign supervisors for projects in their department.",
     )
     is_demo = models.BooleanField(default=False)
+    must_change_password = models.BooleanField(
+        default=False,
+        help_text="Set when an administrator creates the account with a temporary password; "
+                  "the person must choose their own password before using the site.",
+    )
 
     @property
     def has_staff_role(self):

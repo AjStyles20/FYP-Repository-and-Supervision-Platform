@@ -11,7 +11,8 @@ from django.urls import reverse
 from django.utils import timezone
 
 from apps.academics.models import Department, Faculty, Programme
-from apps.accounts.models import Role, StudentProfile, SupervisorProfile, User
+from apps.audit.models import AuditEvent
+from apps.accounts.models import STAFF_ROLES, Role, StudentProfile, SupervisorProfile, User
 from apps.projects.models import (
     ArchivedProject,
     Project,
@@ -589,3 +590,125 @@ class SummaryApiTests(TestCase):
         for user in (self.admin, self.coordinator, self.supervisor, self.hod, self.student):
             self.client.force_login(user)
             self.assertContains(self.client.get(reverse("announcements")), "js/live-counters.js", msg_prefix=user.username)
+
+
+class StaffAccountTests(TestCase):
+    """Staff accounts are created by an admin only, with a one-time temporary password."""
+
+    @classmethod
+    def setUpTestData(cls):
+        faculty = Faculty.objects.create(name="Staff Faculty")
+        cls.department = Department.objects.create(faculty=faculty, name="Staff Department")
+        cls.programme = Programme.objects.create(department=cls.department, name="Computer Science", degree_type="BSc")
+        cls.admin = User.objects.create(username="staff.admin", role=Role.ADMIN)
+        cls.supervisor = User.objects.create(username="staff.supervisor", role=Role.SUPERVISOR, department=cls.department)
+
+    def _create(self, **overrides):
+        data = {
+            "first_name": "Ngozi", "last_name": "Eze", "email": "Ngozi.Eze@bazeuniversity.edu.ng",
+            "role": Role.SUPERVISOR, "department": self.department.pk, "title": "Dr.",
+        }
+        data.update(overrides)
+        self.client.force_login(self.admin)
+        return self.client.post(reverse("add_staff_account"), data)
+
+    def test_only_admins_can_open_the_page(self):
+        url = reverse("add_staff_account")
+        self.assertIn("/login/", self.client.get(url)["Location"])
+        self.client.force_login(self.supervisor)
+        self.assertEqual(self.client.get(url).status_code, 403)
+        self.assertEqual(self.client.post(url, {"role": Role.ADMIN}).status_code, 403)
+        self.client.force_login(self.admin)
+        self.assertEqual(self.client.get(url).status_code, 200)
+
+    def test_admin_creates_a_supervisor_with_a_one_time_password(self):
+        response = self._create()
+
+        user = User.objects.get(username="ngozi.eze@bazeuniversity.edu.ng")
+        self.assertEqual((user.role, user.department, user.email), (Role.SUPERVISOR, self.department, user.username))
+        self.assertTrue(user.must_change_password)
+        self.assertTrue(user.is_active)
+        self.assertEqual(user.supervisor_profile.title, "Dr.")
+        password = response.context["temporary_password"]
+        self.assertGreaterEqual(len(password), 16)
+        self.assertTrue(user.check_password(password))
+        self.assertContains(response, password)
+        self.assertEqual(response["Cache-Control"], "no-store")
+
+        event = AuditEvent.objects.get(action="account.staff_created")
+        self.assertEqual(event.actor, self.admin)
+        self.assertEqual(event.details, {"role": "supervisor", "department": "Staff Department", "can_assign_supervisors": False})
+        self.assertNotIn(password, f"{event.summary} {event.details}")
+
+    def test_every_account_gets_a_different_password(self):
+        first = self._create().context["temporary_password"]
+        second = self._create(email="other.person@bazeuniversity.edu.ng").context["temporary_password"]
+        self.assertNotEqual(first, second)
+
+    def test_admin_role_needs_no_department_and_never_gets_allocation_rights(self):
+        self._create(email="new.admin@bazeuniversity.edu.ng", role=Role.ADMIN, department="", can_assign_supervisors="on")
+
+        user = User.objects.get(username="new.admin@bazeuniversity.edu.ng")
+        self.assertEqual((user.role, user.department, user.can_assign_supervisors), (Role.ADMIN, None, False))
+        self.assertFalse(hasattr(user, "supervisor_profile"))
+
+    def test_validation(self):
+        cases = {
+            "non-Baze email": ({"email": "someone@gmail.com"}, "email"),
+            "duplicate email": ({"email": "STAFF.SUPERVISOR@bazeuniversity.edu.ng"}, None),
+            "missing department": ({"department": ""}, "department"),
+            "student role": ({"role": Role.STUDENT}, "role"),
+        }
+        User.objects.filter(pk=self.supervisor.pk).update(email="staff.supervisor@bazeuniversity.edu.ng")
+        for label, (overrides, field) in cases.items():
+            response = self._create(**overrides)
+            self.assertEqual(response.status_code, 200, label)
+            self.assertTrue(response.context["form"].errors, label)
+            if field:
+                self.assertIn(field, response.context["form"].errors, label)
+        self.assertEqual(User.objects.filter(role__in=STAFF_ROLES).count(), 2)
+
+    def test_new_staff_must_choose_a_password_before_using_the_site(self):
+        password = self._create().context["temporary_password"]
+        self.client.logout()
+        self.assertTrue(self.client.login(username="ngozi.eze@bazeuniversity.edu.ng", password=password))
+
+        for url in (reverse("dashboard"), reverse("repository"), reverse("api_summary")):
+            self.assertRedirects(self.client.get(url), reverse("password_change"), fetch_redirect_response=False)
+        page = self.client.get(reverse("password_change"))
+        self.assertContains(page, "Choose your password")
+
+        response = self.client.post(reverse("password_change"), {
+            "old_password": password, "new_password1": "Supervise-Baze-2026!", "new_password2": "Supervise-Baze-2026!",
+        })
+
+        self.assertRedirects(response, reverse("dashboard"), fetch_redirect_response=False)
+        user = User.objects.get(username="ngozi.eze@bazeuniversity.edu.ng")
+        self.assertFalse(user.must_change_password)
+        self.assertTrue(user.check_password("Supervise-Baze-2026!"))
+        self.assertEqual(self.client.get(reverse("dashboard")).status_code, 200)
+        self.assertTrue(AuditEvent.objects.filter(action="account.password_set", actor=user).exists())
+
+    def test_student_sign_up_cannot_choose_a_role_and_points_staff_elsewhere(self):
+        page = self.client.get(reverse("register_student"))
+        self.assertContains(page, "Staff?")
+        self.assertNotContains(page, 'name="role"')
+
+        self.client.post(reverse("register_student"), {
+            "first_name": "Sneaky", "last_name": "Person", "email": "sneaky@bazeuniversity.edu.ng",
+            "student_number": "BU/26/CS/7777", "programme": self.programme.pk, "student_status": "current",
+            "password1": "Long-enough-pass-77", "password2": "Long-enough-pass-77", "role": Role.ADMIN,
+        })
+
+        user = User.objects.get(username="sneaky@bazeuniversity.edu.ng")
+        self.assertEqual((user.role, user.is_active), (Role.STUDENT, False))
+
+    def test_admin_tools_lists_staff_with_their_status(self):
+        self._create()
+        self.client.force_login(self.admin)
+
+        response = self.client.get(reverse("admin_tools"))
+
+        self.assertContains(response, "Add staff account")
+        self.assertContains(response, "ngozi.eze@bazeuniversity.edu.ng")
+        self.assertContains(response, "Waiting for first sign-in")

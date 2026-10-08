@@ -1,12 +1,14 @@
+import secrets
+
 from django import forms
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
 from django.db import transaction
 
-from apps.academics.models import Programme
+from apps.academics.models import Department, Programme
 
-from .models import Role, StudentProfile, User
+from .models import STAFF_ROLES, Role, StudentProfile, SupervisorProfile, User
 
 BAZE_EMAIL_DOMAIN = "@bazeuniversity.edu.ng"
 
@@ -123,3 +125,69 @@ class StudentRegistrationForm(forms.Form):
             registration_status=StudentProfile.RegistrationStatus.PENDING,
         )
         return user
+
+
+def _check_new_baze_email(value):
+    email = value.strip().lower()
+    if not email.endswith(BAZE_EMAIL_DOMAIN):
+        raise ValidationError(f"Use a Baze email address ending in {BAZE_EMAIL_DOMAIN}.")
+    if User.objects.filter(email__iexact=email).exists() or User.objects.filter(username__iexact=email).exists():
+        raise ValidationError("An account already exists with this email address.")
+    return email
+
+
+class StaffAccountForm(forms.Form):
+    """Admin-only: create a supervisor, coordinator, HOD or administrator account.
+
+    Staff roles are never chosen by the person themselves (student sign-up cannot set a role), so
+    nobody can grant themselves staff access. The password is generated here, shown to the admin
+    once, and must be changed at first sign-in.
+    """
+
+    ROLE_CHOICES = [(role.value, role.label) for role in STAFF_ROLES]
+    TEMPORARY_PASSWORD_BYTES = 12  # 16 URL-safe characters
+
+    first_name = forms.CharField(max_length=150, label="First name")
+    last_name = forms.CharField(max_length=150, label="Last name")
+    email = forms.EmailField(label="Baze email address", help_text="Also their sign-in username.")
+    role = forms.ChoiceField(choices=ROLE_CHOICES, label="Role")
+    department = forms.ModelChoiceField(
+        queryset=Department.objects.none(), required=False, empty_label="Select a department",
+        label="Department", help_text="Required for every role except Administrator.",
+    )
+    title = forms.CharField(max_length=30, required=False, label="Title", help_text="For example Dr., Prof., Mrs.")
+    can_assign_supervisors = forms.BooleanField(
+        required=False, label="Can assign supervisors in their department",
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["department"].queryset = Department.objects.select_related("faculty")
+
+    def clean_email(self):
+        return _check_new_baze_email(self.cleaned_data["email"])
+
+    def clean(self):
+        cleaned = super().clean()
+        role, department = cleaned.get("role"), cleaned.get("department")
+        if role and role != Role.ADMIN and department is None:
+            self.add_error("department", "Choose the department this staff member belongs to.")
+        if role == Role.ADMIN:
+            cleaned["department"] = None
+            cleaned["can_assign_supervisors"] = False
+        return cleaned
+
+    @transaction.atomic
+    def save(self):
+        """Create the account. Returns (user, temporary_password); the password is not stored anywhere else."""
+        password = secrets.token_urlsafe(self.TEMPORARY_PASSWORD_BYTES)
+        data = self.cleaned_data
+        user = User.objects.create_user(
+            username=data["email"], email=data["email"], password=password,
+            first_name=data["first_name"], last_name=data["last_name"],
+            role=data["role"], department=data["department"],
+            can_assign_supervisors=data["can_assign_supervisors"], must_change_password=True,
+        )
+        if data["role"] != Role.ADMIN:
+            SupervisorProfile.objects.create(user=user, title=data["title"])
+        return user, password

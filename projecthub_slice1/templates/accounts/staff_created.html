@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}Staff account created · Baze Project Hub{% endblock %}
+{% block content %}
+<p class="breadcrumb"><a href="{% url 'admin_tools' %}">← Admin tools</a></p>
+<section class="card narrow">
+  <h1>Account created</h1>
+  <dl class="record-fields">
+    <div><dt>Name</dt><dd>{{ staff.get_full_name }}</dd></div>
+    <div><dt>Sign-in (Baze email)</dt><dd>{{ staff.email }}</dd></div>
+    <div><dt>Role</dt><dd>{{ staff.get_role_display }}</dd></div>
+    {% if staff.department %}<div><dt>Department</dt><dd>{{ staff.department.name }}</dd></div>{% endif %}
+  </dl>
+  <aside class="form-note">
+    <p><strong>Temporary password:</strong> <code data-temporary-password>{{ temporary_password }}</code></p>
+    <p>Give it to {{ staff.first_name }} in person or through a channel you trust. <strong>It is shown only on this page</strong> and is not stored or logged anywhere; if it is lost, create the account again from Django admin or reset the password there. They will be asked to choose their own password at first sign-in.</p>
+  </aside>
+  <div class="actions"><a class="btn btn-primary" href="{% url 'admin_tools' %}">Back to admin tools</a><a class="btn" href="{% url 'add_staff_account' %}">Add another</a></div>
+</section>
+{% endblock %}
