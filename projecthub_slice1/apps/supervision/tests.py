@@ -432,7 +432,7 @@ class RunAutomationTests(TestCase):
 
         self.assertContains(response, "At risk (70/100): Stalled project")
         self.assertNotContains(response, "Registration waiting")
-        self.assertContains(response, '<span class="nav-count">1</span>')
+        self.assertContains(response, '<span class="nav-count" data-counter="unread_notifications">1</span>')
 
         self.client.post(reverse("notifications"), {"action": "read_all"})
 

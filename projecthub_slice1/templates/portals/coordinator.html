@@ -10,11 +10,11 @@
   </div>
 </section>
 
-<section class="bento" aria-label="Department workflow counts">
-  <div class="bento-cell"><span class="bento-label">Active projects</span><strong class="bento-value">{{ active_count }}</strong></div>
-  <div class="bento-cell"><span class="bento-label">Need a supervisor</span><strong class="bento-value">{{ unassigned_count }}</strong></div>
-  <div class="bento-cell"><span class="bento-label">Forms to log</span><strong class="bento-value">{{ approval_count }}</strong></div>
-  <div class="bento-cell"><span class="bento-label">Defence outcomes to record</span><strong class="bento-value">{{ defence_count }}</strong></div>
+<section class="bento" aria-label="Department workflow counts" aria-live="polite">
+  <div class="bento-cell"><span class="bento-label">Active projects</span><strong class="bento-value" data-counter="active_count">{{ active_count }}</strong></div>
+  <div class="bento-cell"><span class="bento-label">Need a supervisor</span><strong class="bento-value" data-counter="unassigned_count">{{ unassigned_count }}</strong></div>
+  <div class="bento-cell"><span class="bento-label">Forms to log</span><strong class="bento-value" data-counter="approval_count">{{ approval_count }}</strong></div>
+  <div class="bento-cell"><span class="bento-label">Defence outcomes to record</span><strong class="bento-value" data-counter="defence_count">{{ defence_count }}</strong></div>
 </section>
 
 <section class="stack" aria-labelledby="health-heading">

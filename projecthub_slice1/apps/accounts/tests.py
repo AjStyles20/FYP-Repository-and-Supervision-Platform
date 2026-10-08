@@ -20,7 +20,7 @@ from apps.projects.models import (
     ProjectStage,
     ProjectSupervisorAssignment,
 )
-from apps.supervision.models import Announcement, SharedResource, SupervisionMeeting
+from apps.supervision.models import Announcement, Notification, NotificationKind, SharedResource, SupervisionMeeting
 
 
 # seed_demo writes demo report files; keep them out of the real media folder during tests.
@@ -440,3 +440,108 @@ class RegistrationFlowTests(TestCase):
         )
 
         self.assertEqual(response.status_code, 403)
+
+
+class SummaryApiTests(TestCase):
+    """/api/summary/: counts only, for admins and coordinators; 403 for other roles, 401 when signed out."""
+
+    @classmethod
+    def setUpTestData(cls):
+        faculty = Faculty.objects.create(name="Summary Faculty")
+        cls.department = Department.objects.create(faculty=faculty, name="Summary Department")
+        other = Department.objects.create(faculty=faculty, name="Other Summary Department")
+        programme = Programme.objects.create(department=cls.department, name="Computer Science", degree_type="BSc")
+        other_programme = Programme.objects.create(department=other, name="Law", degree_type="LLB")
+        cls.admin = User.objects.create(username="summary.admin", role=Role.ADMIN)
+        cls.coordinator = User.objects.create(username="summary.coordinator", role=Role.COORDINATOR, department=cls.department)
+        cls.supervisor = User.objects.create(username="summary.supervisor", role=Role.SUPERVISOR, department=cls.department)
+        cls.hod = User.objects.create(username="summary.hod", role=Role.HOD, department=cls.department)
+        cls.student = User.objects.create(
+            username="kemi.private@bazeuniversity.edu.ng", email="kemi.private@bazeuniversity.edu.ng",
+            first_name="Kemi", last_name="Private", role=Role.STUDENT,
+        )
+        StudentProfile.objects.create(
+            user=cls.student, student_number="BU/26/SUM/1", programme=programme,
+            registration_status=StudentProfile.RegistrationStatus.PENDING,
+        )
+        for title, stage, supervisor, dept, prog in (
+            ("Unassigned topic", ProjectStage.PROPOSED, None, cls.department, programme),
+            ("Form to log", ProjectStage.SUPERVISOR_ACCEPTED, cls.supervisor, cls.department, programme),
+            ("Other department", ProjectStage.SUBMITTED, None, other, other_programme),
+        ):
+            Project.objects.create(
+                student=User.objects.create(username=f"summary.{title}", role=Role.STUDENT), title=title,
+                stage=stage, supervisor=supervisor, department=dept, programme=prog,
+            )
+        Notification.objects.create(
+            recipient=cls.admin, kind=NotificationKind.PENDING_REGISTRATION, object_type="accounts.User",
+            object_id=str(cls.student.pk), title="Registration waiting",
+        )
+
+    def _get(self, user=None):
+        if user:
+            self.client.force_login(user)
+        return self.client.get(reverse("api_summary"))
+
+    def test_admin_gets_the_admin_counters_and_unread_alerts(self):
+        response = self._get(self.admin)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response["Cache-Control"], "no-store")
+        body = response.json()
+        self.assertEqual(set(body), {"role", "counters", "unread_notifications", "generated_at"})
+        self.assertEqual(body["role"], "admin")
+        self.assertEqual(body["counters"], {
+            "pending_count": 1,
+            "student_count": User.objects.filter(role=Role.STUDENT, is_active=True, is_demo=False).count(),
+            "staff_count": 3,
+            "programme_count": 2,
+        })
+        self.assertEqual(body["unread_notifications"], 1)
+
+    def test_response_contains_numbers_only_and_no_personal_data(self):
+        for user in (self.admin, self.coordinator):
+            response = self._get(user)
+            for private in ("kemi", "Private", "@", "BU/26", "summary."):
+                self.assertNotIn(private, response.content.decode(), f"{user.username}: {private}")
+            body = response.json()
+            self.assertTrue(all(isinstance(value, int) for value in body["counters"].values()))
+            self.assertIsInstance(body["unread_notifications"], int)
+
+    def test_coordinator_gets_only_their_department_counters(self):
+        body = self._get(self.coordinator).json()
+
+        self.assertEqual(body["role"], "coordinator")
+        self.assertEqual(body["counters"], {"active_count": 2, "unassigned_count": 1, "approval_count": 1, "defence_count": 0})
+        self.assertEqual(body["unread_notifications"], 0)
+
+    def test_counters_match_the_portal_page(self):
+        for user in (self.admin, self.coordinator):
+            counters = self._get(user).json()["counters"]
+            page = self.client.get(reverse("dashboard"))
+            for name, value in counters.items():
+                self.assertEqual(page.context[name], value, f"{user.username}: {name}")
+                self.assertContains(page, f'data-counter="{name}">{value}<')
+
+    def test_other_roles_are_forbidden(self):
+        for user in (self.supervisor, self.hod, self.student):
+            response = self._get(user)
+            self.assertEqual(response.status_code, 403, user.username)
+            self.assertEqual(response.json(), {"detail": "Your role has no live counters."})
+
+    def test_signed_out_gets_401_json_not_a_login_redirect(self):
+        response = self._get()
+
+        self.assertEqual(response.status_code, 401)
+        self.assertEqual(response.json(), {"detail": "Sign in required."})
+
+    def test_only_get_is_allowed(self):
+        self.client.force_login(self.admin)
+
+        self.assertEqual(self.client.post(reverse("api_summary")).status_code, 405)
+
+    def test_polling_script_is_loaded_only_for_admins_and_coordinators(self):
+        for user, expected in ((self.admin, True), (self.coordinator, True), (self.supervisor, False), (self.student, False)):
+            self.client.force_login(user)
+            page = self.client.get(reverse("announcements")).content.decode()
+            self.assertEqual("js/live-counters.js" in page, expected, user.username)

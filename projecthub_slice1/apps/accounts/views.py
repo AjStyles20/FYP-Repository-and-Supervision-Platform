@@ -4,10 +4,10 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.views import LoginView
 from django.db import IntegrityError, transaction
 from django.db.models import Exists, OuterRef, Q
-from django.http import HttpResponseBadRequest
+from django.http import HttpResponseBadRequest, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
-from django.views.decorators.http import require_POST
+from django.views.decorators.http import require_GET, require_POST
 
 from apps.academics.models import Programme
 from apps.audit.models import AuditEvent
@@ -16,7 +16,7 @@ from apps.projects.models import ArchivedProject, Project, ProjectCompletion, Pr
 from apps.projects.services.counters import staff_with_counters
 from apps.projects.services.health import HEALTH_PREFETCH, health_score
 from apps.supervision.models import (
-    Announcement, AnnouncementAcknowledgement, SharedResource, SupervisionMeeting, student_resource_scope,
+    Announcement, AnnouncementAcknowledgement, Notification, SharedResource, SupervisionMeeting, student_resource_scope,
 )
 from .forms import ProjectAuthenticationForm, StudentRegistrationForm
 from .models import Role, StudentProfile, User
@@ -168,6 +168,17 @@ def _department_health_rows(projects, limit=8):
     return rows[:limit]
 
 
+def department_counts(user):
+    """The four coordinator portal counters. Shared by the portal page and /api/summary/."""
+    projects = _department_projects(user)
+    return {
+        "active_count": projects.count(),
+        "unassigned_count": projects.filter(supervisor__isnull=True).count(),
+        "approval_count": projects.filter(stage=ProjectStage.SUPERVISOR_ACCEPTED).count(),
+        "defence_count": projects.filter(stage=ProjectStage.SUBMITTED).count(),
+    }
+
+
 def _department_portal_context(user):
     projects = _department_projects(user)
     pending_proposals = projects.filter(stage=ProjectStage.PROPOSED)
@@ -176,11 +187,8 @@ def _department_portal_context(user):
     return {
         "role": Role.COORDINATOR,
         "department": user.department,
-        "active_count": projects.count(),
-        "unassigned_count": projects.filter(supervisor__isnull=True).count(),
+        **department_counts(user),
         "pending_proposal_count": pending_proposals.count(),
-        "approval_count": awaiting_logging.count(),
-        "defence_count": awaiting_defence_record.count(),
         "queue_projects": (pending_proposals | awaiting_logging | awaiting_defence_record).order_by("updated_at")[:6],
         "health_rows": _department_health_rows(projects),
         "supervisor_load": staff_with_counters(department=user.department)[:6] if user.department_id else [],
@@ -227,20 +235,56 @@ def _hod_portal_context(user):
     }
 
 
-def _admin_portal_context():
-    pending_students = User.objects.filter(
+def _pending_registrations():
+    return User.objects.filter(
         role=Role.STUDENT,
         is_demo=False,
         student_profile__registration_status=StudentProfile.RegistrationStatus.PENDING,
-    ).select_related("department", "student_profile__programme").order_by("date_joined")
+    )
+
+
+def admin_counts():
+    """The four admin portal counters. Shared by the portal page and /api/summary/."""
     return {
-        "role": Role.ADMIN,
-        "pending_students": pending_students[:5],
-        "pending_count": pending_students.count(),
+        "pending_count": _pending_registrations().count(),
         "student_count": User.objects.filter(role=Role.STUDENT, is_active=True, is_demo=False).count(),
         "staff_count": User.objects.filter(role__in=(Role.SUPERVISOR, Role.COORDINATOR, Role.HOD), is_active=True, is_demo=False).count(),
         "programme_count": Programme.objects.count(),
     }
+
+
+def _admin_portal_context():
+    pending_students = _pending_registrations().select_related("department", "student_profile__programme").order_by("date_joined")
+    return {
+        "role": Role.ADMIN,
+        "pending_students": pending_students[:5],
+        **admin_counts(),
+    }
+
+
+SUMMARY_COUNTERS = {Role.ADMIN: lambda user: admin_counts(), Role.COORDINATOR: department_counts}
+
+
+@require_GET
+def api_summary(request):
+    """Live counters for the admin and coordinator portals: numbers only, never names or emails.
+
+    200 for admins and coordinators, 401 when signed out, 403 for every other role. The shape is
+    documented in docs/explain/live-counters.md; static/js/live-counters.js polls it every 30 seconds.
+    """
+    if not request.user.is_authenticated:
+        response = JsonResponse({"detail": "Sign in required."}, status=401)
+    elif request.user.role not in SUMMARY_COUNTERS:
+        response = JsonResponse({"detail": "Your role has no live counters."}, status=403)
+    else:
+        response = JsonResponse({
+            "role": request.user.role,
+            "counters": SUMMARY_COUNTERS[request.user.role](request.user),
+            "unread_notifications": Notification.objects.filter(recipient=request.user, read_at__isnull=True).count(),
+            "generated_at": timezone.now().isoformat(),
+        })
+    response["Cache-Control"] = "no-store"
+    return response
 
 
 @role_required(Role.ADMIN)

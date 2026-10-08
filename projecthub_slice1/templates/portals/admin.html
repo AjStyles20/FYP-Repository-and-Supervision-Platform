@@ -10,11 +10,11 @@
   </div>
 </section>
 
-<section class="bento" aria-label="System overview">
-  <div class="bento-cell"><span class="bento-label">Registrations waiting</span><strong class="bento-value">{{ pending_count }}</strong></div>
-  <div class="bento-cell"><span class="bento-label">Active student accounts</span><strong class="bento-value">{{ student_count }}</strong></div>
-  <div class="bento-cell"><span class="bento-label">Academic staff accounts</span><strong class="bento-value">{{ staff_count }}</strong></div>
-  <div class="bento-cell"><span class="bento-label">Programmes configured</span><strong class="bento-value">{{ programme_count }}</strong></div>
+<section class="bento" aria-label="System overview" aria-live="polite">
+  <div class="bento-cell"><span class="bento-label">Registrations waiting</span><strong class="bento-value" data-counter="pending_count">{{ pending_count }}</strong></div>
+  <div class="bento-cell"><span class="bento-label">Active student accounts</span><strong class="bento-value" data-counter="student_count">{{ student_count }}</strong></div>
+  <div class="bento-cell"><span class="bento-label">Academic staff accounts</span><strong class="bento-value" data-counter="staff_count">{{ staff_count }}</strong></div>
+  <div class="bento-cell"><span class="bento-label">Programmes configured</span><strong class="bento-value" data-counter="programme_count">{{ programme_count }}</strong></div>
 </section>
 
 <section class="grid-2">
