@@ -17,6 +17,7 @@ from .forms import (
 )
 from .models import ArchivedProject, Project, ProjectDocument, ProjectStage, ProjectStatusEvent
 from .imports import import_archived_projects
+from .services.similarity import similar_archived_projects, similarity_threshold
 from .services import (
     assign_project_supervisor, unassign_project_supervisor, log_approved_form, record_supervisor_decision,
     record_transition, sign_off_completion, submit_proposal, available_years,
@@ -25,6 +26,17 @@ from .services import (
 )
 
 REPOSITORY_ROLES = (Role.SUPERVISOR, Role.COORDINATOR, Role.HOD, Role.ADMIN, Role.STUDENT)
+
+
+def _warn_about_similar_topics(request, project):
+    """After a student submits a topic: a warning only. The submission has already been saved."""
+    matches = similar_archived_projects(project.title, project.description)
+    if matches:
+        messages.warning(
+            request,
+            f"{len(matches)} archived project{'' if len(matches) == 1 else 's'} look{'s' if len(matches) == 1 else ''} similar "
+            "to your topic. Your topic was saved; read them below and discuss any overlap with your supervisor.",
+        )
 
 
 def _repository_context(request, section):
@@ -116,6 +128,8 @@ def current_project_detail(request, project_id):
             "can_see_student_id": request.user.role in STAFF_ROLES,
             "student_profile": _student_profile(project.student),
             "previous_supervisors": [],
+            "similar_projects": similar_archived_projects(project.title, project.description),
+            "similarity_threshold": similarity_threshold(),
         },
     )
 
@@ -143,6 +157,8 @@ def past_project_detail(request, project_id):
             "student_profile": _student_profile(project.student),
             "previous_supervisors": list(project.previous_supervisors.all()),
             "documents": project.documents.filter(visible_documents),
+            "similar_projects": similar_archived_projects(project.title, project.description, exclude_id=project.pk),
+            "similarity_threshold": similarity_threshold(),
         },
     )
 
@@ -233,6 +249,7 @@ def start_project(request):
         )
         log_event(actor=request.user, action="project.created", summary=f"Project record created: {project.title}", obj=project)
         messages.success(request, "Project record created. Complete the proposal form to send it for review.")
+        _warn_about_similar_topics(request, project)
         return redirect("project_workflow", project_id=project.pk)
     return render(request, "projects/project_start.html", {"form": form})
 
@@ -280,6 +297,7 @@ def project_workflow(request, project_id):
                     signed_on=form.cleaned_data["signed_on"],
                 )
                 messages.success(request, "Proposal saved for your supervisor to review.")
+                _warn_about_similar_topics(request, project)
                 return redirect("project_workflow", project_id=project.pk)
         elif user.role in (Role.SUPERVISOR, Role.COORDINATOR, Role.HOD) and project.supervisor_id == user.pk and stage == ProjectStage.PROPOSED:
             form = SupervisorDecisionForm(request.POST or None)
@@ -329,11 +347,15 @@ def project_workflow(request, project_id):
     except ValidationError as error:
         if form is not None:
             form.add_error(None, error.messages[0])
+    show_similar = user.role == Role.STUDENT and stage == ProjectStage.PROPOSED
     return render(request, "projects/workflow.html", {
         "project": project,
         "form": form,
         "approval_method": approval_method,
         "approval_criteria": approval_criteria,
+        "show_similar": show_similar,
+        "similar_projects": similar_archived_projects(project.title, project.description) if show_similar else [],
+        "similarity_threshold": similarity_threshold(),
     })
 
 

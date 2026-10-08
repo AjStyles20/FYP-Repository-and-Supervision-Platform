@@ -23,6 +23,7 @@
     <p>No action is available for your account at this stage.</p>
   {% endif %}
 </section>
+{% if show_similar %}{% include "projects/_similar_projects.html" with matches=similar_projects threshold=similarity_threshold %}{% endif %}
 <section class="card">
   <h2>History</h2>
   {% if project.status_events.all %}

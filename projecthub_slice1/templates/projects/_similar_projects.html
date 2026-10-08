@@ -1,0 +1,11 @@
+<section class="card similar-panel" aria-labelledby="similar-heading">
+  <h2 id="similar-heading">Similar past projects</h2>
+  <p class="muted">Archived projects whose title and abstract share words with this topic, scored from 0 to 1 (Jaccard: shared words ÷ all words). Listed at {{ threshold|floatformat:2 }} or higher. A warning to read, not a rule: nothing is blocked.</p>
+  {% if matches %}
+    <ol class="plain-list similar-list">
+      {% for match in matches %}<li><a href="{% url 'past_project_detail' match.id %}">{{ match.title }}</a><span class="muted">{{ match.year }}</span><span class="tag tag-mono" title="Jaccard similarity">{{ match.score|floatformat:2 }}</span></li>{% endfor %}
+    </ol>
+  {% else %}
+    <p>No archived project scores {{ threshold|floatformat:2 }} or higher.</p>
+  {% endif %}
+</section>

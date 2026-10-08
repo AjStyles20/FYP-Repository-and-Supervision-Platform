@@ -6,7 +6,7 @@
   <title>{% block title %}Baze Project Hub{% endblock %}</title>
   <meta name="color-scheme" content="light">
   <link rel="stylesheet" href="{% static 'css/tokens.css' %}?v=1">
-  <link rel="stylesheet" href="{% static 'css/app.css' %}?v=11">
+  <link rel="stylesheet" href="{% static 'css/app.css' %}?v=12">
 </head>
 <body>
 <header class="top">
@@ -60,7 +60,7 @@
   </div>
 </header>
 <main class="shell {% block main_class %}{% endblock %}">
-  {% if messages %}{% for m in messages %}<p class="msg">{{ m }}</p>{% endfor %}{% endif %}
+  {% if messages %}{% for m in messages %}<p class="msg{% if m.tags %} {{ m.tags }}{% endif %}">{{ m }}</p>{% endfor %}{% endif %}
   {% block content %}{% endblock %}
 </main>
 <footer class="site-footer"><div class="footer-inner">Baze Project Hub <span>·</span> Final-year project repository and supervision platform</div></footer>

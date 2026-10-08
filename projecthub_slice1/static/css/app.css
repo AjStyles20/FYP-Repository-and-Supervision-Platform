@@ -148,6 +148,7 @@ small { font-size: var(--text-sm); }
   color: var(--accent-hover);
   font-weight: 500;
 }
+.msg.warning { background: var(--gray-50); color: var(--gray-900); border-left: 3px solid var(--accent); }
 .breadcrumb { margin: 0; font-size: var(--text-sm); }
 .breadcrumb a { text-decoration: none; }
 .site-footer { border-top: var(--border); background: var(--gray-0); }
@@ -525,3 +526,7 @@ td form { display: flex; flex-wrap: wrap; gap: var(--space-2); margin: 0; }
   .top-nav .who { display: none; }
 }
 .detail-hero .sample-label { align-self: flex-start; }
+
+/* Similar past projects panel (workflow and repository detail) */
+.similar-list li { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--space-2) var(--space-3); }
+.similar-list li a { flex: 1 1 14rem; overflow-wrap: anywhere; }

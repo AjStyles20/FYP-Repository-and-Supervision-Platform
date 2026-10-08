@@ -6,7 +6,7 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from django.db import IntegrityError, connection, transaction
 from django.db.migrations.executor import MigrationExecutor
 from django.test import override_settings
-from django.test import TestCase, TransactionTestCase
+from django.test import SimpleTestCase, TestCase, TransactionTestCase
 from django.urls import reverse
 from django.utils import timezone
 
@@ -38,6 +38,7 @@ from .services import (
     submit_proposal,
     unassign_project_supervisor,
 )
+from .services.similarity import similar_archived_projects, similarity, tokens
 
 
 class RepositoryTests(TestCase):
@@ -1095,3 +1096,119 @@ class UnassignedProjectPagesTests(TestCase):
         response = self.client.get(reverse("my_project"))
 
         self.assertContains(response, "Supervisor to be assigned")
+
+
+class SimilarityScoreTests(SimpleTestCase):
+    """similarity(a, b) is the Jaccard index of the two word sets after cleaning."""
+
+    def test_identical_text_scores_one(self):
+        self.assertEqual(similarity("Exam Seating Allocation Tool", "Exam Seating Allocation Tool"), 1.0)
+
+    def test_case_punctuation_and_stop_words_are_ignored(self):
+        self.assertEqual(tokens("The Exam-Seating tool, for halls!"), {"exam", "seating", "tool", "halls"})
+        self.assertEqual(similarity("The Exam-Seating Tool!", "exam seating tool"), 1.0)
+
+    def test_partly_overlapping_text_scores_shared_over_all_words(self):
+        # {campus, shuttle, delay, tracker} vs {campus, shuttle, booking, app}: 2 shared of 6 words.
+        self.assertAlmostEqual(similarity("Campus Shuttle Delay Tracker", "A campus shuttle booking app"), 2 / 6)
+
+    def test_unrelated_text_scores_zero(self):
+        self.assertEqual(similarity("Cafeteria Queue Predictor", "Exam Seating Allocation Tool"), 0.0)
+
+    def test_empty_text_scores_zero(self):
+        self.assertEqual(similarity("", ""), 0.0)
+        self.assertEqual(similarity("", "Exam Seating Allocation Tool"), 0.0)
+        self.assertEqual(similarity(None, None), 0.0)
+        self.assertEqual(similarity("the and of", "the and of"), 0.0)  # only stop-words left nothing
+
+
+class SimilarTopicPagesTests(TestCase):
+    """The checker warns on topic submission and lists matches on the repository detail page."""
+
+    @classmethod
+    def setUpTestData(cls):
+        faculty = Faculty.objects.create(name="Similarity Faculty")
+        cls.department = Department.objects.create(faculty=faculty, name="Similarity Department")
+        cls.programme = Programme.objects.create(department=cls.department, name="Computer Science", degree_type="BSc")
+        cls.student = User.objects.create(username="similar.student", role=Role.STUDENT)
+        StudentProfile.objects.create(
+            user=cls.student, student_number="BU/26/CS/9001", programme=cls.programme,
+            registration_status=StudentProfile.RegistrationStatus.APPROVED,
+        )
+        cls.alumni = User.objects.create(username="similar.alumni", role=Role.STUDENT)
+        cls.seating = cls._archive("Exam Seating Allocation Tool", "Allocating examination seats across halls.", 2024)
+        cls.cafeteria = cls._archive("Cafeteria Queue Predictor", "Predicts queue length from sales.", 2025)
+
+    @classmethod
+    def _archive(cls, title, description, year):
+        return ArchivedProject.objects.create(
+            title=title, description=description, year=year, department=cls.department,
+            programme=cls.programme, student=cls.alumni,
+        )
+
+    def test_similar_topic_warns_but_the_project_is_still_created(self):
+        self.client.force_login(self.student)
+
+        response = self.client.post(reverse("start_project"), {
+            "title": "Exam Seating Allocation Tool", "description": "Allocating examination seats across lecture halls.",
+        }, follow=True)
+
+        project = Project.objects.get(student=self.student)
+        self.assertRedirects(response, reverse("project_workflow", args=[project.pk]))
+        self.assertContains(response, "1 archived project looks similar")
+        self.assertContains(response, reverse("past_project_detail", args=[self.seating.pk]))
+        self.assertNotContains(response, "Cafeteria Queue Predictor")
+
+    def test_unrelated_topic_gives_no_warning(self):
+        self.client.force_login(self.student)
+
+        response = self.client.post(reverse("start_project"), {"title": "Hostel Laundry Booking"}, follow=True)
+
+        self.assertTrue(Project.objects.filter(student=self.student).exists())
+        self.assertNotContains(response, "looks similar")
+        self.assertContains(response, "No archived project scores 0.35 or higher.")
+
+    def test_proposal_with_a_similar_title_is_saved_with_a_warning(self):
+        project = Project.objects.create(
+            student=self.student, title="Working title", department=self.department, programme=self.programme,
+        )
+        self.client.force_login(self.student)
+
+        response = self.client.post(reverse("project_workflow", args=[project.pk]), {
+            "proposed_title": "Exam Seating Allocation Tool for Halls",
+            "problem_statement": "Seats are allocated by hand.", "objectives": "Automate it.", "methodology": "Prototype.",
+        }, follow=True)
+
+        self.assertTrue(ProjectApprovalForm.objects.filter(project=project).exists())
+        self.assertContains(response, "Your topic was saved")
+        self.assertContains(response, "Exam Seating Allocation Tool</a>")
+
+    def test_detail_page_shows_the_top_five_best_first_and_not_itself(self):
+        for number in range(6):
+            self._archive(f"Exam Seating Allocation Tool {number}", "Allocating examination seats across halls.", 2020 + number)
+        self.client.force_login(self.student)
+
+        response = self.client.get(reverse("past_project_detail", args=[self.seating.pk]))
+
+        matches = response.context["similar_projects"]
+        self.assertEqual(len(matches), 5)
+        self.assertNotIn(self.seating.pk, [match["id"] for match in matches])
+        self.assertEqual([match["score"] for match in matches], sorted((match["score"] for match in matches), reverse=True))
+        self.assertContains(response, "Similar past projects")
+
+    def test_current_project_detail_lists_similar_archived_projects(self):
+        project = Project.objects.create(
+            student=self.student, title="Exam Seating Allocation Tool", description="Allocating examination seats across halls.",
+            department=self.department, programme=self.programme,
+        )
+        self.client.force_login(self.student)
+
+        response = self.client.get(reverse("current_project_detail", args=[project.pk]))
+
+        self.assertEqual([match["id"] for match in response.context["similar_projects"]], [self.seating.pk])
+        self.assertContains(response, "1.00")
+
+    @override_settings(SIMILARITY_THRESHOLD=0.99)
+    def test_threshold_comes_from_settings(self):
+        self.assertEqual(similar_archived_projects("Exam Seating Allocation Tool for Halls"), [])
+        self.assertEqual(len(similar_archived_projects("Exam Seating Allocation Tool", "Allocating examination seats across halls.")), 1)

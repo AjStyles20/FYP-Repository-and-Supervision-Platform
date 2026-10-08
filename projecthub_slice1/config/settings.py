@@ -131,6 +131,10 @@ PUBLIC_REPOSITORY = False
 # Personal data (student ID, an individual's contact) is never public, whatever the flag above says.
 REPOSITORY_PAGE_SIZE = 12
 
+# Similar-topic checker (apps/projects/services/similarity.py): archived projects whose Jaccard
+# word-overlap score with a topic is at or above this value are shown as a warning, never a block.
+SIMILARITY_THRESHOLD = 0.35
+
 # Security defaults. Production deployment must also serve over HTTPS.
 SESSION_COOKIE_HTTPONLY = True
 CSRF_COOKIE_HTTPONLY = False
