@@ -24,3 +24,19 @@ class CodeMapTests(SimpleTestCase):
     def test_no_line_numbers(self):
         text = (DOCS / "code_map.md").read_text(encoding="utf-8")
         self.assertIsNone(re.search(r"\.(py|html|js|css):\d+", text))
+
+
+class RegistrationStatusExplainerTests(SimpleTestCase):
+    def test_has_the_required_sections_and_five_questions(self):
+        text = (DOCS / "explain" / "registration-status.md").read_text(encoding="utf-8")
+        for heading in ("## Purpose", "## Files involved", "## Flow", "## Rules", "## Self-test"):
+            self.assertIn(heading, text)
+        questions = text.split("## Self-test", 1)[1].split("<details>", 1)[0]
+        self.assertEqual(len(re.findall(r"^\d\. ", questions, re.M)), 5)
+
+    def test_every_code_name_it_mentions_exists(self):
+        source = (settings.BASE_DIR / "apps" / "accounts" / "views.py").read_text(encoding="utf-8")
+        for name in ("def registration_status", "def registration_status_token", "def _registration_for_token", "def _rejection_reason"):
+            self.assertIn(name, source)
+        for path in ("templates/registration/status.html", "static/js/poll.js", "static/js/registration-status.js"):
+            self.assertTrue((settings.BASE_DIR / path).is_file(), path)
