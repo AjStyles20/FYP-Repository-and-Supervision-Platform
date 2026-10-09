@@ -86,6 +86,11 @@ small { font-size: var(--text-sm); }
 }
 .nav-toggle-icon { display: grid; gap: 4px; }
 .nav-toggle-icon span { display: block; width: 18px; height: 2px; background: currentColor; border-radius: 2px; }
+/* The menu is a hamburger at every width. Without JavaScript the links simply sit below the
+   header; with it (.nav-js) they open as a panel under the button. */
+.nav-toggle { position: relative; }
+.nav-toggle-count { position: absolute; top: -0.45rem; right: -0.45rem; }
+.top-inner { position: relative; }
 .top-nav {
   display: flex;
   flex-direction: column;
@@ -93,6 +98,19 @@ small { font-size: var(--text-sm); }
   width: 100%;
   gap: var(--space-1);
   padding-top: var(--space-2);
+}
+.nav-js .top-nav {
+  position: absolute;
+  top: calc(100% + var(--space-1));
+  right: var(--gutter);
+  width: min(20rem, calc(100vw - 2 * var(--gutter)));
+  max-height: calc(100vh - 6rem);
+  overflow-y: auto;
+  padding: var(--space-2);
+  background: var(--band-dark);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
 }
 .nav-js .top-nav:not(.is-open) { display: none; }
 .top-nav a {
@@ -103,29 +121,11 @@ small { font-size: var(--text-sm); }
   font-weight: 500;
   text-decoration: none;
 }
-.top-nav a:hover { background: var(--gray-50); color: var(--gray-900); }
+.top-nav a:hover, .top-nav a:focus-visible { background: var(--gray-50); color: var(--gray-900); }
 .top-nav .tag { align-self: flex-start; margin: var(--space-1) var(--space-3); }
 .top-nav .who { padding: var(--space-2) var(--space-3); color: var(--gray-500); font-size: var(--text-sm); border-top: var(--border); margin-top: var(--space-1); }
 .top-nav .inline-form { padding: 0 var(--space-3) var(--space-2); }
 .inline-form { margin: 0; }
-
-@media (min-width: 1100px) {
-  .top-inner { flex-wrap: nowrap; }
-  .nav-toggle { display: none; }
-  .top-nav, .nav-js .top-nav:not(.is-open) {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    justify-content: flex-end;
-    flex-wrap: wrap;
-    width: auto;
-    padding: 0;
-  }
-  .top-nav a { padding: var(--space-2); }
-  .top-nav .tag { display: none; }
-  .top-nav .who { border: 0; margin: 0 0 0 var(--space-2); padding: 0 var(--space-2); }
-  .top-nav .inline-form { padding: 0; }
-}
 
 /* ---------- Page shell ---------- */
 .shell {
@@ -520,21 +520,7 @@ td form { display: flex; flex-wrap: wrap; gap: var(--space-2); margin: 0; }
 .filter-row { display: flex; flex-wrap: wrap; align-items: flex-end; gap: var(--space-3); }
 .filter-row > div { flex: 1 1 14rem; min-width: 0; }
 
-/* Header fit: one row on desktop for every role (the coordinator has the most links). Links are
-   tightened and never wrap; the name label only returns on very wide screens. */
 .brand { white-space: nowrap; flex-shrink: 0; }
-@media (min-width: 1100px) {
-  .top-nav, .nav-js .top-nav:not(.is-open) { flex-wrap: nowrap; gap: 0; }
-  .top-nav a { padding: var(--space-2) 0.45rem; font-size: 0.8125rem; white-space: nowrap; }
-  .top-nav .inline-form { margin-left: var(--space-2); }
-  .top-nav .who { display: none; }
-}
-@media (min-width: 1100px) and (max-width: 1199px) {
-  .top-nav a { padding: var(--space-2) 0.3rem; font-size: 0.78rem; }
-}
-@media (min-width: 1600px) {
-  .top-nav .who { display: inline; white-space: nowrap; }
-}
 .detail-hero .sample-label { align-self: flex-start; }
 
 /* Similar past projects panel (workflow and repository detail) */
@@ -575,3 +561,8 @@ td form { display: flex; flex-wrap: wrap; gap: var(--space-2); margin: 0; }
   body { background: #fff; }
   .card { box-shadow: none; border: 0; padding: 0; }
 }
+
+/* Back arrow under the header */
+.back-link { margin: 0; }
+.back-link a { display: inline-flex; align-items: center; gap: var(--space-1); font-weight: 600; text-decoration: none; }
+.back-link a:hover { text-decoration: underline; }

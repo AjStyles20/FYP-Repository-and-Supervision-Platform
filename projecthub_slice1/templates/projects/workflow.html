@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% block title %}Project workflow · {{ project.title }}{% endblock %}
+{% block back %}<p class="breadcrumb back-link"><a href="{% url 'current_project_detail' project.pk %}"><span aria-hidden="true">←</span> Project summary</a></p>{% endblock %}
 {% block content %}
-<p class="breadcrumb"><a href="{% url 'current_project_detail' project.pk %}">← Project summary</a></p>
 <section class="card">
   <p class="eyebrow">Project workflow</p>
   <h1>{{ project.title }}</h1>

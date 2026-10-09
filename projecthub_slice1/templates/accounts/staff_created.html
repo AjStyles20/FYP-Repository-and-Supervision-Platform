@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% block title %}{% if is_reset %}Password reset{% else %}Staff account created{% endif %} · Baze Project Hub{% endblock %}
+{% block back %}<p class="breadcrumb back-link"><a href="{% url 'admin_tools' %}"><span aria-hidden="true">←</span> Admin tools</a></p>{% endblock %}
 {% block content %}
-<p class="breadcrumb"><a href="{% url 'admin_tools' %}">← Admin tools</a></p>
 <section class="card narrow">
   <h1>{% if is_reset %}Password reset{% else %}Account created{% endif %}</h1>
   <dl class="record-fields">

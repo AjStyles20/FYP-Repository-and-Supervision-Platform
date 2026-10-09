@@ -1,3 +1,4 @@
 {% extends "base.html" %}
 {% block title %}Upload project document · Baze Project Hub{% endblock %}
+{% block back %}<p class="breadcrumb back-link"><a href="{% url 'my_project' %}"><span aria-hidden="true">←</span> My project</a></p>{% endblock %}
 {% block content %}<h1>Upload project document</h1><section class="card"><p>{{ project.title }} · Files are limited to 25 MB. Uploads are visible to academic staff and to you.</p><form method="post" enctype="multipart/form-data" class="stack-form">{% csrf_token %}{% for field in form %}<div class="form-row">{{ field.label_tag }}{{ field }}{{ field.errors }}</div>{% endfor %}<button class="button">Upload file</button></form></section>{% endblock %}

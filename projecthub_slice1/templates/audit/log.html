@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% load audit_display %}
 {% block title %}Audit log · Baze Project Hub{% endblock %}
+{% block back %}<p class="breadcrumb back-link"><a href="{% url 'admin_tools' %}"><span aria-hidden="true">←</span> Admin tools</a></p>{% endblock %}
 {% block content %}
 <section class="page-heading"><p class="eyebrow">System administration</p><h1>Audit log</h1><p class="muted">Append-only record of important actions, newest first. Entries cannot be edited or deleted. Demo accounts are not recorded.</p></section>
 <section class="card">

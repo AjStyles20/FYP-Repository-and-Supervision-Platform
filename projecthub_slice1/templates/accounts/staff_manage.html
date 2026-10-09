@@ -1,8 +1,8 @@
 {% extends "base.html" %}
 {% load static %}
 {% block title %}{{ staff.get_full_name|default:staff.username }} · Staff account · Baze Project Hub{% endblock %}
+{% block back %}<p class="breadcrumb back-link"><a href="{% url 'admin_tools' %}"><span aria-hidden="true">←</span> Admin tools</a></p>{% endblock %}
 {% block content %}
-<p class="breadcrumb"><a href="{% url 'admin_tools' %}">← Admin tools</a></p>
 <section class="page-heading">
   <p class="eyebrow">Staff account</p>
   <h1>{{ staff.get_full_name|default:staff.username }}</h1>

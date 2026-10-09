@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% block title %}Meeting record · Baze Project Hub{% endblock %}
+{% block back %}<p class="breadcrumb back-link"><a href="{% url 'project_meetings' meeting.project.pk %}"><span aria-hidden="true">←</span> Meetings</a></p>{% endblock %}
 {% block content %}
 <section class="card"><p class="eyebrow">Meeting record</p><h1>{{ meeting.project.title }}</h1><div class="tag-row"><span class="tag tag-live">{{ meeting.get_status_display }}</span><span class="tag">{{ meeting.scheduled_for|date:"j M Y, H:i" }}</span>{% if meeting.venue %}<span class="tag">{{ meeting.venue }}</span>{% endif %}</div>
 <dl class="record-fields"><div><dt>Agenda</dt><dd>{{ meeting.agenda|default:"—"|linebreaksbr }}</dd></div><div><dt>Discussion</dt><dd>{{ meeting.discussion|default:"—"|linebreaksbr }}</dd></div><div><dt>Attendance</dt><dd>{% if meeting.status == 'held' %}Held{% elif meeting.status == 'missed' %}Missed{% else %}Not yet held{% endif %}</dd></div><div><dt>Corrective action</dt><dd>{{ meeting.corrective_action|default:"—"|linebreaksbr }}</dd></div><div><dt>Next steps</dt><dd>{{ meeting.next_steps|default:"—"|linebreaksbr }}</dd></div></dl>

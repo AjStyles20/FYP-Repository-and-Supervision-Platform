@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% block title %}Edit resource · Baze Project Hub{% endblock %}
+{% block back %}<p class="breadcrumb back-link"><a href="{% url 'announcements' %}"><span aria-hidden="true">←</span> Notices and resources</a></p>{% endblock %}
 {% block content %}
 <section class="page-heading"><p class="eyebrow">SUPERVISOR TOOLS</p><h1>Edit shared resource</h1><p class="muted">Save your changes to notify the students selected below.</p></section>
 <section class="card"><form method="post" enctype="multipart/form-data" class="stack-form">{% csrf_token %}{% for field in form %}<div class="form-row">{{ field.label_tag }}{{ field }}{% if field.help_text %}<small class="muted">{{ field.help_text }}</small>{% endif %}{{ field.errors }}</div>{% endfor %}<button class="button">Save and notify students</button><a href="{% url 'announcements' %}">Cancel</a></form></section>

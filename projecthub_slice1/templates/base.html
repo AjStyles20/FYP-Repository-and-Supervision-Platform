@@ -6,7 +6,7 @@
   <title>{% block title %}Baze Project Hub{% endblock %}</title>
   <meta name="color-scheme" content="light">
   <link rel="stylesheet" href="{% static 'css/tokens.css' %}?v=3">
-  <link rel="stylesheet" href="{% static 'css/app.css' %}?v=23">
+  <link rel="stylesheet" href="{% static 'css/app.css' %}?v=24">
 </head>
 <body>
 <header class="top">
@@ -14,6 +14,7 @@
   <a class="brand" href="{% url 'home' %}"><span class="brand-mark" aria-hidden="true">BU</span>Baze Project Hub</a>
   <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="main-nav" aria-label="Open navigation">
     <span class="nav-toggle-icon" aria-hidden="true"><span></span><span></span><span></span></span>
+    {% if user.is_authenticated %}<span class="nav-count nav-toggle-count" data-counter="unread_notifications" aria-hidden="true"{% if not unread_notification_count %} hidden{% endif %}>{{ unread_notification_count|default:0 }}</span>{% endif %}
   </button>
   <nav class="top-nav" id="main-nav" aria-label="Main navigation">
     {% if user.is_authenticated %}
@@ -63,11 +64,12 @@
   </div>
 </header>
 <main class="shell {% block main_class %}{% endblock %}">
+  {% block back %}{% if user.is_authenticated %}<p class="breadcrumb back-link"><a href="{% url 'dashboard' %}"><span aria-hidden="true">←</span> Portal home</a></p>{% endif %}{% endblock %}
   {% if messages %}{% for m in messages %}<p class="msg{% if m.tags %} {{ m.tags }}{% endif %}">{{ m }}</p>{% endfor %}{% endif %}
   {% block content %}{% endblock %}
 </main>
 <footer class="site-footer"><div class="footer-inner">Baze Project Hub <span>·</span> Final-year project repository and supervision platform</div></footer>
-<script src="{% static 'js/navigation.js' %}?v=2" defer></script>
+<script src="{% static 'js/navigation.js' %}?v=3" defer></script>
 {% if user.is_authenticated %}<script src="{% static 'js/live-counters.js' %}?v=2" data-summary-url="{% url 'api_summary' %}" defer></script><script src="{% static 'js/greeting.js' %}?v=1" defer></script>{% endif %}
 </body>
 </html>

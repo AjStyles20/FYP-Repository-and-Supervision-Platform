@@ -1,8 +1,8 @@
 {% extends "base.html" %}
 {% load static %}
 {% block title %}Add staff account · Baze Project Hub{% endblock %}
+{% block back %}<p class="breadcrumb back-link"><a href="{% url 'admin_tools' %}"><span aria-hidden="true">←</span> Admin tools</a></p>{% endblock %}
 {% block content %}
-<p class="breadcrumb"><a href="{% url 'admin_tools' %}">← Admin tools</a></p>
 <section class="card narrow">
   <h1>Add staff account</h1>
   <p class="muted">For supervisors, coordinators, Heads of Department and administrators. A temporary password is generated and shown once; the person must choose their own at first sign-in.</p>

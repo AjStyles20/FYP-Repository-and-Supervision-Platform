@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% block title %}Meetings · {{ project.title }}{% endblock %}
+{% block back %}<p class="breadcrumb back-link"><a href="{% if user.role == 'student' %}{% url 'my_project' %}{% else %}{% url 'supervision' %}{% endif %}"><span aria-hidden="true">←</span> {% if user.role == 'student' %}My project{% else %}Supervised students{% endif %}</a></p>{% endblock %}
 {% block content %}
 <section class="page-heading"><p class="eyebrow">Supervision meetings</p><h1>{{ project.title }}</h1></section>
 <section class="bento" aria-label="Attendance"><div class="bento-cell"><span class="bento-label">Held</span><strong class="bento-value">{{ counts.held }}</strong></div><div class="bento-cell"><span class="bento-label">Missed</span><strong class="bento-value">{{ counts.missed }}</strong></div></section>

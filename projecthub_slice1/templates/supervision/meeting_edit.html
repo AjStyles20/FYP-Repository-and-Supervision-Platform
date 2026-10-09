@@ -1,3 +1,4 @@
 {% extends "base.html" %}
 {% block title %}Edit meeting record{% endblock %}
+{% block back %}<p class="breadcrumb back-link"><a href="{% url 'meeting_detail' meeting.pk %}"><span aria-hidden="true">←</span> Meeting record</a></p>{% endblock %}
 {% block content %}<h1>Edit meeting record</h1><section class="card"><form method="post" class="stack-form">{% csrf_token %}{% for field in form %}<div class="form-row">{{ field.label_tag }}{{ field }}{{ field.errors }}</div>{% endfor %}<button class="button">Save new version</button></form></section>{% endblock %}

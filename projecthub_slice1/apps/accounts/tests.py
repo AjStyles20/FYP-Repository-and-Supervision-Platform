@@ -87,6 +87,14 @@ class LoginAndRolesTests(TestCase):
                 self.assertContains(response, f"<span data-greeting>Good afternoon</span>, {name}", msg_prefix=username)
                 self.assertContains(response, "js/greeting.js", msg_prefix=username)
 
+    def test_back_arrow_goes_to_the_logical_parent_and_not_on_portal_homes(self):
+        self.login("demo.admin")
+        self.assertNotContains(self.client.get(reverse("dashboard")), "back-link")
+        self.assertContains(self.client.get(reverse("admin_tools")), "</span> Portal home</a>", html=False)
+        self.assertContains(self.client.get(reverse("audit_log")), "</span> Admin tools</a>", html=False)
+        self.client.logout()
+        self.assertNotContains(self.client.get(reverse("login")), "back-link")
+
     def test_role_dashboards_use_separate_portal_templates(self):
         expected = {
             "demo.amina": "portals/student_current.html",

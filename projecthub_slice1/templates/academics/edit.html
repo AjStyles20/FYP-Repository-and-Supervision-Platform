@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% block title %}Edit {{ kind }} · Baze Project Hub{% endblock %}
+{% block back %}<p class="breadcrumb back-link"><a href="{% url 'manage_structure' %}"><span aria-hidden="true">←</span> Academic structure</a></p>{% endblock %}
 {% block content %}
-<p class="breadcrumb"><a href="{% url 'manage_structure' %}">← Academic structure</a></p>
 <section class="card narrow">
   <h1>Edit {{ kind }}</h1>
   <p class="muted">{{ item }}</p>
