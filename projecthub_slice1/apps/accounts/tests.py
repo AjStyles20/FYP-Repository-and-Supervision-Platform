@@ -7,7 +7,7 @@ from pathlib import Path
 from django.contrib.messages import get_messages
 from django.core.management import call_command
 from django.core.management.base import CommandError
-from django.test import TestCase, override_settings
+from django.test import SimpleTestCase, TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
 
@@ -70,6 +70,21 @@ class LoginAndRolesTests(TestCase):
             response = self.client.get(reverse("dashboard"))
             self.assertEqual(response.status_code, 200, username)
             self.assertContains(response, heading)
+
+    def test_every_portal_greets_by_time_of_day_and_name(self):
+        from datetime import datetime
+        from unittest import mock
+
+        expected = {"demo.amina": "Amina", "demo.okoro": "Dr. A.", "demo.coordinator": "Emeka",
+                    "demo.hod": "Halima", "demo.admin": "Demo"}
+        afternoon = datetime(2026, 10, 9, 14, 30, tzinfo=timezone.get_current_timezone())
+        with mock.patch("apps.accounts.templatetags.greeting.timezone.localtime", return_value=afternoon):
+            for username, name in expected.items():
+                self.client.logout()
+                self.login(username)
+                response = self.client.get(reverse("dashboard"))
+                self.assertContains(response, f"<span data-greeting>Good afternoon</span>, {name}", msg_prefix=username)
+                self.assertContains(response, "js/greeting.js", msg_prefix=username)
 
     def test_role_dashboards_use_separate_portal_templates(self):
         expected = {
@@ -843,3 +858,21 @@ class ManageStaffAccountTests(TestCase):
         self.client.post(reverse("manage_staff_account", args=[other.pk]), {"action": "deactivate"})
         other.refresh_from_db()
         self.assertTrue(other.is_active)
+
+
+class GreetingTests(SimpleTestCase):
+    def test_part_of_day_bands(self):
+        from apps.accounts.templatetags.greeting import part_of_day
+
+        self.assertEqual([part_of_day(hour) for hour in (0, 11, 12, 16, 17, 23)], [
+            "Good morning", "Good morning", "Good afternoon", "Good afternoon", "Good evening", "Good evening",
+        ])
+
+    def test_name_uses_title_for_staff_only(self):
+        from apps.accounts.templatetags.greeting import greeting_name
+
+        supervisor = User(username="julius", first_name="Julius", role=Role.SUPERVISOR)
+        supervisor.supervisor_profile = SupervisorProfile(title="Dr.")
+        student = User(username="amina", first_name="Amina", role=Role.STUDENT)
+        unnamed = User(username="admin", role=Role.ADMIN)
+        self.assertEqual([greeting_name(u) for u in (supervisor, student, unnamed)], ["Dr. Julius", "Amina", "admin"])

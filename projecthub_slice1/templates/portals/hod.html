@@ -1,8 +1,10 @@
 {% extends "base.html" %}
+{% load greeting %}
 {% block title %}HOD Portal · Baze Project Hub{% endblock %}
 {% block content %}
 <section class="hero-band">
   <div class="hero-copy">
+    <p class="hero-greeting">{% greeting user %}</p>
     <p class="eyebrow">Head of Department · Department leadership{% if department %} · {{ department }}{% endif %}</p>
     <h1>Department project oversight</h1>
     <p>Review projects ready for completion sign-off, monitor graduation checks, and see the department’s supervision capacity.</p>

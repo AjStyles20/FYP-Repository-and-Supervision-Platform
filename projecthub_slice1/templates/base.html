@@ -6,7 +6,7 @@
   <title>{% block title %}Baze Project Hub{% endblock %}</title>
   <meta name="color-scheme" content="light">
   <link rel="stylesheet" href="{% static 'css/tokens.css' %}?v=3">
-  <link rel="stylesheet" href="{% static 'css/app.css' %}?v=19">
+  <link rel="stylesheet" href="{% static 'css/app.css' %}?v=20">
 </head>
 <body>
 <header class="top">
@@ -66,6 +66,6 @@
 </main>
 <footer class="site-footer"><div class="footer-inner">Baze Project Hub <span>·</span> Final-year project repository and supervision platform</div></footer>
 <script src="{% static 'js/navigation.js' %}?v=2" defer></script>
-{% if user.is_authenticated %}<script src="{% static 'js/live-counters.js' %}?v=2" data-summary-url="{% url 'api_summary' %}" defer></script>{% endif %}
+{% if user.is_authenticated %}<script src="{% static 'js/live-counters.js' %}?v=2" data-summary-url="{% url 'api_summary' %}" defer></script><script src="{% static 'js/greeting.js' %}?v=1" defer></script>{% endif %}
 </body>
 </html>

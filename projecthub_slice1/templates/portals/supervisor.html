@@ -1,11 +1,12 @@
 {% extends "base.html" %}
+{% load greeting %}
 {% block title %}Supervisor Portal | Baze Project Hub{% endblock %}
 {% block content %}
 <div class="supervisor-dashboard">
   <section class="supervisor-welcome">
     <div>
       <p class="eyebrow">Supervisor workspace{% if department %} · {{ department }}{% endif %}</p>
-      <h1>Good day, {{ user.first_name|default:user.username }}</h1>
+      <h1>{% greeting user %}</h1>
       <p>Your students, project progress, and upcoming meetings at a glance.</p>
     </div>
     <div class="supervisor-welcome-actions">

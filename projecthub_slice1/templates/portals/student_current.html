@@ -1,8 +1,10 @@
 {% extends "base.html" %}
+{% load greeting %}
 {% block title %}Student Portal · Baze Project Hub{% endblock %}
 {% block content %}
 <section class="hero-band">
   <div class="hero-copy">
+    <p class="hero-greeting">{% greeting user %}</p>
     <p class="eyebrow">Student portal{% if student_profile %} · {{ student_profile.programme.department }}{% endif %}</p>
     <h1>Your project, in one place</h1>
     <p>Keep up with supervisor feedback, meetings, resources, and the next steps for your project.</p>

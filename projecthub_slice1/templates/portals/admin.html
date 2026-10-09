@@ -1,8 +1,10 @@
 {% extends "base.html" %}
+{% load greeting %}
 {% block title %}System Admin Portal · Baze Project Hub{% endblock %}
 {% block content %}
 <section class="hero-band">
   <div class="hero-copy">
+    <p class="hero-greeting">{% greeting user %}</p>
     <p class="eyebrow">Administrator · System administration</p>
     <h1>Keep the university workspace healthy</h1>
     <p>Manage account review, academic structure, project imports, and the audit trail. Academic decisions stay with the department roles.</p>

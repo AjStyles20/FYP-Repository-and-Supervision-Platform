@@ -555,3 +555,6 @@ td form { display: flex; flex-wrap: wrap; gap: var(--space-2); margin: 0; }
 .alert-card.is-unread { border-left: 3px solid var(--accent); }
 .nav-count[hidden] { display: none; }
 .form-row[hidden] { display: none; }
+
+/* Portal greeting (time of day from the viewer's clock: static/js/greeting.js) */
+.hero-greeting { margin: 0 0 var(--space-2); font-size: var(--text-lg); font-weight: 600; color: var(--gray-900); }

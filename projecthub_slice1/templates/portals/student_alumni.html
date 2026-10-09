@@ -1,8 +1,10 @@
 {% extends "base.html" %}
+{% load greeting %}
 {% block title %}Alumni Portal · Baze Project Hub{% endblock %}
 {% block content %}
 <section class="hero-band">
   <div class="hero-copy">
+    <p class="hero-greeting">{% greeting user %}</p>
     <p class="eyebrow">Past student / alumni portal · {{ student_profile.programme.department.faculty.name }}</p>
     <h1>Your work stays useful</h1>
     <p>Find your completed FYP records, see what was left for future researchers, and choose whether you want students to contact you.</p>
