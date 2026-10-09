@@ -1100,3 +1100,19 @@ class StudentIdFormatTests(TestCase):
     def test_the_format_and_message_come_from_settings(self):
         self.assertContains(self._register("BU22CS4012"), "Baze ID card: like BU/22/CS/4012.")
         self.assertEqual(self._register("BU/22/CS/4012").status_code, 302)
+
+
+class DemoCredentialHintTests(TestCase):
+    """Item 5: the login page names the demo account only when DEBUG is True (and the account exists)."""
+
+    @classmethod
+    def setUpTestData(cls):
+        User.objects.create(username="demo.amina", role=Role.STUDENT, is_demo=True)
+
+    @override_settings(DEBUG=False)
+    def test_hidden_when_debug_is_off_even_with_demo_data(self):
+        self.assertNotContains(self.client.get(reverse("login")), "demo.amina")
+
+    @override_settings(DEBUG=True)
+    def test_shown_on_a_debug_demo(self):
+        self.assertContains(self.client.get(reverse("login")), "demo.amina / ChangeMe123!")
