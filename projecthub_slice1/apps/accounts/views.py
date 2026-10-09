@@ -37,7 +37,8 @@ class ProjectLoginView(LoginView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["show_demo_credentials"] = settings.DEBUG
+        # Only advertise the demo account where it exists (the demo database, not the real one).
+        context["show_demo_credentials"] = settings.DEBUG and User.objects.filter(username="demo.amina", is_demo=True).exists()
         return context
 
 

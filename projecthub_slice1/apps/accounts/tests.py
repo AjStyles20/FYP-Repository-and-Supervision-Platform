@@ -690,6 +690,14 @@ class StaffAccountTests(TestCase):
         self.assertEqual(self.client.get(reverse("dashboard")).status_code, 200)
         self.assertTrue(AuditEvent.objects.filter(action="account.password_set", actor=user).exists())
 
+    @override_settings(DEBUG=True)
+    def test_login_page_shows_one_clear_error_and_no_demo_hint_without_demo_data(self):
+        response = self.client.post(reverse("login"), {"username": "Ngozi Eze", "password": "wrong"})
+
+        self.assertContains(response, "not your name", count=1)
+        self.assertNotContains(response, "Please enter a correct username")
+        self.assertNotContains(response, "demo.amina")
+
     def test_student_sign_up_cannot_choose_a_role_and_points_staff_elsewhere(self):
         page = self.client.get(reverse("register_student"))
         self.assertContains(page, "Staff?")

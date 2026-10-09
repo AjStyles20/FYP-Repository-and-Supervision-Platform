@@ -5,9 +5,8 @@
 <section class="card narrow">
   <h1>Log in</h1>
   <p class="muted">Use your Baze email or student ID. Staff can use their account username.</p>
-  {% if form.errors %}<p class="error">Email/ID or password is incorrect, or the account is awaiting approval.</p>{% endif %}
+  {% if form.errors %}<p class="error">The email/ID or password is incorrect, or the account is awaiting approval. Sign in with your Baze email, student ID or staff username (not your name); the password is case-sensitive.</p>{% endif %}
   <form method="post">{% csrf_token %}
-    {{ form.non_field_errors }}
     <label class="field"><span class="field-label">{{ form.username.label }}</span>{{ form.username }}</label>
     <label class="field"><span class="field-label">{{ form.password.label }}</span>{{ form.password }}</label>
     <input type="hidden" name="next" value="{{ next }}">
