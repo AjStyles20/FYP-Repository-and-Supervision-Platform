@@ -587,12 +587,19 @@ def guidelines(request):
             resources = SharedResource.objects.filter(student_resource_scope(request.user))
     elif request.user.role == Role.SUPERVISOR:
         resources = SharedResource.objects.filter(Q(author=request.user) | Q(projects__supervisor=request.user))
+    elif request.user.role == Role.ADMIN:
+        # Shared guides are supervision material between supervisors and their students (D-14);
+        # the administrator manages accounts and setup, so the page shows only the general guide.
+        resources = SharedResource.objects.none()
     else:
         resources = SharedResource.objects.filter(
             Q(department_id=request.user.department_id) | Q(department__isnull=True)
-        ) if request.user.role != Role.ADMIN else SharedResource.objects.all()
+        )
     resources = resources.select_related("author").distinct().order_by("-created_at")
-    return render(request, "projects/guidelines.html", {"guide_resources": resources})
+    return render(request, "projects/guidelines.html", {
+        "guide_resources": resources,
+        "show_resources": request.user.role != Role.ADMIN,
+    })
 
 
 @role_required(Role.ADMIN)

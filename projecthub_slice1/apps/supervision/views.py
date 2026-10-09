@@ -321,7 +321,8 @@ def download_shared_resource(request, resource_id):
     elif request.user.role in (Role.SUPERVISOR, Role.COORDINATOR, Role.HOD):
         can_access = resource.author_id == request.user.pk or resource.department_id == request.user.department_id
     else:
-        can_access = request.user.role == Role.ADMIN
+        # Administrators manage accounts and setup, not supervision material (D-14).
+        can_access = False
     if not can_access:
         raise PermissionDenied
     return FileResponse(resource.file.open("rb"), as_attachment=True, filename=Path(resource.file.name).name)

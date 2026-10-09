@@ -126,6 +126,23 @@ class SupervisorStudentWorkflowTests(TestCase):
         self.assertContains(response, "overlaps another scheduled meeting")
         self.assertEqual(SupervisionMeeting.objects.count(), 1)
 
+    def test_administrator_sees_the_general_guide_but_not_supervision_resources(self):
+        self.client.force_login(self.supervisor)
+        self.client.post(reverse("announcements"), {
+            "action": "publish_resource", "title": "Private chapter feedback", "description": "",
+            "url": "", "project_targets": [str(self.project.pk)],
+            "file": SimpleUploadedFile("feedback.pdf", b"feedback", content_type="application/pdf"),
+        })
+        resource = SharedResource.objects.get(title="Private chapter feedback")
+        self.client.force_login(User.objects.create(username="guide.admin", role=Role.ADMIN))
+
+        guide = self.client.get(reverse("guidelines"))
+
+        self.assertContains(guide, "Project workflow")
+        self.assertNotContains(guide, "Shared guide documents")
+        self.assertNotContains(guide, "Private chapter feedback")
+        self.assertEqual(self.client.get(reverse("download_shared_resource", args=[resource.pk])).status_code, 403)
+
     def test_supervisor_can_upload_targeted_resource_and_students_can_download_it(self):
         self.client.force_login(self.supervisor)
         response = self.client.post(reverse("announcements"), {
