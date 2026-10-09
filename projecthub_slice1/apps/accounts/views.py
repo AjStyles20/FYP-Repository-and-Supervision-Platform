@@ -2,11 +2,12 @@ from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.views import LoginView, PasswordChangeView
+from django.core.mail import send_mail
 from django.db import IntegrityError, transaction
 from django.db.models import Exists, OuterRef, Q
 from django.http import HttpResponseBadRequest, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
-from django.urls import reverse_lazy
+from django.urls import reverse, reverse_lazy
 from django.utils import timezone
 from django.views.decorators.http import require_GET, require_POST
 
@@ -55,7 +56,7 @@ def register_student(request):
         else:
             messages.success(
                 request,
-                "Your registration has been submitted for review. You can sign in after an administrator approves your account.",
+                "Your registration has been submitted for review. You will get an email at your Baze address once an administrator has reviewed it, and you can sign in after it is approved.",
             )
             return redirect("login")
     return render(request, "registration/register.html", {"form": form})
@@ -422,9 +423,33 @@ def review_student_registration(request, user_id):
         registration.save(update_fields=["registration_status"])
         student.is_active = action == "approve"
         student.save(update_fields=["is_active"])
-        log_event(actor=request.user, action=f"account.registration_{action}", summary=f"{outcome} student registration for {student.username}", obj=student)
+        reason = request.POST.get("reason", "").strip()[:500] if action == "reject" else ""
+        log_event(actor=request.user, action=f"account.registration_{action}", summary=f"{outcome} student registration for {student.username}", obj=student,
+                  details={"reason": reason} if reason else None)
     messages.success(request, f"{outcome} the account for {student.get_full_name() or student.email}.")
+    if not _email_registration_decision(request, student, approved=action == "approve", reason=reason):
+        messages.warning(request, f"The decision is saved, but the email to {student.email} could not be sent. Please tell the student directly.")
     return redirect("admin_tools")
+
+
+def _email_registration_decision(request, student, *, approved, reason=""):
+    """Tell the student the outcome at their Baze email. Returns False if sending failed."""
+    name = student.first_name or "there"
+    if approved:
+        subject = "Your Baze Project Hub account is approved"
+        body = (f"Hello {name},\n\nYour Baze Project Hub registration has been approved. You can now sign in "
+                f"with your Baze email or student ID at:\n{request.build_absolute_uri(reverse('login'))}\n\n"
+                "Baze Project Hub")
+    else:
+        subject = "Your Baze Project Hub registration was not approved"
+        body = (f"Hello {name},\n\nYour Baze Project Hub registration was not approved."
+                + (f"\n\nReason: {reason}" if reason else "")
+                + "\n\nIf you think this is a mistake, contact your department.\n\nBaze Project Hub")
+    try:
+        send_mail(subject, body, settings.DEFAULT_FROM_EMAIL, [student.email])
+    except Exception:  # a mail outage must not undo the decision
+        return False
+    return True
 
 
 @role_required(Role.ADMIN)

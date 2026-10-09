@@ -51,6 +51,8 @@ To try that staff workflow locally, sign in as `demo.coordinator` with password 
 
 - Current and past final-year students can submit a registration using a `@bazeuniversity.edu.ng` email, student ID, programme, and password.
 - New student accounts stay inactive until an administrator reviews the registration.
+- The student is emailed at their Baze address when the registration is approved or rejected (with the reason, if the administrator gives one). Signing in with the right password before then shows whether the registration is still pending or was not approved.
+- Email settings live in `projecthub_slice1/.env` (see `.env.example`). Without them, emails are printed in the server terminal instead of being sent, which is fine for development; at launch, add the SMTP details from Baze ICT.
 - Staff and administrator access is not self-registerable; accounts must be provisioned by an administrator.
 - Create the initial administrator with `python manage.py createsuperuser`. The account is assigned the administrator role automatically. If its password is forgotten, reset it with `python manage.py changepassword <username>`.
 - The administrator adds supervisor, coordinator, HOD and further administrator accounts in **System administration → Add staff account**. A temporary password is shown once; the person must choose their own at first sign-in. The same page per staff member edits role and department, resets the password, and deactivates or reactivates the account.

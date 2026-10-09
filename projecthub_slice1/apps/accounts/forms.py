@@ -14,6 +14,7 @@ BAZE_EMAIL_DOMAIN = "@bazeuniversity.edu.ng"
 
 
 class ProjectAuthenticationForm(AuthenticationForm):
+    status_message = ""  # set by clean() when the right password meets an inactive account
     username = forms.CharField(
         label="Baze email, student ID, or staff username",
         widget=forms.TextInput(attrs={"autofocus": True, "autocomplete": "username"}),
@@ -32,7 +33,28 @@ class ProjectAuthenticationForm(AuthenticationForm):
                 account = profile.user if profile else None
             if account:
                 self.cleaned_data["username"] = account.get_username()
-        return super().clean()
+        try:
+            return super().clean()
+        except ValidationError:
+            self.status_message = self._inactive_account_message()
+            raise
+
+    def _inactive_account_message(self):
+        """Why an account with the RIGHT password cannot sign in, or "" (also for a wrong password).
+
+        Only someone who knows the password learns the account's status, so this does not reveal
+        which emails are registered.
+        """
+        username, password = self.cleaned_data.get("username"), self.cleaned_data.get("password")
+        user = User.objects.filter(username=username, is_active=False).select_related("student_profile").first() if username else None
+        if user is None or not password or not user.check_password(password):
+            return ""
+        profile = getattr(user, "student_profile", None)
+        if profile and profile.registration_status == StudentProfile.RegistrationStatus.PENDING:
+            return "Your registration is still awaiting approval by an administrator. You will receive an email at your Baze address when it has been reviewed."
+        if profile and profile.registration_status == StudentProfile.RegistrationStatus.REJECTED:
+            return "Your registration was not approved. Check your Baze email for the reason, or contact your department."
+        return "This account has been deactivated. Contact the system administrator if you need access."
 
 
 class StudentRegistrationForm(forms.Form):

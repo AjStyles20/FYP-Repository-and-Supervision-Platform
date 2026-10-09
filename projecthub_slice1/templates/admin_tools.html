@@ -21,6 +21,7 @@
                 <form method="post" action="{% url 'review_student_registration' student.pk %}">
                   {% csrf_token %}
                   <button type="submit" name="action" value="approve" class="primary">Approve</button>
+                  <input type="text" name="reason" maxlength="500" placeholder="Reason if rejecting (sent to the student)" aria-label="Reason for rejection, sent to the student">
                   <button type="submit" name="action" value="reject">Reject</button>
                 </form>
               </td>

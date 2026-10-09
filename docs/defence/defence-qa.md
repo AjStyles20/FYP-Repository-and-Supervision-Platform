@@ -33,6 +33,14 @@ Likely examiner questions, with a short answer to say aloud, how it works, where
 
 **Show it:** create a test supervisor → copy the password → private window → sign in → forced to choose a password.
 
+### 2b. How does a student know their registration was approved?
+
+**Say:** "They get an email at their Baze address when the administrator approves or rejects it, with the reason if it was rejected. And if they try to sign in before then with the right password, the login page tells them it is still awaiting approval. A wrong password only gets the general error, so nobody can use the login page to find out who has registered."
+
+**How it works:** `_email_registration_decision` in `apps/accounts/views.py` sends the email with Django's `send_mail`; if the mail server is down, the decision is still saved and the admin is warned to tell the student directly. `ProjectAuthenticationForm._inactive_account_message` in `apps/accounts/forms.py` checks the password before revealing any status. In development the email backend prints messages in the server terminal; at launch the SMTP settings go in `.env`.
+
+**Show it:** register a test student → sign in with the right password ("still awaiting approval") → approve as admin → the email appears in the server terminal → the student signs in.
+
 ### 3. How do you stop a user opening pages for another role?
 
 **Say:** "Every non-public view is protected on the server by a `role_required` decorator: deny by default, 403 for the wrong role, the login page for anyone signed out. Hiding a menu link is never the protection."

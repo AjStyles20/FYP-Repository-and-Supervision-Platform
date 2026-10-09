@@ -5,6 +5,7 @@ from io import StringIO
 from pathlib import Path
 
 from django.contrib.messages import get_messages
+from django.core import mail
 from django.core.management import call_command
 from django.core.management.base import CommandError
 from django.test import SimpleTestCase, TestCase, override_settings
@@ -876,3 +877,89 @@ class GreetingTests(SimpleTestCase):
         student = User(username="amina", first_name="Amina", role=Role.STUDENT)
         unnamed = User(username="admin", role=Role.ADMIN)
         self.assertEqual([greeting_name(u) for u in (supervisor, student, unnamed)], ["Dr. Julius", "Amina", "admin"])
+
+
+@override_settings(PASSWORD_HASHERS=["django.contrib.auth.hashers.MD5PasswordHasher"])
+class RegistrationDecisionNoticeTests(TestCase):
+    """Students learn the outcome: by email when it is decided, and on the login page."""
+
+    PASSWORD = "Student-pass-2026!"
+
+    @classmethod
+    def setUpTestData(cls):
+        faculty = Faculty.objects.create(name="Notice Faculty")
+        department = Department.objects.create(faculty=faculty, name="Notice Department")
+        cls.programme = Programme.objects.create(department=department, name="Computer Science", degree_type="BSc")
+        cls.admin = User.objects.create(username="notice.admin", role=Role.ADMIN)
+
+    def _student(self, status=StudentProfile.RegistrationStatus.PENDING, active=False):
+        user = User.objects.create_user(
+            "noah@bazeuniversity.edu.ng", email="noah@bazeuniversity.edu.ng", password=self.PASSWORD,
+            first_name="Noah", role=Role.STUDENT, is_active=active,
+        )
+        StudentProfile.objects.create(user=user, student_number="BU/26/CS/5555", programme=self.programme, registration_status=status)
+        return user
+
+    def _login(self, username, password):
+        return self.client.post(reverse("login"), {"username": username, "password": password})
+
+    def test_pending_student_with_the_right_password_is_told_to_wait(self):
+        self._student()
+
+        response = self._login("noah@bazeuniversity.edu.ng", self.PASSWORD)
+
+        self.assertContains(response, "still awaiting approval by an administrator")
+        self.assertContains(self._login("BU/26/CS/5555", self.PASSWORD), "still awaiting approval")
+
+    def test_a_wrong_password_reveals_nothing_about_the_account(self):
+        self._student()
+
+        response = self._login("noah@bazeuniversity.edu.ng", "wrong-password")
+
+        self.assertNotContains(response, "still awaiting")
+        self.assertContains(response, "is incorrect")
+
+    def test_rejected_student_and_deactivated_staff_get_their_own_message(self):
+        self._student(StudentProfile.RegistrationStatus.REJECTED)
+        User.objects.create_user("gone@bazeuniversity.edu.ng", password=self.PASSWORD, role=Role.SUPERVISOR, is_active=False)
+
+        self.assertContains(self._login("noah@bazeuniversity.edu.ng", self.PASSWORD), "was not approved")
+        self.assertContains(self._login("gone@bazeuniversity.edu.ng", self.PASSWORD), "has been deactivated")
+
+    def test_approval_emails_the_student_a_sign_in_link(self):
+        student = self._student()
+        self.client.force_login(self.admin)
+
+        self.client.post(reverse("review_student_registration", args=[student.pk]), {"action": "approve"})
+
+        self.assertEqual(len(mail.outbox), 1)
+        message = mail.outbox[0]
+        self.assertEqual(message.to, ["noah@bazeuniversity.edu.ng"])
+        self.assertIn("approved", message.subject)
+        self.assertIn("http://testserver/login/", message.body)
+        self.client.logout()
+        self.assertTrue(self.client.login(username="noah@bazeuniversity.edu.ng", password=self.PASSWORD))
+
+    def test_rejection_emails_the_reason_and_records_it(self):
+        student = self._student()
+        self.client.force_login(self.admin)
+
+        self.client.post(reverse("review_student_registration", args=[student.pk]),
+                         {"action": "reject", "reason": "Student ID does not match our records."})
+
+        self.assertIn("Reason: Student ID does not match our records.", mail.outbox[0].body)
+        self.assertEqual(AuditEvent.objects.get(action="account.registration_reject").details,
+                         {"reason": "Student ID does not match our records."})
+
+    def test_a_mail_failure_keeps_the_decision_and_warns_the_admin(self):
+        from unittest import mock
+
+        student = self._student()
+        self.client.force_login(self.admin)
+
+        with mock.patch("apps.accounts.views.send_mail", side_effect=OSError("mail server down")):
+            response = self.client.post(reverse("review_student_registration", args=[student.pk]), {"action": "approve"}, follow=True)
+
+        student.refresh_from_db()
+        self.assertTrue(student.is_active)
+        self.assertContains(response, "could not be sent")
