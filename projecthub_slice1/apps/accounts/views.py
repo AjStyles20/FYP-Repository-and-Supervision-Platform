@@ -338,7 +338,7 @@ def manage_staff_account(request, user_id):
         changes = form.save()
         if changes:
             log_event(actor=request.user, action="account.staff_updated", summary=f"Updated staff account {staff.username}", obj=staff, details=changes)
-            messages.success(request, f"Saved the changes to {name}.")
+            messages.success(request, f"Saved the changes to {staff.get_full_name() or staff.username}.")
         else:
             messages.info(request, "Nothing changed.")
         return redirect("manage_staff_account", user_id=staff.pk)

@@ -4,6 +4,7 @@ from collections import Counter
 from io import StringIO
 from pathlib import Path
 
+from django.contrib.messages import get_messages
 from django.core.management import call_command
 from django.core.management.base import CommandError
 from django.test import TestCase, override_settings
@@ -761,6 +762,7 @@ class ManageStaffAccountTests(TestCase):
         ))
 
         self.assertRedirects(response, reverse("manage_staff_account", args=[self.supervisor.pk]))
+        self.assertEqual([str(m) for m in get_messages(response.wsgi_request)], ["Saved the changes to Kemi Lecturer."])
         self.supervisor.refresh_from_db()
         self.assertEqual((self.supervisor.role, self.supervisor.department, self.supervisor.can_assign_supervisors),
                          (Role.COORDINATOR, self.other_department, True))
@@ -805,6 +807,11 @@ class ManageStaffAccountTests(TestCase):
         self.assertTrue(self.supervisor.must_change_password)
         event = AuditEvent.objects.get(action="account.password_reset")
         self.assertNotIn(password, f"{event.summary} {event.details}")
+
+    def test_saved_message_uses_the_new_name(self):
+        self._post(self.supervisor, "save", **self._details(first_name="Adaeze", last_name="Okafor"))
+        page = self.client.get(reverse("manage_staff_account", args=[self.supervisor.pk]))
+        self.assertContains(page, "Saved the changes to Adaeze Okafor.")
 
     def test_an_admin_cannot_lock_themselves_out(self):
         self._post(self.admin, "deactivate")

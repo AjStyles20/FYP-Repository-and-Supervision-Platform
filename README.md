@@ -41,9 +41,20 @@ To try that staff workflow locally, sign in as `demo.coordinator` with password 
 - Current and past final-year students can submit a registration using a `@bazeuniversity.edu.ng` email, student ID, programme, and password.
 - New student accounts stay inactive until an administrator reviews the registration.
 - Staff and administrator access is not self-registerable; accounts must be provisioned by an administrator.
-- Create the initial administrator with `python manage.py createsuperuser`. The account is assigned the administrator role automatically; use Django Admin to add other staff accounts.
-- Assignment access is a separate staff permission, not a job title. In Django Admin, edit the relevant staff account and enable **Can assign supervisors**; it will be scoped to that staff member's department. A supervisor or HOD may supervise projects and can be delegated the allocation responsibility independently.
+- Create the initial administrator with `python manage.py createsuperuser`. The account is assigned the administrator role automatically. If its password is forgotten, reset it with `python manage.py changepassword <username>`.
+- The administrator adds supervisor, coordinator, HOD and further administrator accounts in **System administration → Add staff account**. A temporary password is shown once; the person must choose their own at first sign-in. The same page per staff member edits role and department, resets the password, and deactivates or reactivates the account.
+- Assignment access is a separate staff permission, not a job title: tick **Can assign supervisors in their department** on the staff account. A supervisor or HOD may supervise projects and can be delegated the allocation responsibility independently.
 - Local demo users are created with `seed_demo` and removed with `purge_demo`.
+
+## MySQL setup
+
+The audit log is protected by database triggers (`apps/audit/migrations/0003_append_only_triggers.py`). With binary logging on (the MySQL 8 default), MySQL only lets an account without `SUPER` create triggers when this server setting is enabled. Run it once as `root`; `PERSIST` keeps it across server restarts:
+
+```sql
+SET PERSIST log_bin_trust_function_creators = 1;
+```
+
+Without it, `migrate` on a fresh database and the MySQL test run fail with *"You do not have the SUPER privilege and binary logging is enabled"*. An already-migrated database keeps working either way.
 
 ## Repository hygiene
 
