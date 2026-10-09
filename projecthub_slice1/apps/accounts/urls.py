@@ -7,6 +7,7 @@ urlpatterns = [
     path("", views.home, name="home"),
     path("login/", views.ProjectLoginView.as_view(), name="login"),
     path("register/", views.register_student, name="register_student"),
+    path("register/status/<str:token>/", views.registration_status, name="registration_status"),
     path("logout/", auth_views.LogoutView.as_view(), name="logout"),
     path("dashboard/", views.dashboard, name="dashboard"),
     path("api/summary/", views.api_summary, name="api_summary"),

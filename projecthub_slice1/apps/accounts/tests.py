@@ -15,6 +15,7 @@ from django.utils import timezone
 from apps.academics.models import Department, Faculty, Programme
 from apps.audit.models import AuditEvent
 from apps.accounts.models import STAFF_ROLES, Role, StudentProfile, SupervisorProfile, User
+from apps.accounts.views import REGISTRATION_STATUS_SALT
 from apps.projects.models import (
     ArchivedProject,
     Project,
@@ -354,8 +355,12 @@ class RegistrationFlowTests(TestCase):
             self.registration_data(role=Role.ADMIN),
         )
 
-        self.assertRedirects(response, reverse("login"))
         student = User.objects.get(email="ada.student@bazeuniversity.edu.ng")
+        # The redirect carries a signed token that decodes to this student (tokens include a timestamp).
+        from django.core import signing
+        token = response["Location"].rstrip("/").rsplit("/", 1)[-1]
+        self.assertEqual(response["Location"], reverse("registration_status", args=[token]))
+        self.assertEqual(signing.loads(token, salt=REGISTRATION_STATUS_SALT), student.pk)
         self.assertEqual(student.role, Role.STUDENT)
         self.assertFalse(student.is_active)
         self.assertEqual(student.username, student.email)
@@ -971,3 +976,75 @@ class RegistrationDecisionNoticeTests(TestCase):
         student.refresh_from_db()
         self.assertTrue(student.is_active)
         self.assertContains(response, "could not be sent")
+
+
+@override_settings(PASSWORD_HASHERS=["django.contrib.auth.hashers.MD5PasswordHasher"])
+class RegistrationStatusPageTests(TestCase):
+    """Item 1: a signed link shows pending / approved / rejected and updates itself."""
+
+    @classmethod
+    def setUpTestData(cls):
+        faculty = Faculty.objects.create(name="Status Faculty")
+        department = Department.objects.create(faculty=faculty, name="Status Department")
+        cls.programme = Programme.objects.create(department=department, name="Computer Science", degree_type="BSc")
+        cls.admin = User.objects.create(username="status.admin", role=Role.ADMIN)
+
+    def _register(self):
+        return self.client.post(reverse("register_student"), {
+            "first_name": "Noah", "last_name": "Student", "email": "noah.status@bazeuniversity.edu.ng",
+            "student_number": "BU22CS4012", "programme": self.programme.pk, "student_status": "current",
+            "password1": "Long-enough-pass-77", "password2": "Long-enough-pass-77",
+        }, follow=True)
+
+    def _json(self, token):
+        return self.client.get(reverse("registration_status", args=[token]), {"format": "json"})
+
+    def test_registering_lands_on_a_pending_status_page_that_polls(self):
+        response = self._register()
+
+        self.assertContains(response, "Waiting for review")
+        self.assertContains(response, "js/poll.js")
+        self.assertContains(response, "js/registration-status.js")
+        html = response.content.decode()
+        self.assertLess(html.index("js/poll.js"), html.index("js/registration-status.js"), "poll.js must load first")
+        self.assertEqual(response["Cache-Control"], "no-store")
+        token = response.context["token"]
+        self.assertEqual(self._json(token).json(), {"status": "pending", "reason": ""})
+
+    def test_status_follows_the_admins_decision(self):
+        token = self._register().context["token"]
+        student = User.objects.get(email="noah.status@bazeuniversity.edu.ng")
+        self.client.force_login(self.admin)
+        self.client.post(reverse("review_student_registration", args=[student.pk]),
+                         {"action": "reject", "reason": "Wrong programme selected."})
+        self.client.logout()
+
+        self.assertEqual(self._json(token).json(), {"status": "rejected", "reason": "Wrong programme selected."})
+        page = self.client.get(reverse("registration_status", args=[token]))
+        self.assertContains(page, "Wrong programme selected.")
+
+    def test_approved_status_offers_sign_in(self):
+        token = self._register().context["token"]
+        student = User.objects.get(email="noah.status@bazeuniversity.edu.ng")
+        self.client.force_login(self.admin)
+        self.client.post(reverse("review_student_registration", args=[student.pk]), {"action": "approve"})
+        self.client.logout()
+
+        self.assertEqual(self._json(token).json()["status"], "approved")
+
+    def test_tampered_expired_or_staff_tokens_are_refused(self):
+        from unittest import mock
+
+        from django.core import signing
+
+        token = self._register().context["token"]
+        staff = User.objects.create(username="status.staff", role=Role.SUPERVISOR)
+        for bad in (token[:-2] + "xx", signing.dumps(staff.pk, salt=REGISTRATION_STATUS_SALT), "not-a-token"):
+            self.assertEqual(self.client.get(reverse("registration_status", args=[bad])).status_code, 404, bad)
+            self.assertEqual(self._json(bad).status_code, 404, bad)
+        with mock.patch("django.core.signing.time.time", return_value=__import__("time").time() + 31 * 24 * 3600):
+            self.assertContains(self.client.get(reverse("registration_status", args=[token])), "not valid", status_code=404)
+
+    def test_there_is_no_way_to_look_a_registration_up_by_email(self):
+        self._register()
+        self.assertEqual(self.client.get("/register/status/", {"email": "noah.status@bazeuniversity.edu.ng"}).status_code, 404)

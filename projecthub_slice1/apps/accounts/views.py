@@ -2,6 +2,7 @@ from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.views import LoginView, PasswordChangeView
+from django.core import signing
 from django.core.mail import send_mail
 from django.db import IntegrityError, transaction
 from django.db.models import Exists, OuterRef, Q
@@ -50,16 +51,62 @@ def register_student(request):
     form = StudentRegistrationForm(request.POST or None)
     if request.method == "POST" and form.is_valid():
         try:
-            form.save()
+            student = form.save()
         except IntegrityError:
             form.add_error(None, "An account already exists with this email address or student ID.")
         else:
-            messages.success(
-                request,
-                "Your registration has been submitted for review. You will get an email at your Baze address once an administrator has reviewed it, and you can sign in after it is approved.",
-            )
-            return redirect("login")
+            messages.success(request, "Your registration has been submitted for review.")
+            return redirect("registration_status", token=registration_status_token(student))
     return render(request, "registration/register.html", {"form": form})
+
+
+REGISTRATION_STATUS_SALT = "accounts.registration-status"
+
+
+def registration_status_token(student):
+    """A signed, tamper-proof token naming one registration. Only the person who just registered
+    receives it, so the status page needs no email lookup (which would reveal who is registered)."""
+    return signing.dumps(student.pk, salt=REGISTRATION_STATUS_SALT)
+
+
+def _registration_for_token(token):
+    max_age = int(getattr(settings, "REGISTRATION_STATUS_MAX_AGE_DAYS", 30)) * 24 * 3600
+    try:
+        pk = signing.loads(token, salt=REGISTRATION_STATUS_SALT, max_age=max_age)
+    except signing.BadSignature:  # also covers SignatureExpired
+        return None
+    return User.objects.filter(pk=pk, role=Role.STUDENT).select_related("student_profile").first()
+
+
+def _rejection_reason(student):
+    event = AuditEvent.objects.filter(
+        action="account.registration_reject", object_type="accounts.User", object_id=str(student.pk)
+    ).order_by("-created_at").first()
+    return (event.details or {}).get("reason", "") if event else ""
+
+
+@require_GET
+def registration_status(request, token):
+    """Pending / approved / rejected for the registration named by a signed token.
+
+    ?format=json returns {"status": ..., "reason": ...} for the page's 30-second poller.
+    """
+    student = _registration_for_token(token)
+    profile = getattr(student, "student_profile", None) if student else None
+    if profile is None:
+        if request.GET.get("format") == "json":
+            return JsonResponse({"detail": "This status link is not valid."}, status=404)
+        return render(request, "registration/status.html", {"invalid": True}, status=404)
+    status = profile.registration_status
+    reason = _rejection_reason(student) if status == StudentProfile.RegistrationStatus.REJECTED else ""
+    if request.GET.get("format") == "json":
+        response = JsonResponse({"status": status, "reason": reason})
+    else:
+        response = render(request, "registration/status.html", {
+            "student": student, "status": status, "reason": reason, "token": token,
+        })
+    response["Cache-Control"] = "no-store"
+    return response
 
 
 @login_required

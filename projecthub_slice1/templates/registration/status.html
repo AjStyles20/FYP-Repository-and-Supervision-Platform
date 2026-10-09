@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Registration status · Baze Project Hub{% endblock %}
+{% block main_class %}narrow-shell{% endblock %}
+{% block back %}{% endblock %}
+{% block content %}
+<section class="card narrow"{% if not invalid %} data-registration-status="{{ status }}" data-status-url="{% url 'registration_status' token %}?format=json"{% endif %}>
+  <p class="eyebrow">Student registration</p>
+  {% if invalid %}
+    <h1>This status link is not valid</h1>
+    <p>It may have expired or been copied incompletely. You can still check: sign in with your Baze email and password, and the login page tells you whether your registration is waiting or was not approved.</p>
+    <p><a class="btn btn-primary" href="{% url 'login' %}">Go to sign in</a></p>
+  {% else %}
+    <h1>Hello {{ student.first_name|default:"there" }}</h1>
+    <div data-status-panel="pending"{% if status != "pending" %} hidden{% endif %}>
+      <p><span class="tag tag-live">Waiting for review</span></p>
+      <p>Your registration is waiting for an administrator to check it. This page updates by itself every 30 seconds, and you will also get an email at your Baze address.</p>
+      <p class="muted">Bookmark this page to come back to it.</p>
+    </div>
+    <div data-status-panel="approved"{% if status != "approved" %} hidden{% endif %}>
+      <p><span class="tag tag-live">Approved</span></p>
+      <p>Your account is ready. Sign in with your Baze email or student ID and the password you chose.</p>
+      <p><a class="btn btn-primary" href="{% url 'login' %}">Sign in</a></p>
+    </div>
+    <div data-status-panel="rejected"{% if status != "rejected" %} hidden{% endif %}>
+      <p><span class="tag">Not approved</span></p>
+      <p>Your registration was not approved.</p>
+      <p{% if not reason %} hidden{% endif %}><strong>Reason:</strong> <span data-rejection-reason>{{ reason }}</span></p>
+      <p>If you think this is a mistake, contact your department.</p>
+    </div>
+  {% endif %}
+</section>
+{% endblock %}
+{% block scripts %}{% if not invalid %}<script src="{% static 'js/registration-status.js' %}?v=1" defer></script>{% endif %}{% endblock %}

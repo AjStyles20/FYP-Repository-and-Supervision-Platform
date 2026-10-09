@@ -70,6 +70,8 @@
 </main>
 <footer class="site-footer"><div class="footer-inner">Baze Project Hub <span>·</span> Final-year project repository and supervision platform</div></footer>
 <script src="{% static 'js/navigation.js' %}?v=3" defer></script>
-{% if user.is_authenticated %}<script src="{% static 'js/live-counters.js' %}?v=2" data-summary-url="{% url 'api_summary' %}" defer></script><script src="{% static 'js/greeting.js' %}?v=1" defer></script>{% endif %}
+<script src="{% static 'js/poll.js' %}?v=1" defer></script>
+{% if user.is_authenticated %}<script src="{% static 'js/live-counters.js' %}?v=3" data-summary-url="{% url 'api_summary' %}" defer></script><script src="{% static 'js/greeting.js' %}?v=1" defer></script>{% endif %}
+{% block scripts %}{% endblock %}{# page scripts that use poll.js go here, after it #}
 </body>
 </html>

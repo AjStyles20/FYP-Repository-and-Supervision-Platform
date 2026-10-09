@@ -135,6 +135,9 @@ EMAIL_USE_TLS = env("EMAIL_USE_TLS", "True").lower() == "true"
 DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL", "Baze Project Hub <no-reply@bazeuniversity.edu.ng>")
 
 # --- Project Hub product settings -------------------------------------------------------------
+
+# How long the signed link to the registration status page keeps working.
+REGISTRATION_STATUS_MAX_AGE_DAYS = int(env("REGISTRATION_STATUS_MAX_AGE_DAYS", "30"))
 SITE_NAME = "Baze Project Hub"
 
 # Repository access follows D-09: signed-in Baze Project Hub accounts only.
