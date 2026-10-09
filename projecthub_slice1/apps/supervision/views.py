@@ -379,7 +379,11 @@ def approval_policy(request):
 
 @login_required
 def notifications(request):
-    """The signed-in user's own alerts from run_automation, newest first; mark one or all as read."""
+    """The signed-in user's own notifications ("Alerts"), newest first; mark one or all as read.
+
+    They come from run_automation and from account events such as an approved registration.
+    Only the user's own rows are ever listed or changed.
+    """
     own = Notification.objects.filter(recipient=request.user)
     if request.method == "POST":
         unread = own.filter(read_at__isnull=True)

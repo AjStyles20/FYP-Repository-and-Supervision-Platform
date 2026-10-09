@@ -441,6 +441,26 @@ class RunAutomationTests(TestCase):
         with self.assertRaises(CommandError):
             call_command("run_automation", "--loop", "--interval", "0", stdout=StringIO())
 
+    def test_mark_one_alert_read_and_never_someone_elses(self):
+        self._run()
+        mine = Notification.objects.filter(recipient=self.supervisor).first()
+        theirs = Notification.objects.filter(recipient=self.coordinator).first()
+        self.client.force_login(self.supervisor)
+
+        self.client.post(reverse("notifications"), {"action": "read", "notification_id": mine.pk})
+        self.client.post(reverse("notifications"), {"action": "read", "notification_id": theirs.pk})
+
+        mine.refresh_from_db()
+        theirs.refresh_from_db()
+        self.assertIsNotNone(mine.read_at)
+        self.assertIsNone(theirs.read_at)
+        self.assertEqual(self.client.get(reverse("api_summary")).json()["unread_notifications"], 0)
+
+    def test_every_role_has_the_alerts_link_in_the_menu(self):
+        for user in (self.supervisor, self.coordinator, self.admin, self.reader):
+            self.client.force_login(user)
+            self.assertContains(self.client.get(reverse("announcements")), f'href="{reverse("notifications")}"', msg_prefix=user.username)
+
     def test_alerts_page_shows_only_your_own_and_marks_them_read(self):
         self._run()
         self.client.force_login(self.coordinator)
