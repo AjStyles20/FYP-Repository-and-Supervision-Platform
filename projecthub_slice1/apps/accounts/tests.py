@@ -953,6 +953,24 @@ class RegistrationDecisionNoticeTests(TestCase):
         self.client.logout()
         self.assertTrue(self.client.login(username="noah@bazeuniversity.edu.ng", password=self.PASSWORD))
 
+    def test_approval_leaves_an_alert_waiting_for_the_first_sign_in(self):
+        student = self._student()
+        self.client.force_login(self.admin)
+        self.client.post(reverse("review_student_registration", args=[student.pk]), {"action": "approve"})
+        self.client.logout()
+
+        self.assertTrue(self.client.login(username="noah@bazeuniversity.edu.ng", password=self.PASSWORD))
+        self.assertEqual(self.client.get(reverse("api_summary")).json()["unread_notifications"], 1)
+        alerts = self.client.get(reverse("notifications"))
+        self.assertContains(alerts, "Welcome to Baze Project Hub")
+        self.assertContains(alerts, "Account approved")
+
+    def test_rejection_creates_no_alert(self):
+        student = self._student()
+        self.client.force_login(self.admin)
+        self.client.post(reverse("review_student_registration", args=[student.pk]), {"action": "reject"})
+        self.assertFalse(Notification.objects.filter(recipient=student).exists())
+
     def test_rejection_emails_the_reason_and_records_it(self):
         student = self._student()
         self.client.force_login(self.admin)

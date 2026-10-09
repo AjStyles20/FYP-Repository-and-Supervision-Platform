@@ -21,6 +21,9 @@ from apps.projects.services.health import HEALTH_PREFETCH, health_score
 from apps.supervision.models import (
     Announcement, AnnouncementAcknowledgement, Notification, SharedResource, SupervisionMeeting, student_resource_scope,
 )
+from apps.supervision.models import NotificationKind
+from apps.supervision.services import notify
+
 from .forms import (
     ProjectAuthenticationForm, StaffAccountForm, StaffEditForm, StudentRegistrationForm, active_admin_count,
     generate_temporary_password,
@@ -522,6 +525,12 @@ def review_student_registration(request, user_id):
         log_event(actor=request.user, action=f"account.registration_{action}", summary=f"{outcome} student registration for {student.username}", obj=student,
                   details={"reason": reason} if reason else None)
     messages.success(request, f"{outcome} the account for {student.get_full_name() or student.email}.")
+    if action == "approve":
+        # Waiting in their Alerts the first time they sign in (a rejected account cannot sign in).
+        notify(student, NotificationKind.ACCOUNT_APPROVED, student,
+               title="Welcome to Baze Project Hub",
+               body="Your registration was approved. Start your final-year project from My project.",
+               url=reverse("my_project"))
     if not _email_registration_decision(request, student, approved=action == "approve", reason=reason):
         messages.warning(request, f"The decision is saved, but the email to {student.email} could not be sent. Please tell the student directly.")
     return redirect("admin_tools")

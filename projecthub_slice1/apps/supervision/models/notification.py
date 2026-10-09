@@ -14,6 +14,7 @@ class NotificationKind(models.TextChoices):
     AT_RISK_PROJECT = "at_risk_project", "Project at risk"
     PENDING_REGISTRATION = "pending_registration", "Registration waiting"
     UNACKNOWLEDGED_NOTICE = "unacknowledged_notice", "Notice not acknowledged"
+    ACCOUNT_APPROVED = "account_approved", "Account approved"
 
 
 class Notification(models.Model):
