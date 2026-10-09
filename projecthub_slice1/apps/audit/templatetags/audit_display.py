@@ -34,6 +34,7 @@ ACTION_LABELS = {
     "project.supervisor_decision": "Supervisor decision recorded",
     "project.supervisor_edited": "Project details edited by supervisor",
     "project.supervisor_unassigned": "Supervisor removed",
+    "convocation.exported": "Convocation list downloaded",
     "repository.csv_import": "Past projects imported from CSV",
     "resource.published": "Resource shared",
     "resource.updated": "Resource updated",

@@ -17,6 +17,7 @@ urlpatterns = [
     path("admin-tools/staff/new/", views.add_staff_account, name="add_staff_account"),
     path("admin-tools/staff/<int:user_id>/", views.manage_staff_account, name="manage_staff_account"),
     path("account/password/", views.FirstPasswordChangeView.as_view(), name="password_change"),
+    path("department/staff/", views.department_staff, name="department_staff"),
     path(
         "admin-tools/registrations/<int:user_id>/review/",
         views.review_student_registration,

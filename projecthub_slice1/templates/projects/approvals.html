@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% block title %}Approvals queue · Baze Project Hub{% endblock %}
 {% block content %}
-<section class="page-heading"><p class="eyebrow">Department workspace</p><h1>Approvals queue</h1><p class="muted">Projects waiting for a department step: logging the signed form, recording a defence or, for the HOD, sign-off.</p></section>
+<section class="page-heading"><p class="eyebrow">Department workspace</p>{% if user.role == "hod" %}<h1>Final sign-off queue</h1><p class="muted">Defended projects waiting for your sign-off. Sign off when the student has brought the final documents; the project then moves to the archive and the student appears on the <a href="{% url 'convocation_list' %}">convocation list</a>.</p>{% else %}<h1>Approvals queue</h1><p class="muted">Projects waiting for a department step: logging the signed approval form or recording a defence.</p>{% endif %}</section>
 {% if projects %}
   {% for project in projects %}
     <section class="card">
@@ -20,7 +20,7 @@
   {% endfor %}
 {% else %}
   <div class="card">
-    <p>No projects are waiting for approval at the moment.</p>
+    <p>{% if user.role == "hod" %}No projects are waiting for your sign-off.{% else %}No projects are waiting for approval at the moment.{% endif %}</p>
   </div>
 {% endif %}
 {% endblock %}

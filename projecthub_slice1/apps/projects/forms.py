@@ -80,8 +80,14 @@ class StageActionForm(forms.Form):
 
 
 class CompletionForm(forms.Form):
-    signed_on = forms.DateField(widget=forms.DateInput(attrs={"type": "date"}), initial=timezone.localdate)
-    completion_note = forms.CharField(required=False, widget=forms.Textarea)
+    signed_on = forms.DateField(
+        widget=forms.DateInput(attrs={"type": "date"}), initial=timezone.localdate, label="Signed off on",
+        help_text="The day the student brought the final documents and you signed them off.",
+    )
+    completion_note = forms.CharField(
+        required=False, widget=forms.Textarea, label="Sign-off note",
+        help_text="What you checked, e.g. bound copies and corrections received.",
+    )
     gap_summary = forms.CharField(
         required=False,
         widget=forms.Textarea,

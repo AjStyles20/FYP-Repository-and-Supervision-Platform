@@ -6,7 +6,7 @@
   <title>{% block title %}Baze Project Hub{% endblock %}</title>
   <meta name="color-scheme" content="light">
   <link rel="stylesheet" href="{% static 'css/tokens.css' %}?v=3">
-  <link rel="stylesheet" href="{% static 'css/app.css' %}?v=22">
+  <link rel="stylesheet" href="{% static 'css/app.css' %}?v=23">
 </head>
 <body>
 <header class="top">
@@ -42,7 +42,9 @@
         <a href="{% url 'announcements' %}">Notices</a>
         <a href="{% url 'academic_structure' %}">Academic structure</a>
       {% elif user.role == 'hod' %}
-        <a href="{% url 'approvals' %}">Department sign-offs</a>
+        <a href="{% url 'approvals' %}">Sign-off queue</a>
+        <a href="{% url 'convocation_list' %}">Convocation list</a>
+        <a href="{% url 'department_staff' %}">Department staff</a>
         <a href="{% url 'supervision' %}">Supervision history</a>
         <a href="{% url 'academic_structure' %}">Academic structure</a>
       {% elif user.role == 'admin' %}

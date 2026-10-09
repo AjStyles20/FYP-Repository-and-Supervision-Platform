@@ -568,3 +568,10 @@ td form { display: flex; flex-wrap: wrap; gap: var(--space-2); margin: 0; }
 .audit-before { color: var(--gray-500); text-decoration: line-through; }
 .audit-after { font-weight: 600; }
 .audit-before.is-empty { text-decoration: none; font-style: italic; }
+
+/* Printing (convocation list): just the content */
+@media print {
+  .top, .site-footer, .no-print, .msg { display: none !important; }
+  body { background: #fff; }
+  .card { box-shadow: none; border: 0; padding: 0; }
+}

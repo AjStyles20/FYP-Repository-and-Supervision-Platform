@@ -24,7 +24,7 @@ from .forms import (
     ProjectAuthenticationForm, StaffAccountForm, StaffEditForm, StudentRegistrationForm, active_admin_count,
     generate_temporary_password,
 )
-from .models import STAFF_ROLES, Role, StudentProfile, User
+from .models import STAFF_ROLES, Role, StudentProfile, SupervisorProfile, User
 from .permissions import role_required
 
 
@@ -379,6 +379,54 @@ def manage_staff_account(request, user_id):
     return render(request, "accounts/staff_manage.html", {
         "staff": staff, "form": form, "is_self": staff.pk == request.user.pk,
         "active_supervisions": staff.supervised_projects.filter(archived=False).count(),
+    })
+
+
+DEPARTMENT_STAFF_ACTIONS = {
+    "make_coordinator": ("role", Role.COORDINATOR),
+    "make_supervisor": ("role", Role.SUPERVISOR),
+    "grant_allocation": ("can_assign_supervisors", True),
+    "remove_allocation": ("can_assign_supervisors", False),
+}
+
+
+@role_required(Role.HOD)
+def department_staff(request):
+    """The HOD appoints the FYP coordinator and the lecturers who allocate supervisors (D-19).
+
+    Only supervisors and coordinators in the HOD's own department can be changed, and only between
+    those two roles; accounts themselves are still created by the system administrator.
+    """
+    hod = request.user
+    staff = User.objects.filter(
+        department_id=hod.department_id, role__in=(Role.SUPERVISOR, Role.COORDINATOR), is_active=True,
+    ).order_by("last_name", "first_name", "username") if hod.department_id else User.objects.none()
+    if request.method == "POST":
+        change = DEPARTMENT_STAFF_ACTIONS.get(request.POST.get("action", ""))
+        if change is None:
+            return HttpResponseBadRequest("Unknown action.")
+        member = get_object_or_404(staff, pk=request.POST.get("user_id"))
+        field, value = change
+        before = getattr(member, field)
+        if before != value:
+            setattr(member, field, value)
+            member.save(update_fields=[field])
+            if field == "role":
+                SupervisorProfile.objects.get_or_create(user=member)  # coordinators can still supervise
+            log_event(actor=hod, action="account.staff_updated", summary=f"Updated staff account {member.username}",
+                      obj=member, details={field: {"from": str(before), "to": str(value)}})
+            name = member.get_full_name() or member.username
+            messages.success(request, {
+                "make_coordinator": f"{name} is now the FYP coordinator for the department.",
+                "make_supervisor": f"{name} is now a supervisor (no longer coordinator).",
+                "grant_allocation": f"{name} can now assign supervisors in the department.",
+                "remove_allocation": f"{name} can no longer assign supervisors.",
+            }[request.POST["action"]])
+        return redirect("department_staff")
+    return render(request, "accounts/department_staff.html", {
+        "staff": staff,
+        "coordinator_count": sum(1 for member in staff if member.role == Role.COORDINATOR),
+        "department": hod.department,
     })
 
 

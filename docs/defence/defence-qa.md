@@ -49,6 +49,14 @@ Likely examiner questions, with a short answer to say aloud, how it works, where
 
 **Show it:** sign in as a student and type `/admin-tools/` in the address bar → 403 page.
 
+### 3b. Who does what: supervisor, FYP coordinator, HOD, administrator?
+
+**Say:** "It follows how Baze works. Supervisors accept topics against their own criteria and supervise. The FYP coordinator, a lecturer the HOD appoints, logs the signed approval form and records defences. The HOD does HOD work: signs off when the student brings the final documents, which archives the project, and keeps the convocation list. The administrator only manages accounts and setup and sees no supervision material. Allocating supervisors is a permission the HOD gives to chosen lecturers, not a job title."
+
+**How it works:** stage rules in `TRANSITION_ROLES` (`apps/projects/services/lifecycle.py`); the coordinator-only check in `log_approved_form` (`apps/projects/services/approval.py`); the HOD's *Department staff* page (`department_staff` in `apps/accounts/views.py`) can only switch lecturers in their own department between supervisor and coordinator and grant the allocation permission; the HOD's queue shows only defended projects; the *Convocation list* (`convocation_list` in `apps/projects/views.py`) prints or downloads as CSV, with spreadsheet-formula protection, and every download is audited. Decision D-19.
+
+**Show it:** sign in as the HOD → Department staff → make a lecturer the FYP coordinator → Convocation list → Download.
+
 ### 4. Can an administrator lock everyone out?
 
 **Say:** "No. You cannot deactivate or demote yourself, and the last active administrator cannot be deactivated or demoted by anyone. If all else fails, `createsuperuser` and `changepassword` on the server always work."

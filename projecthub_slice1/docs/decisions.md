@@ -27,6 +27,7 @@ Update this file whenever a decision is made or an open question is answered. Ne
 | D-16 | The existing Django application is the authoritative product foundation; consolidate the project work into it and build the real Baze system there | User clarified 2026-10-05 |
 | D-17 | "My project" is a student-only workspace; staff supervision history lists only that staff member's current and past supervisees, linked to project summaries | User clarified 2026-10-05 |
 | D-18 | Supervisor-allocation authority is granted independently from job title and scoped to the staff member's department; an eligible supervisor or HOD may also receive it | User clarified 2026-10-05; administered as an explicit staff permission |
+| D-19 | The HOD does HOD work: signs off final projects when the student brings the physical final documents and keeps the convocation list. The HOD appoints the FYP coordinator and the lecturers who assign supervisors, from lecturers in their department. Only the coordinator logs approved topics and records defences; the HOD does not do the coordinator's steps. A coordinator is never the HOD | User clarified 2026-10-09; HOD queue shows final sign-off only; convocation list printable and downloadable |
 
 ## B. Proposed (not yet confirmed)
 

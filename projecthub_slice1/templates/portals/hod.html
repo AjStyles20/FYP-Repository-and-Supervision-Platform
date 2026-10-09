@@ -7,7 +7,7 @@
     <p class="hero-greeting">{% greeting user %}</p>
     <p class="eyebrow">Head of Department · Department leadership{% if department %} · {{ department }}{% endif %}</p>
     <h1>Department project oversight</h1>
-    <p>Review projects ready for completion sign-off, monitor graduation checks, and see the department’s supervision capacity.</p>
+    <p>Sign off completed projects when students bring their final documents, keep the convocation list, and appoint the department's FYP coordinator.</p>
     <div class="hero-actions"><a class="btn btn-primary" href="{% url 'approvals' %}">Review sign-off queue</a><a class="btn btn-quiet" href="{% url 'repository' %}?section=past">Open project archive</a></div>
   </div>
 </section>
@@ -34,7 +34,7 @@
     <div class="card"><dl class="fact-list">
       {% for supervisor in supervisor_load %}<div><dt>{{ supervisor.get_full_name|default:supervisor.username }}</dt><dd>{{ supervisor.active_count }} active · {{ supervisor.approved_count }} approved · {{ supervisor.defended_count }} defended · {{ supervisor.past_count }} past</dd></div>{% empty %}<div><dt>No staff list</dt><dd>Department supervisors will appear here when available.</dd></div>{% endfor %}
     </dl></div>
-    <div class="card card-pad-sm"><div class="card-head"><h3>Department links</h3></div><ul class="plain-list"><li><a href="{% url 'academic_structure' %}">Academic programmes</a></li><li><a href="{% url 'repository' %}?section=current">Current student projects</a></li><li><a href="{% url 'repository' %}?section=past">Completed-project archive</a></li></ul></div>
+    <div class="card card-pad-sm"><div class="card-head"><h3>Department links</h3></div><ul class="plain-list"><li><a href="{% url 'convocation_list' %}">Convocation list</a></li><li><a href="{% url 'department_staff' %}">Department staff: FYP coordinator and assigning</a></li><li><a href="{% url 'academic_structure' %}">Academic programmes</a></li><li><a href="{% url 'repository' %}?section=current">Current student projects</a></li><li><a href="{% url 'repository' %}?section=past">Completed-project archive</a></li></ul></div>
   </div>
 </section>
 {% endblock %}

@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block title %}Convocation list · Baze Project Hub{% endblock %}
+{% block content %}
+<section class="page-heading">
+  <p class="eyebrow">Head of Department{% if department %} · {{ department.name }}{% endif %}</p>
+  <h1>Convocation list</h1>
+  <p class="muted">Students whose final project you have signed off. Print it or download it for the convocation office instead of writing the names by hand.</p>
+</section>
+<section class="card no-print">
+  <form method="get" class="filter-row">
+    <div><label for="year">Sign-off year</label><select id="year" name="year"><option value="">All years</option>{% for option in years %}<option value="{{ option }}"{% if option|stringformat:"d" == year %} selected{% endif %}>{{ option }}</option>{% endfor %}</select></div>
+    <button type="submit">Show</button>
+  </form>
+  <div class="actions">
+    <a class="btn btn-primary" href="?{% if year %}year={{ year }}&amp;{% endif %}format=csv">Download for Excel (CSV)</a>
+    <button type="button" onclick="window.print()">Print</button>
+  </div>
+</section>
+<section class="card">
+  <h2>{{ rows|length }} student{{ rows|length|pluralize }}{% if year %} signed off in {{ year }}{% endif %}</h2>
+  {% if rows %}
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Student</th><th>Student ID</th><th>Programme</th><th>Project</th><th>Supervisor</th><th>Signed off</th><th>Graduation</th></tr></thead>
+        <tbody>
+          {% for row in rows %}
+            <tr>
+              <td data-label="Student">{{ row.student_name }}</td>
+              <td data-label="Student ID">{{ row.student_number|default:"—" }}</td>
+              <td data-label="Programme">{{ row.programme }}</td>
+              <td data-label="Project">{{ row.title }}</td>
+              <td data-label="Supervisor">{{ row.supervisor|default:"—" }}</td>
+              <td data-label="Signed off">{{ row.signed_on|date:"j M Y" }}</td>
+              <td data-label="Graduation">{% if row.graduation_verified %}Verified{% if row.graduation_year %} · {{ row.graduation_year }}{% endif %}{% else %}Not yet verified{% endif %}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <p class="muted">No signed-off students{% if year %} for {{ year }}{% endif %} yet. Students appear here once you sign off their final project.</p>
+  {% endif %}
+</section>
+{% endblock %}

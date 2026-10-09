@@ -16,7 +16,7 @@
   {% if form %}
     <form method="post" class="stack-form">
       {% csrf_token %}
-      {% for field in form %}<div class="form-row">{{ field.label_tag }}{{ field }}{% if field.errors %}<small class="error">{{ field.errors|join:", " }}</small>{% endif %}</div>{% endfor %}
+      {% for field in form %}<div class="form-row">{{ field.label_tag }}{{ field }}{% if field.help_text %}<small class="muted">{{ field.help_text }}</small>{% endif %}{% if field.errors %}<small class="error">{{ field.errors|join:", " }}</small>{% endif %}</div>{% endfor %}
       {% if form.non_field_errors %}<p class="error">{{ form.non_field_errors|join:", " }}</p>{% endif %}
       <button class="button" type="submit">Save workflow step</button>
     </form>

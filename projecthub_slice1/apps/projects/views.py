@@ -3,7 +3,7 @@ from pathlib import Path
 from django.contrib import messages
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.db.models import Count, Q
-from django.http import Http404, FileResponse
+from django.http import FileResponse, Http404, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 
@@ -15,7 +15,7 @@ from .forms import (
     CompletionForm, CoordinatorApprovalForm, ProjectCsvImportForm, ProjectDocumentForm, ProjectProposalForm, ProjectStartForm, StageActionForm,
     SupervisorAssignmentForm, SupervisorDecisionForm, SupervisorProjectEditForm, UnassignedSuperviseeForm,
 )
-from .models import ArchivedProject, Project, ProjectDocument, ProjectStage, ProjectStatusEvent
+from .models import ArchivedProject, Project, ProjectCompletion, ProjectDocument, ProjectStage, ProjectStatusEvent
 from .imports import import_archived_projects
 from .services.health import HEALTH_PREFETCH, can_see_health, health_score
 from .services.similarity import similar_archived_projects, similarity_threshold
@@ -486,11 +486,70 @@ def supervision(request):
     )
 
 
+CONVOCATION_COLUMNS = ("Student name", "Student ID", "Programme", "Project title", "Supervisor",
+                       "Signed off on", "Graduation verified", "Graduation year")
+
+
+def _csv_safe(value):
+    """Stop a spreadsheet treating a cell as a formula (CSV injection)."""
+    text = str(value)
+    return "'" + text if text[:1] in ("=", "+", "-", "@") else text
+
+
+@role_required(Role.HOD)
+def convocation_list(request):
+    """Students whose project the HOD has signed off: the list the HOD used to write by hand."""
+    completions = ProjectCompletion.objects.filter(
+        project__department_id=request.user.department_id
+    ).select_related(
+        "project__student__student_profile", "project__programme", "project__supervisor"
+    ).order_by("project__student__last_name", "project__student__first_name") if request.user.department_id else ProjectCompletion.objects.none()
+    years = sorted({completion.signed_on.year for completion in completions}, reverse=True)
+    year = request.GET.get("year", "")
+    if year.isdigit():
+        completions = completions.filter(signed_on__year=int(year))
+    rows = []
+    for completion in completions:
+        project = completion.project
+        student = project.student
+        profile = getattr(student, "student_profile", None)
+        rows.append({
+            "student_name": student.get_full_name() or student.username,
+            "student_number": profile.student_number if profile else "",
+            "programme": project.programme.award,
+            "title": project.title,
+            "supervisor": project.supervisor.get_full_name() if project.supervisor else "",
+            "signed_on": completion.signed_on,
+            "graduation_verified": completion.graduation_verified,
+            "graduation_year": completion.graduation_year or "",
+        })
+    if request.GET.get("format") == "csv":
+        import csv
+
+        response = HttpResponse(content_type="text/csv; charset=utf-8")
+        label = year if year.isdigit() else "all-years"
+        response["Content-Disposition"] = f'attachment; filename="convocation-list-{label}.csv"'
+        response.write("\ufeff")  # lets Excel open the UTF-8 file with names intact
+        writer = csv.writer(response)
+        writer.writerow(CONVOCATION_COLUMNS)
+        for row in rows:
+            writer.writerow([_csv_safe(value) for value in (
+                row["student_name"], row["student_number"], row["programme"], row["title"], row["supervisor"],
+                row["signed_on"].isoformat(), "Yes" if row["graduation_verified"] else "No", row["graduation_year"],
+            )])
+        log_event(actor=request.user, action="convocation.exported", summary=f"Downloaded the convocation list ({label})",
+                  details={"year": label, "students": len(rows)})
+        return response
+    return render(request, "projects/convocation.html", {"rows": rows, "years": years, "year": year, "department": request.user.department})
+
+
 @role_required(Role.COORDINATOR, Role.HOD, Role.ADMIN)
 def approvals(request):
-    stages = [ProjectStage.PROPOSED, ProjectStage.SUPERVISOR_ACCEPTED, ProjectStage.SUBMITTED]
+    # Coordinators log approved topics and record defences; the HOD only signs off (D-19).
     if request.user.role == Role.HOD:
-        stages.append(ProjectStage.DEFENDED)
+        stages = [ProjectStage.DEFENDED]
+    else:
+        stages = [ProjectStage.PROPOSED, ProjectStage.SUPERVISOR_ACCEPTED, ProjectStage.SUBMITTED]
     projects = Project.objects.filter(stage__in=stages, archived=False)
     if request.user.role != Role.ADMIN:
         if request.user.department_id:
