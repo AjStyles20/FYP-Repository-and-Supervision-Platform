@@ -340,7 +340,7 @@ class RegistrationFlowTests(TestCase):
             "first_name": "Ada",
             "last_name": "Student",
             "email": "ada.student@bazeuniversity.edu.ng",
-            "student_number": "BU/26/CS/1001",
+            "student_number": "BU26CS1001",
             "programme": self.programme.pk,
             "student_status": StudentProfile.Status.CURRENT,
             "password1": self.password,
@@ -365,7 +365,7 @@ class RegistrationFlowTests(TestCase):
         self.assertFalse(student.is_active)
         self.assertEqual(student.username, student.email)
         profile = student.student_profile
-        self.assertEqual(profile.student_number, "BU/26/CS/1001")
+        self.assertEqual(profile.student_number, "BU26CS1001")
         self.assertEqual(profile.student_status, StudentProfile.Status.CURRENT)
         self.assertEqual(profile.registration_status, StudentProfile.RegistrationStatus.PENDING)
 
@@ -734,7 +734,7 @@ class StaffAccountTests(TestCase):
 
         self.client.post(reverse("register_student"), {
             "first_name": "Sneaky", "last_name": "Person", "email": "sneaky@bazeuniversity.edu.ng",
-            "student_number": "BU/26/CS/7777", "programme": self.programme.pk, "student_status": "current",
+            "student_number": "BU26CS7777", "programme": self.programme.pk, "student_status": "current",
             "password1": "Long-enough-pass-77", "password2": "Long-enough-pass-77", "role": Role.ADMIN,
         })
 
@@ -1066,3 +1066,37 @@ class RegistrationStatusPageTests(TestCase):
     def test_there_is_no_way_to_look_a_registration_up_by_email(self):
         self._register()
         self.assertEqual(self.client.get("/register/status/", {"email": "noah.status@bazeuniversity.edu.ng"}).status_code, 404)
+
+
+@override_settings(PASSWORD_HASHERS=["django.contrib.auth.hashers.MD5PasswordHasher"])
+class StudentIdFormatTests(TestCase):
+    """Item 4: the student ID must match STUDENT_ID_REGEX, with a clear message when it does not."""
+
+    @classmethod
+    def setUpTestData(cls):
+        faculty = Faculty.objects.create(name="ID Faculty")
+        department = Department.objects.create(faculty=faculty, name="ID Department")
+        cls.programme = Programme.objects.create(department=department, name="Computer Science", degree_type="BSc")
+
+    def _register(self, student_number, email="id.check@bazeuniversity.edu.ng"):
+        return self.client.post(reverse("register_student"), {
+            "first_name": "Ida", "last_name": "Check", "email": email, "student_number": student_number,
+            "programme": self.programme.pk, "student_status": "current",
+            "password1": "Long-enough-pass-77", "password2": "Long-enough-pass-77",
+        })
+
+    def test_default_accepts_5_to_15_letters_or_digits(self):
+        for number, email in (("AB123", "a@bazeuniversity.edu.ng"), ("BU22CS401234567", "b@bazeuniversity.edu.ng")):
+            self.assertEqual(self._register(number, email).status_code, 302, number)
+
+    def test_default_rejects_other_shapes_with_a_clear_message(self):
+        for number in ("AB12", "BU22CS4012345678", "BU/22/CS/4012", "BU 22 CS", "BU-22-CS"):
+            response = self._register(number)
+            self.assertEqual(response.status_code, 200, number)
+            self.assertContains(response, "exactly as it appears on your Baze ID card", msg_prefix=number)
+        self.assertFalse(User.objects.filter(username="id.check@bazeuniversity.edu.ng").exists())
+
+    @override_settings(STUDENT_ID_REGEX=r"^BU/\d{2}/[A-Z]{2,4}/\d{4}$", STUDENT_ID_HELP="like BU/22/CS/4012")
+    def test_the_format_and_message_come_from_settings(self):
+        self.assertContains(self._register("BU22CS4012"), "Baze ID card: like BU/22/CS/4012.")
+        self.assertEqual(self._register("BU/22/CS/4012").status_code, 302)

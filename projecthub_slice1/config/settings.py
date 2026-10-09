@@ -1,7 +1,10 @@
 """Settings for Baze Project Hub. Secrets come from environment variables or a local .env file."""
 import os
+import re
 import sys
 from pathlib import Path
+
+from django.core.exceptions import ImproperlyConfigured
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -135,6 +138,16 @@ EMAIL_USE_TLS = env("EMAIL_USE_TLS", "True").lower() == "true"
 DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL", "Baze Project Hub <no-reply@bazeuniversity.edu.ng>")
 
 # --- Project Hub product settings -------------------------------------------------------------
+
+# Student ID format for self-registration, from .env. The default (5-15 letters or digits) is a
+# placeholder until the real Baze format is confirmed; STUDENT_ID_HELP is the message shown when an
+# ID does not match, so change both together.
+STUDENT_ID_REGEX = env("STUDENT_ID_REGEX", r"^[A-Za-z0-9]{5,15}$")
+STUDENT_ID_HELP = env("STUDENT_ID_HELP", "5 to 15 letters or digits, with no spaces, slashes or other symbols")
+try:
+    re.compile(STUDENT_ID_REGEX)
+except re.error as error:
+    raise ImproperlyConfigured(f"STUDENT_ID_REGEX in .env is not a valid regular expression: {error}") from error
 
 # How long the signed link to the registration status page keeps working.
 REGISTRATION_STATUS_MAX_AGE_DAYS = int(env("REGISTRATION_STATUS_MAX_AGE_DAYS", "30"))

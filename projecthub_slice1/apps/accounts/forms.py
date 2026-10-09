@@ -1,6 +1,8 @@
+import re
 import secrets
 
 from django import forms
+from django.conf import settings
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
@@ -66,7 +68,7 @@ class StudentRegistrationForm(forms.Form):
     first_name = forms.CharField(max_length=150, label="First name")
     last_name = forms.CharField(max_length=150, label="Last name")
     email = forms.EmailField(label="Baze email address")
-    student_number = forms.CharField(max_length=30, label="Student ID")
+    student_number = forms.CharField(max_length=30, label="Student ID", help_text=settings.STUDENT_ID_HELP.capitalize() + ".")
     programme = forms.ModelChoiceField(
         queryset=Programme.objects.none(),
         empty_label="Select your programme",
@@ -103,6 +105,10 @@ class StudentRegistrationForm(forms.Form):
 
     def clean_student_number(self):
         student_number = self.cleaned_data["student_number"].strip()
+        if not re.fullmatch(settings.STUDENT_ID_REGEX, student_number):
+            raise ValidationError(
+                f"Enter your student ID exactly as it appears on your Baze ID card: {settings.STUDENT_ID_HELP}."
+            )
         if StudentProfile.objects.filter(student_number__iexact=student_number).exists():
             raise ValidationError("An account already exists with this student ID.")
         return student_number
