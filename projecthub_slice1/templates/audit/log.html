@@ -1,3 +1,28 @@
 {% extends "base.html" %}
+{% load audit_display %}
 {% block title %}Audit log · Baze Project Hub{% endblock %}
-{% block content %}<section class="page-heading"><p class="eyebrow">System administration</p><h1>Audit log</h1><p class="muted">Append-only record of important actions. Demo accounts are not recorded.</p></section><section class="card"><form method="get" class="filter-row"><div><label for="action">Action</label><select id="action" name="action"><option value="">All actions</option>{% for item in actions %}<option value="{{ item }}"{% if item == selected_action %} selected{% endif %}>{{ item }}</option>{% endfor %}</select></div><button>Filter</button></form></section><section>{% for event in events %}<article class="card"><p class="eyebrow">{{ event.created_at|date:"j M Y H:i:s" }} · {{ event.action }}</p><h2>{{ event.summary }}</h2><p>{% if event.actor %}{{ event.actor.get_full_name|default:event.actor.username }}{% else %}System{% endif %}{% if event.object_type %} · {{ event.object_type }} #{{ event.object_id }}{% endif %}</p>{% if event.details %}<pre>{{ event.details }}</pre>{% endif %}</article>{% empty %}<p>No audit events found.</p>{% endfor %}</section>{% endblock %}
+{% block content %}
+<section class="page-heading"><p class="eyebrow">System administration</p><h1>Audit log</h1><p class="muted">Append-only record of important actions, newest first. Entries cannot be edited or deleted. Demo accounts are not recorded.</p></section>
+<section class="card">
+  <form method="get" class="filter-row">
+    <div><label for="action">Action</label><select id="action" name="action"><option value="">All actions</option>{% for item in actions %}<option value="{{ item }}"{% if item == selected_action %} selected{% endif %}>{{ item|audit_label }}</option>{% endfor %}</select></div>
+    <button>Filter</button>
+  </form>
+</section>
+<section>
+  {% for event in events %}
+    <article class="card audit-entry">
+      <p class="eyebrow">{{ event.created_at|date:"j M Y, H:i:s" }} · <span title="{{ event.action }}">{{ event.action|audit_label }}</span></p>
+      <h2>{{ event.summary }}</h2>
+      <p class="muted">By {% if event.actor %}{{ event.actor.get_full_name|default:event.actor.username }}{% else %}the system{% endif %}{% if event.object_type %} · {{ event.object_type|audit_object }} #{{ event.object_id }}{% endif %}</p>
+      {% with rows=event|audit_details %}{% if rows %}
+        <dl class="audit-changes">
+          {% for row in rows %}<div><dt>{{ row.label }}</dt><dd>{% if row.value is not None %}{{ row.value }}{% else %}<span class="audit-before{% if row.before == "(blank)" %} is-empty{% endif %}">{{ row.before }}</span> <span aria-label="changed to">→</span> <span class="audit-after">{{ row.after }}</span>{% endif %}</dd></div>{% endfor %}
+        </dl>
+      {% endif %}{% endwith %}
+    </article>
+  {% empty %}
+    <p>No audit events found.</p>
+  {% endfor %}
+</section>
+{% endblock %}

@@ -558,3 +558,13 @@ td form { display: flex; flex-wrap: wrap; gap: var(--space-2); margin: 0; }
 
 /* Portal greeting (time of day from the viewer's clock: static/js/greeting.js) */
 .hero-greeting { margin: 0 0 var(--space-2); font-size: var(--text-lg); font-weight: 600; color: var(--gray-900); }
+
+/* Audit log: change details as "Field: before -> after" */
+.audit-changes { display: grid; gap: var(--space-1); margin: var(--space-3) 0 0; padding: var(--space-3) var(--space-4); border-radius: var(--radius); background: var(--gray-50); font-size: var(--text-sm); }
+.audit-changes > div { display: flex; flex-wrap: wrap; gap: 0 var(--space-2); }
+.audit-changes dt { font-weight: 600; color: var(--gray-700); }
+.audit-changes dt::after { content: ":"; }
+.audit-changes dd { margin: 0; overflow-wrap: anywhere; }
+.audit-before { color: var(--gray-500); text-decoration: line-through; }
+.audit-after { font-weight: 600; }
+.audit-before.is-empty { text-decoration: none; font-style: italic; }

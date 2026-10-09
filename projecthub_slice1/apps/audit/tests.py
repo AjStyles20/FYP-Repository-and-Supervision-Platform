@@ -122,4 +122,63 @@ class AuditAppendOnlyTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "System action")
-        self.assertContains(response, "System")
+        self.assertContains(response, "the system")
+
+
+class ReadableAuditLogTests(TestCase):
+    """The audit page shows labels and "Field: old -> new", never raw codes or dictionaries."""
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.admin = User.objects.create(username="readable.admin", first_name="Solomon", last_name="Ejeh", role=Role.ADMIN)
+
+    def _event(self, action, details, summary="Something happened"):
+        return log_event(actor=self.admin, action=action, summary=summary, details=details)
+
+    def test_field_changes_read_as_before_and_after(self):
+        from .templatetags.audit_display import audit_details
+
+        event = self._event("account.staff_updated", {"department": {"from": "", "to": "Computer Science"},
+                                                      "can_assign_supervisors": {"from": "False", "to": "True"},
+                                                      "role": {"from": "supervisor", "to": "coordinator"}})
+
+        self.assertEqual(audit_details(event), [
+            {"label": "Department", "before": "(blank)", "after": "Computer Science"},
+            {"label": "Can assign supervisors", "before": "No", "after": "Yes"},
+            {"label": "Role", "before": "Supervisor", "after": "Coordinator"},
+        ])
+
+    def test_facts_and_stage_changes(self):
+        from .templatetags.audit_display import audit_details
+
+        created = self._event("account.staff_created", {"role": "supervisor", "department": "Computer Science",
+                                                        "can_assign_supervisors": False})
+        stage = self._event("project.stage_changed", {"from": "2", "to": "3", "note": "Work started."})
+
+        self.assertEqual(audit_details(created), [
+            {"label": "Role", "value": "Supervisor"}, {"label": "Department", "value": "Computer Science"},
+            {"label": "Can assign supervisors", "value": "No"},
+        ])
+        self.assertEqual(audit_details(stage), [
+            {"label": "Stage", "before": "Approved by the department", "after": "In progress"},
+            {"label": "Note", "value": "Work started."},
+        ])
+
+    def test_labels_for_known_and_unknown_actions(self):
+        from .templatetags.audit_display import audit_label
+
+        self.assertEqual(audit_label("structure.department_updated"), "Department updated")
+        self.assertEqual(audit_label("account.password_set"), "Temporary password replaced")
+        self.assertEqual(audit_label("something.new_thing"), "Something new thing")
+
+    def test_page_shows_readable_entries(self):
+        self._event("account.staff_updated", {"first_name": {"from": "", "to": "Solomon"}}, summary="Updated staff account admin")
+        self.client.force_login(self.admin)
+
+        response = self.client.get(reverse("audit_log"))
+
+        self.assertContains(response, "Staff account updated")
+        self.assertContains(response, "<dt>First name</dt>", html=False)
+        self.assertContains(response, '<span class="audit-after">Solomon</span>', html=False)
+        self.assertNotContains(response, "{&#x27;first_name&#x27;")
+        self.assertContains(response, "By Solomon Ejeh")
