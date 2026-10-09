@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load static %}
 {% block title %}{{ staff.get_full_name|default:staff.username }} · Staff account · Baze Project Hub{% endblock %}
 {% block content %}
 <p class="breadcrumb"><a href="{% url 'admin_tools' %}">← Admin tools</a></p>
@@ -21,7 +22,7 @@
       <input type="hidden" name="action" value="save">
       {{ form.non_field_errors }}
       {% for field in form %}
-        <div class="form-row">
+        <div class="form-row"{% if field.name == "department" or field.name == "title" or field.name == "can_assign_supervisors" %} data-staff-only{% endif %}>
           {% if field.widget_type == "checkbox" %}<label for="{{ field.id_for_label }}">{{ field }} {{ field.label }}</label>{% else %}{{ field.label_tag }}{{ field }}{% endif %}
           {% if field.help_text %}<small class="muted">{{ field.help_text }}</small>{% endif %}
           {% for error in field.errors %}<p class="error">{{ error }}</p>{% endfor %}
@@ -52,4 +53,5 @@
     </section>
   </div>
 </div>
+<script src="{% static 'js/staff-form.js' %}?v=1" defer></script>
 {% endblock %}

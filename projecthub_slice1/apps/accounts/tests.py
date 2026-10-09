@@ -703,6 +703,13 @@ class StaffAccountTests(TestCase):
         user = User.objects.get(username="sneaky@bazeuniversity.edu.ng")
         self.assertEqual((user.role, user.is_active), (Role.STUDENT, False))
 
+    def test_admin_only_fields_are_marked_for_hiding_on_both_forms(self):
+        self.client.force_login(self.admin)
+        for url in (reverse("add_staff_account"), reverse("manage_staff_account", args=[self.supervisor.pk])):
+            page = self.client.get(url).content.decode()
+            self.assertEqual(page.count("data-staff-only"), 3, url)
+            self.assertIn("js/staff-form.js", page, url)
+
     def test_admin_tools_lists_staff_with_their_status(self):
         self._create()
         self.client.force_login(self.admin)

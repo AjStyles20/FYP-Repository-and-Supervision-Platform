@@ -164,7 +164,7 @@ class StaffAccountForm(forms.Form):
     first_name = forms.CharField(max_length=150, label="First name")
     last_name = forms.CharField(max_length=150, label="Last name")
     email = forms.EmailField(label="Baze email address", help_text="Also their sign-in username.")
-    role = forms.ChoiceField(choices=ROLE_CHOICES, label="Role")
+    role = forms.ChoiceField(choices=ROLE_CHOICES, label="Role", help_text="Administrators manage accounts and setup across the whole system, so they have no department, title or allocation permission.")
     department = forms.ModelChoiceField(
         queryset=Department.objects.none(), required=False, empty_label="Select a department",
         label="Department", help_text="Required for every role except Administrator.",
@@ -217,7 +217,7 @@ class StaffEditForm(forms.Form):
 
     first_name = forms.CharField(max_length=150, label="First name")
     last_name = forms.CharField(max_length=150, label="Last name")
-    role = forms.ChoiceField(choices=StaffAccountForm.ROLE_CHOICES, label="Role")
+    role = forms.ChoiceField(choices=StaffAccountForm.ROLE_CHOICES, label="Role", help_text="Administrators manage accounts and setup across the whole system, so they have no department, title or allocation permission.")
     department = forms.ModelChoiceField(
         queryset=Department.objects.none(), required=False, empty_label="Select a department",
         label="Department", help_text="Required for every role except Administrator.",
