@@ -14,9 +14,20 @@ From PowerShell at the repository root:
 
 The script runs the Django tests against SQLite.
 
+## Run the demo
+
+The demo story (21 synthetic projects, health-score bands, a similar archived topic) lives in its own SQLite database, `projecthub_slice1/demo.sqlite3`, so the real MySQL database stays clean. From PowerShell at the repository root:
+
+```powershell
+.\run_demo.ps1          # build the demo if needed, then serve it on http://127.0.0.1:8000/
+.\run_demo.ps1 -Fresh   # start the demo over
+```
+
+All demo accounts use the password `ChangeMe123!` (for example `demo.admin`, `demo.coordinator`, `demo.okoro`, `demo.amina`). Stop the real server first: both use port 8000.
+
 ## Run the application locally
 
-From PowerShell:
+The real system uses MySQL (settings in `projecthub_slice1/.env`). To try it on a throwaway SQLite database instead, from PowerShell:
 
 ```powershell
 cd .\projecthub_slice1

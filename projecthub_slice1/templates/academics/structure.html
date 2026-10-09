@@ -1,17 +1,23 @@
 {% extends "base.html" %}
 {% block title %}Academic structure · Baze Project Hub{% endblock %}
 {% block content %}
-<h1>Academic structure</h1>
-<p class="muted">Faculty → Department → Programme. Edited by administrators in the admin site.</p>
+<section class="page-heading">
+  <p class="eyebrow">Academic structure</p>
+  <h1>Faculties, departments and programmes</h1>
+  <p class="muted">Faculty → Department → Programme. Maintained by the system administrator.</p>
+  {% if user.role == "admin" %}<div class="actions"><a class="btn btn-primary" href="{% url 'manage_structure' %}">Manage structure</a></div>{% endif %}
+</section>
 {% for faculty in faculties %}
 <section class="card">
-  <h2>{{ faculty.name }}{% if faculty.is_demo %} <span class="tag">demo</span>{% endif %}</h2>
+  <h2>{{ faculty.name }}{% if faculty.is_demo %} <span class="tag tag-quiet">Sample</span>{% endif %}</h2>
   {% for dept in faculty.departments.all %}
     <h3>{{ dept.name }}</h3>
-    <ul>{% for p in dept.programmes.all %}<li>{{ p }}</li>{% endfor %}</ul>
+    <ul>{% for p in dept.programmes.all %}<li>{{ p }}</li>{% empty %}<li class="muted">No programmes yet.</li>{% endfor %}</ul>
+  {% empty %}
+    <p class="muted">No departments yet.</p>
   {% endfor %}
 </section>
 {% empty %}
-<p>No faculties yet. Run <code>python manage.py seed_demo</code> or add them in the admin site.</p>
+<div class="card"><p>No faculties yet.{% if user.role == "admin" %} <a href="{% url 'manage_structure' %}">Add the first one</a>.{% else %} The system administrator adds them.{% endif %}</p></div>
 {% endfor %}
 {% endblock %}

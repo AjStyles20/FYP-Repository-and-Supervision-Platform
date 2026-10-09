@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}Edit {{ kind }} · Baze Project Hub{% endblock %}
+{% block content %}
+<p class="breadcrumb"><a href="{% url 'manage_structure' %}">← Academic structure</a></p>
+<section class="card narrow">
+  <h1>Edit {{ kind }}</h1>
+  <p class="muted">{{ item }}</p>
+  <form method="post" class="stack-form">
+    {% csrf_token %}
+    {{ form.non_field_errors }}
+    {% for field in form %}
+      <div class="form-row">{{ field.label_tag }}{{ field }}
+        {% if field.help_text %}<small class="muted">{{ field.help_text }}</small>{% endif %}
+        {% for error in field.errors %}<p class="error">{{ error }}</p>{% endfor %}
+      </div>
+    {% endfor %}
+    <button type="submit" class="primary">Save</button>
+  </form>
+</section>
+{% endblock %}

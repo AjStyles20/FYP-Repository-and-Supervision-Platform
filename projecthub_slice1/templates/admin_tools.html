@@ -2,7 +2,7 @@
 {% block title %}Admin tools · Baze Project Hub{% endblock %}
 {% block content %}
 <section class="page-heading"><p class="eyebrow">System administration</p><h1>Admin tools</h1>
-<div class="actions"><a class="btn btn-primary" href="{% url 'add_staff_account' %}">Add staff account</a><a class="btn" href="{% url 'audit_log' %}">View audit log</a><a class="btn" href="{% url 'import_projects' %}">Import past projects from CSV</a></div></section>
+<div class="actions"><a class="btn btn-primary" href="{% url 'add_staff_account' %}">Add staff account</a><a class="btn" href="{% url 'manage_structure' %}">Academic structure</a><a class="btn" href="{% url 'audit_log' %}">View audit log</a><a class="btn" href="{% url 'import_projects' %}">Import past projects from CSV</a></div></section>
 <section class="card">
   <h2>Student account approvals</h2>
   {% if pending_students %}

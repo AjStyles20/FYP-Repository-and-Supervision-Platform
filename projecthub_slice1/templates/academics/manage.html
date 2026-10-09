@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% block title %}Manage academic structure · Baze Project Hub{% endblock %}
+{% block content %}
+<p class="breadcrumb"><a href="{% url 'admin_tools' %}">← Admin tools</a></p>
+<section class="page-heading">
+  <p class="eyebrow">System administration</p>
+  <h1>Manage academic structure</h1>
+  <p class="muted">Add faculties first, then their departments, then each department's programmes. Something still in use (a department with staff or students, a programme with students or projects) cannot be deleted. Every change is recorded in the audit log.</p>
+</section>
+
+<div class="grid-2">
+  {% for kind, form in forms.items %}
+    <section class="card">
+      <h2>Add {{ kind }}</h2>
+      <form method="post" class="stack-form">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="add_{{ kind }}">
+        {{ form.non_field_errors }}
+        {% for field in form %}
+          <div class="form-row">{{ field.label_tag }}{{ field }}
+            {% if field.help_text %}<small class="muted">{{ field.help_text }}</small>{% endif %}
+            {% for error in field.errors %}<p class="error">{{ error }}</p>{% endfor %}
+          </div>
+        {% endfor %}
+        <button type="submit" class="primary">Add {{ kind }}</button>
+      </form>
+    </section>
+  {% endfor %}
+</div>
+
+<section class="stack" aria-labelledby="tree-heading">
+  <h2 id="tree-heading">Current structure</h2>
+  {% for faculty in faculties %}
+    <article class="card">
+      <div class="section-title">
+        <h3>{{ faculty.name }}{% if faculty.code %} <span class="muted">({{ faculty.code }})</span>{% endif %}{% if faculty.is_demo %} <span class="tag tag-quiet">Sample</span>{% endif %}</h3>
+        <div class="row">
+          <a class="btn btn-sm" href="{% url 'edit_structure_item' 'faculty' faculty.pk %}">Edit</a>
+          <form method="post" class="inline-form">{% csrf_token %}<input type="hidden" name="action" value="delete"><input type="hidden" name="kind" value="faculty"><input type="hidden" name="pk" value="{{ faculty.pk }}"><button type="submit" class="btn-sm">Delete</button></form>
+        </div>
+      </div>
+      <ul class="plain-list">
+        {% for dept in faculty.departments.all %}
+          <li>
+            <div class="section-title">
+              <strong>{{ dept.name }}{% if dept.code %} <span class="muted">({{ dept.code }})</span>{% endif %}</strong>
+              <div class="row">
+                <a class="btn btn-sm" href="{% url 'edit_structure_item' 'department' dept.pk %}">Edit</a>
+                <form method="post" class="inline-form">{% csrf_token %}<input type="hidden" name="action" value="delete"><input type="hidden" name="kind" value="department"><input type="hidden" name="pk" value="{{ dept.pk }}"><button type="submit" class="btn-sm">Delete</button></form>
+              </div>
+            </div>
+            <ul class="plain-list">
+              {% for programme in dept.programmes.all %}
+                <li class="row">
+                  <span>{{ programme }} <span class="muted">· {{ programme.get_level_display }}{% if programme.duration_years %} · {{ programme.duration_years }} years{% endif %}</span></span>
+                  <a class="btn btn-sm" href="{% url 'edit_structure_item' 'programme' programme.pk %}">Edit</a>
+                  <form method="post" class="inline-form">{% csrf_token %}<input type="hidden" name="action" value="delete"><input type="hidden" name="kind" value="programme"><input type="hidden" name="pk" value="{{ programme.pk }}"><button type="submit" class="btn-sm">Delete</button></form>
+                </li>
+              {% empty %}
+                <li class="muted">No programmes yet.</li>
+              {% endfor %}
+            </ul>
+          </li>
+        {% empty %}
+          <li class="muted">No departments yet.</li>
+        {% endfor %}
+      </ul>
+    </article>
+  {% empty %}
+    <div class="card"><p class="muted">No faculties yet. Add the first one above.</p></div>
+  {% endfor %}
+</section>
+{% endblock %}
