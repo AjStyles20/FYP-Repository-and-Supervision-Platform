@@ -15,11 +15,13 @@ A web application that does two connected jobs for final-year projects (FYPs):
 
 It begins with the author's own faculty and department. The data model includes Faculty, Department and Programme so the same system extends to other faculties later.
 
-## 2. Files in this folder
+## 2. Planning files in this folder
+
+The full list of docs, including the code map, explainers, diagrams and reviews, is in [`README.md`](README.md).
 
 | File | Read it for |
 |---|---|
-| `README.md` | This overview, setup and rules |
+| `overview.md` | This overview, setup and rules |
 | `implementation_plan.md` | Architecture, workflows, security, stages, testing, risks |
 | `task.md` | The working checklist, phase by phase |
 | `walkthrough.md` | Current account flow and project workflow implementation status |
@@ -28,7 +30,7 @@ It begins with the author's own faculty and department. The data model includes 
 | `product-blueprint.md` | Product navigation, privacy boundaries, lifecycle and staged delivery |
 | `database_schema.sql` | MySQL reference design (ER diagram source) |
 
-Read order for a new developer or AI agent: `README.md` → `product-blueprint.md` → `requirements.md` → `decisions.md` → `implementation_plan.md` → `database_schema.sql` → `task.md`.
+Read order for a new developer or AI agent: `overview.md` → `product-blueprint.md` → `requirements.md` → `decisions.md` → `implementation_plan.md` → `database_schema.sql` → `task.md`.
 
 ## 3. Fixed constraints (do not change without asking the author)
 

@@ -2,7 +2,7 @@
 
 Mermaid sources drawn from the code on branch `repo-review`. GitHub renders `.mmd` files when they are pasted into a ```` ```mermaid ```` block. To export images, run `npx @mermaid-js/mermaid-cli -i <file>.mmd -o <file>.svg`. All five files were rendered with mermaid-cli 11 without errors.
 
-Paths are relative to `projecthub_slice1/`. Nothing in these diagrams comes from the docs alone. Where the plan (`docs/implementation_plan.md`) and the code differ, the diagrams follow the code.
+Paths are relative to `projecthub_slice1/`. Nothing in these diagrams comes from the docs alone. Where the plan (`../implementation_plan.md`) and the code differ, the diagrams follow the code.
 
 | File | What it shows | How it was checked |
 |---|---|---|

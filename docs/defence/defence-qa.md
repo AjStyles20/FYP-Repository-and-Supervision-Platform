@@ -147,7 +147,7 @@ Likely examiner questions, with a short answer to say aloud, how it works, where
 
 **Say:** "Only signed-in Baze users can browse projects; the public internet cannot. Student IDs are visible to staff only, a student's contact details appear only if they consented, and private supervision records such as meeting discussions are limited to the student, their supervisor and authorised department staff."
 
-**Details:** decisions D-09, D-14 in `projecthub_slice1/docs/decisions.md`.
+**Details:** decisions D-09, D-14 in `docs/decisions.md`.
 
 ---
 
