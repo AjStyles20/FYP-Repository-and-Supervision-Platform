@@ -230,6 +230,30 @@ class SeedAndPurgeTests(TestCase):
         self.assertEqual(ProjectSupervisorAssignment.objects.filter(ended_at__isnull=True).count(), 20)
         self.assertEqual(ArchivedProject.objects.filter(is_demo=True).count(), 4)
 
+    def test_seeded_names_carry_no_demo_suffix_and_is_demo_marks_them(self):
+        run("seed_demo")
+        names = [str(row) for model in (Faculty, Department, Programme) for row in model.objects.filter(is_demo=True)]
+        names += [user.get_full_name() for user in User.objects.filter(is_demo=True)]
+        self.assertTrue(names)
+        self.assertEqual([name for name in names if "(demo)" in name.lower()], [])
+        self.assertEqual(Faculty.objects.get(is_demo=True).name, "Faculty of Computing")
+        self.assertFalse(Faculty.objects.filter(is_demo=False).exists())
+
+    def test_seed_renames_an_older_demo_faculty_instead_of_adding_one(self):
+        Faculty.objects.create(name="Faculty of Computing (demo)", code="FOC", is_demo=True)
+        run("seed_demo")
+        run("seed_demo")
+        self.assertEqual(list(Faculty.objects.values_list("name", flat=True)), ["Faculty of Computing"])
+        self.assertEqual(Department.objects.filter(is_demo=True).count(), 2)
+
+    def test_seed_never_adopts_a_real_faculty_with_the_same_name(self):
+        real = Faculty.objects.create(name="Faculty of Computing", code="FOC")
+        with self.assertRaisesMessage(CommandError, "A real faculty is already called"):
+            run("seed_demo")
+        real.refresh_from_db()
+        self.assertFalse(real.is_demo)
+        self.assertFalse(real.departments.exists())
+
     def test_seed_tells_the_demo_story(self):
         run("seed_demo")
         stages = Counter(Project.objects.filter(is_demo=True).values_list("stage", flat=True))

@@ -46,7 +46,10 @@ from apps.supervision.models import (
     SupervisorAvailability,
 )
 
-FACULTY = "Faculty of Computing (demo)"
+# Demo rows are told apart by is_demo (shown as a "Sample" tag), not by their names. The faculty is
+# found by is_demo and its code, so a real faculty with the same name is never adopted.
+FACULTY, FACULTY_CODE = "Faculty of Computing", "FOC"
+OLD_FACULTY = "Faculty of Computing (demo)"  # name used by demo databases seeded before 2026-10-10
 CS = "Computer Science"
 SE = "Software Engineering"
 STRUCTURE = {CS: ("CS", ["BSc", "MSc"]), SE: ("SE", ["BSc"])}
@@ -249,7 +252,7 @@ class Command(BaseCommand):
     # --- structure and people ------------------------------------------------------------------
 
     def _structure(self):
-        faculty, _ = Faculty.objects.get_or_create(name=FACULTY, defaults={"code": "FOC", "is_demo": True})
+        faculty = self._demo_faculty()
         departments, programmes = {}, {}
         for name, (code, degrees) in STRUCTURE.items():
             department, _ = Department.objects.get_or_create(
@@ -262,6 +265,23 @@ class Command(BaseCommand):
                 )
                 programmes.setdefault(name, programme)  # students are on the first (BSc) programme
         return departments, programmes
+
+    def _demo_faculty(self):
+        faculty = (
+            Faculty.objects.filter(is_demo=True, code=FACULTY_CODE, name=FACULTY).first()
+            or Faculty.objects.filter(is_demo=True, code=FACULTY_CODE, name=OLD_FACULTY).first()
+        )
+        if faculty and faculty.name == FACULTY:
+            return faculty
+        if Faculty.objects.filter(name=FACULTY).exists():
+            raise CommandError(
+                f'A real faculty is already called "{FACULTY}". The demo needs its own faculty, so rename one of them first.'
+            )
+        if faculty:  # an older demo database: drop the "(demo)" suffix in place
+            faculty.name = FACULTY
+            faculty.save(update_fields=["name"])
+            return faculty
+        return Faculty.objects.create(name=FACULTY, code=FACULTY_CODE, is_demo=True)
 
     def _user(self, username, first, last, role, department, password):
         email = f"{username.removeprefix('demo.')}@bazeuniversity.edu.ng"
