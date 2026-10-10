@@ -40,6 +40,7 @@ Paths are relative to `projecthub_slice1/`.
 - **Defence in depth for the history tables.** Status events, approval decisions and audit events also refuse update and delete in the model, and audit events are protected by database triggers as well.
 - **One admin hub.** The audit log and CSV import are linked only from Admin tools; the menu and the admin portal link to the hub.
 - **Logs stay admin-only.** `audit_log` and `import_projects` use `role_required(Role.ADMIN)`.
+- **The CSV import cannot leave half a file behind.** `import_archived_projects` (`apps/projects/imports.py`) checks every row in one transaction; if any row is bad, nothing is saved and every bad row is listed with its line number. Supervisors and previous supervisors must pass `can_supervise_in`, the rule `assign_project_supervisor` uses (without the active check, for historic records). A sample with demo data is `docs/sample_import.csv`.
 - **Known gaps:**
   - Milestones and project documents can still be added, changed and deleted in the admin.
   - A student account without a project can be deleted in the admin. Once the student has a project, the admin refuses, because the delete would take records it may not delete.

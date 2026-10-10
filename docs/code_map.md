@@ -89,3 +89,18 @@
 | The admin portal's links to the hub | `templates/portals/admin.html` | `Open admin tools` |
 | The tests for the hub and the admin-only audit log and CSV import | `apps/accounts/tests.py` | `def test_admin_tools_is_the_one_hub_for_the_audit_log_and_csv_import` |
 | The explainer for this feature | `../docs/explain/admin-integrity.md` | `## Self-test` |
+
+## Demo data, CSV import and notices
+
+| To change… | Open | Look for |
+|---|---|---|
+| How the demo faculty is found and named (no "(demo)" suffix; `is_demo` is the marker) | `apps/accounts/management/commands/seed_demo.py` | `def _demo_faculty` |
+| The PDF built for demo downloads (no binary file is committed) | `apps/accounts/demo_pdf.py` | `def demo_pdf` |
+| The seeded "Literature review checklist" and the upgrade of older external demo links | `apps/accounts/management/commands/seed_demo.py` | `def _replace_external_demo_links` |
+| Which demo files `purge_demo` removes from disk | `apps/accounts/management/commands/purge_demo.py` | `demo_files` |
+| The CSV import: one transaction, every bad row listed, nothing written if any row fails | `apps/projects/imports.py` | `def import_archived_projects` |
+| The checks on one CSV row and their error messages | `apps/projects/imports.py` | `def _import_row` |
+| Who may be named as a supervisor (shared by assignment and the CSV import) | `apps/projects/services/assignment.py` | `def can_supervise_in` |
+| The demo-only sample CSV | `../docs/sample_import.csv` | `student_username` |
+| The notice author is not asked to acknowledge their own notice | `apps/supervision/views.py` | `is_author` |
+| The "You posted this notice" line in place of the button | `templates/supervision/announcements.html` | `card.is_author` |

@@ -64,6 +64,8 @@ They are shown on `templates/portals/admin.html:14-17`.
 
 ## 3. Why "View audit log" appears several times
 
+> **Update 2026-10-10:** fixed. **Admin tools** (`/admin-tools/`, `templates/admin_tools.html`) is now the one admin hub and the only page linking to the audit log and the CSV import. The menu (`templates/base.html`) and the admin portal (`templates/portals/admin.html`) link to the hub instead. Tests: `test_admin_tools_is_the_one_hub_for_the_audit_log_and_csv_import` and `test_audit_log_and_csv_import_stay_admin_only` in `apps/accounts/tests.py`. The findings below describe the code at review time.
+
 There are four links to the same page (`audit_log`, `/admin-tools/audit/`, `apps/accounts/urls.py:15`), not three (VERIFIED):
 
 | Place | File and line | Link text |
@@ -81,6 +83,8 @@ The CSV import link is also duplicated: `admin.html:32` and `admin_tools.html:5`
 
 ## 4. Where "(demo)" in names comes from
 
+> **Update 2026-10-10:** fixed. The demo faculty is now "Faculty of Computing", found by `is_demo` and its code (`_demo_faculty` in `seed_demo.py`), not by name. An older demo database is renamed in place, and a real faculty with the same name is never adopted (the seed stops with an error). `is_demo` stays the marker and shows as the "Sample" tag. Tests: `test_seeded_names_carry_no_demo_suffix_and_is_demo_marks_them` and the two tests after it in `apps/accounts/tests.py`. The findings below describe the code at review time.
+
 - **Faculty:** the name is hard-coded as `FACULTY = "Faculty of Computing (demo)"` (`seed_demo.py:46`) and created at `seed_demo.py:232`.
 - **Departments and programmes are not named with "(demo)"** (`seed_demo.py:47-49`, `:235-242`: "Computer Science", "Software Engineering"). They *show* "(demo)" because `Department.__str__` appends the faculty name: `f"{self.name} ({self.faculty.name})"` (`apps/academics/models.py:38-39`). That gives "Computer Science (Faculty of Computing (demo))", which appears in dropdowns, the pending-registration card (visible in `/docs/screenshots/admin-portal-1280.png`) and anywhere else a department is printed with `{{ department }}`.
 - `Programme.__str__` is `name + degree_type` (`academics/models.py:79-80`), so a programme on its own shows no "(demo)".
@@ -89,6 +93,8 @@ The CSV import link is also duplicated: `admin.html:32` and `admin_tools.html:5`
 ---
 
 ## 5. Which seed data sets the guide URL to example.com
+
+> **Update 2026-10-10:** fixed. The seeded "Literature review checklist" is now a real one-page PDF generated at seed time (`apps/accounts/demo_pdf.py`; nothing binary is committed), downloaded through the permission-checked `download_shared_resource`. Seeded project documents are valid PDFs too. An older demo database has its external link replaced on the next seed (`_replace_external_demo_links`), and `purge_demo` deletes the file with its demo author. Tests: `test_no_seeded_resource_links_to_an_external_url`, `test_seeded_downloads_are_valid_pdfs` and the two tests after it in `apps/accounts/tests.py`. The findings below describe the code at review time.
 
 - Only one place in application code: `seed_demo.py:422-426` creates a `SharedResource` titled "Literature review checklist", authored by `demo.okoro`, with `url="https://example.com/literature-checklist"`. It is linked to all of Okoro's active demo projects (`:426`). (VERIFIED, `grep -rn example.com` across the project.)
 - The guide page lists shared resources (`apps/projects/views.py:554-569`) and renders `{{ resource.url }}` as an "Open guide" button (`templates/projects/guidelines.html:12`). The notices page has the same "Open link" button for the author (`templates/supervision/announcements.html:14`).
@@ -128,6 +134,8 @@ The CSV import link is also duplicated: `admin.html:32` and `admin_tools.html:5`
 ---
 
 ## 7. Why the supervisor sees "Acknowledge notice" on their own notice
+
+> **Update 2026-10-10:** fixed as suggested. In `announcements` (`apps/supervision/views.py`) the author's own notices get no acknowledgement row and an `is_author` flag; the template shows "You posted this notice" instead of the button; and an author's acknowledge POST is refused with 403. Test: `test_the_author_is_not_asked_to_acknowledge_their_own_notice` in `apps/supervision/tests.py`. The findings below describe the code at review time.
 
 All VERIFIED, `apps/supervision/views.py` unless noted:
 
