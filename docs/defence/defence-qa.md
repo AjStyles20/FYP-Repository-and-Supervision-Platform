@@ -158,3 +158,44 @@ Likely examiner questions, with a short answer to say aloud, how it works, where
 **Say:** "There are 158 automated tests, run on both SQLite and MySQL, because MySQL behaves differently in places such as time zones, constraints and triggers. Every feature has tests for the allowed case, the forbidden case and edge cases. The layout was checked in a headless browser on every page at 360, 768 and 1280 pixels wide for horizontal scrolling."
 
 **Show it:** `.\run_tests.ps1` from the repository root (SQLite), or `manage.py test apps` with MySQL configured.
+
+---
+
+## Admin integrity
+
+### 16. Can an administrator change a project's stage or history directly?
+
+**Say:** "Not through the Django admin. A project's stage, its stage dates, its archived flag and its supervisor are shown read-only there, and a project cannot be deleted there, one at a time or in bulk. The history records are view-only: no add, change or delete. A stage changes only on the workflow page, which writes the status event, the date and the audit entry together."
+
+**Details:** `ProjectAdmin` and `ReadOnlyAdmin` in `apps/projects/admin.py`; `SupervisionMeetingAdmin` in `apps/supervision/admin.py`. Tests: `AdminCannotBypassWorkflowTests` in `apps/projects/tests_admin.py` (a hand-made POST with a new stage, dates or `archived` saves the other fields and leaves those unchanged) and `MeetingRecordAdminTests` in `apps/supervision/tests_admin.py`. Explainer: `docs/explain/admin-integrity.md`.
+
+### 17. How do you know the audit log can't be altered?
+
+**Say:** "Three layers. The Django admin shows audit entries read-only. The model and its queryset refuse every update and delete. And the database itself refuses UPDATE and DELETE on the audit table with triggers. Only `audit_auditevent` has triggers; no other table does. The triggers are not absolute: an account with MySQL's TRIGGER privilege can drop them, and that includes a database administrator and, with the setup in this project, the application account, which is granted all privileges on its own database."
+
+**Details:** guards in `apps/audit/models.py`; triggers in `apps/audit/migrations/0003_append_only_triggers.py` (created on MySQL and on SQLite, so the tests exercise them); read-only admin in `apps/audit/admin.py`. The grant is in `PROGRESS.md`, "Run it on Windows", step 2. Tightening it means a separate migration account that owns the triggers and an application account without the TRIGGER privilege.
+
+### 18. Which records are protected, and how?
+
+**Say:** "Every record the workflow writes is view-only in the Django admin. The history tables also refuse changes in the model, and the audit log in the database too."
+
+**Details:**
+
+| Records | Protection |
+|---|---|
+| Audit events | Database triggers on `audit_auditevent` + model and queryset guard + read-only admin |
+| Project status events, approval decisions | Model and queryset guards (`PermissionError` on update or delete) + read-only admin |
+| Supervisor assignments | Changed only through the audited assignment workflow + read-only admin. No model guard |
+| Approval forms, completions, meeting records and their versions | Read-only admin; changed only through the workflow and meeting pages. Meeting versions (`MeetingRecordEdit`) have no admin screen of their own; they appear view-only on the meeting record |
+
+Guards: `apps/audit/models.py`, `apps/projects/models/project.py`, `apps/projects/models/approval.py`. Admin: `apps/projects/admin.py`, `apps/supervision/admin.py`, `apps/audit/admin.py`.
+
+### 19. What are the known limits of this protection?
+
+**Say:** "Three that I know of. Milestones and project documents can still be edited in the Django admin. Deleting a student outside the admin, from the shell or in code, deletes their projects and every record on them. And on MySQL without its time zone tables loaded, one admin page, the meeting list, fails."
+
+**Details:**
+- **Milestones and documents:** editable as inlines on a project and on the *Project documents* admin screen (`ProjectMilestoneInline`, `ProjectDocumentInline`, `ProjectDocumentAdmin` in `apps/projects/admin.py`).
+- **Deleting a student:** `Project.student` is `CASCADE`, so the projects and their status events, approvals, completion, assignments, meetings, milestones and documents go too. Only `PROTECT` stops it, with `ProtectedError`: when the student is the actor of an audit event (`AuditEvent.actor`) or has an archived project (`ArchivedProject.student`). The Django admin refuses the delete once the student has a project, because it would remove records the admin may not delete; a student without a project can still be deleted there.
+- **MySQL time zone tables:** the admin's meeting list uses `date_hierarchy = "scheduled_for"`. With `USE_TZ` on and `TIME_ZONE = "Africa/Lagos"`, MySQL converts times with `CONVERT_TZ`, which needs the server's time zone tables; without them the page fails with *"Database returned an invalid datetime value"*. The application's own pages avoid this on purpose (`available_years` in `apps/projects/services/repository.py`). The fix is to load the time zone tables on the server or drop `date_hierarchy`.
+- Listed with the other limits in `docs/known_limits.md`.
