@@ -11,6 +11,8 @@ Branch `repo-review` at `9a2cb97`. Review date 2026-10-08. Read-only: no code, t
 
 ## 1. The four admin-portal counters
 
+> **Update 2026-10-10:** changed. The counters now follow the viewer (`for_viewer` in `apps/accounts/views.py`): a demo account counts demo and real rows, so `demo.admin` sees the demo story instead of 0 / 0 / 0; a real account counts real rows only, now including `programme_count`, which ends the inconsistency noted below. `admin_counts(user)` takes the viewer; the registration lists on the admin portal and Admin tools and the coordinator `department_counts` follow the same rule. Tests: `SummaryApiTests` in `apps/accounts/tests.py`. The findings below describe the code at review time.
+
 **What they query (VERIFIED, `apps/accounts/views.py:220-233`)**
 
 | Counter | Query | Excludes demo? |
@@ -34,6 +36,8 @@ They are shown on `templates/portals/admin.html:14-17`.
 ---
 
 ## 2. The CSV importer
+
+> **Update 2026-10-10:** both gaps below are fixed (`apps/projects/imports.py`). The import is now all or nothing: every row is checked in one transaction, with a savepoint per row, and if any row is bad nothing is saved and every bad row is listed with its line number. Database errors (`IntegrityError`, `DataError`) and unexpected errors become row errors, never a traceback. Supervisors **and previous supervisors** must pass `can_supervise_in` (`apps/projects/services/assignment.py`), the rule `assign_project_supervisor` uses, without the active check for historic records. Rows about demo students are imported as demo data. Sample: `docs/sample_import.csv`. Tests: `apps/projects/tests_import.py`. The findings below describe the code at review time.
 
 **Where:** view `apps/projects/views.py:573-586` (admin only, `@role_required(Role.ADMIN)`), form `apps/projects/forms.py:105-114`, importer `apps/projects/imports.py:16-70`, URL `apps/projects/urls.py:19`.
 

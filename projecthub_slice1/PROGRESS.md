@@ -23,7 +23,7 @@
 - Faculty → Department → Programme models, with a management page for administrators
 - Authenticated project repository with Current/Past sections, search, academic filters and role-aware project detail pages
 - Permission-checked project downloads with per-file Baze-user/staff visibility and extension/size validation
-- Admin-only CSV import of historic project summaries with row-level errors
+- Admin-only CSV import of historic project summaries, all or nothing: every bad row is listed with its line number and nothing is saved until every row is valid; supervisors and previous supervisors must be academic staff of the project's department. Demo sample: `docs/sample_import.csv`
 - Similar-topic checker: archived projects whose topics score above `SIMILARITY_THRESHOLD` are listed (`docs/explain/similarity.md`)
 
 ### Project workflow and supervision
@@ -34,7 +34,7 @@
 - Staff supervision history shows each staff member's current supervisees, prior assignments and archived supervisees; student-only My Project is hidden and denied to staff
 - Supervisor meeting scheduling and records, held/missed counts, student confirmation/dispute, and versioned edits
 - Weekly supervisor availability windows (students are notified; the supervisor schedules each meeting)
-- Department/project notices with first-seen and acknowledgement timestamps; shared supervisor resources with permission-checked downloads
+- Department/project notices with first-seen and acknowledgement timestamps (the author is not asked to acknowledge their own notice); shared supervisor resources with permission-checked downloads
 - Project health score with reasons, shown only to the roles allowed to see it (`docs/explain/health-score.md`)
 
 ### Alerts, automation and live counters
@@ -48,10 +48,11 @@
 - Admin-only audit log screen with readable labels and "Field: before -> after" changes
 - Audit events are append-only at the database level: triggers on `audit_auditevent` refuse every UPDATE and DELETE (created on MySQL and SQLite; `apps/audit/migrations/0003_append_only_triggers.py`). This is the only table with triggers
 - Project status events and approval decisions are also append-only in the model (the model and its queryset refuse update and delete). Supervisor assignments change only through the audited assignment workflow; their model has no append-only guard
-- `seed_demo` and `purge_demo` commands (demo rows flagged `is_demo`); the demo runs on its own SQLite database (`SQLITE_PATH`) through `run_demo.ps1`
+- `seed_demo` and `purge_demo` commands (demo rows flagged `is_demo` and shown with a "Sample" tag, not "(demo)" in names; seeded downloads are real PDFs made at seed time); the demo runs on its own SQLite database (`SQLITE_PATH`) through `run_demo.ps1`
+- Live counters and the lists beside them follow the viewer: a demo account counts demo and real rows, a real account real rows only
 
 ## Verification status
-- `manage.py test apps`: **219 tests pass on SQLite (`DB_ENGINE=sqlite`) and on MySQL 8.4** (2026-10-10).
+- `manage.py test apps`: **239 tests pass on SQLite (`DB_ENGINE=sqlite`) and on MySQL 8.4** (2026-10-10).
 - `apps/accounts/tests_docs.py` checks that every row of `docs/code_map.md` names a real file and name.
 - Runtime in use: Python 3.14.0, Django 5.2.18, MySQL 8.4.
 

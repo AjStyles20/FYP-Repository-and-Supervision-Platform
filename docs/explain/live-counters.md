@@ -39,12 +39,14 @@ The 401 is JSON on purpose, not a redirect to the login page, so the script can 
 }
 ```
 
-| Key | Meaning |
-|---|---|
-| `pending_count` | Real (non-demo) student registrations waiting for review |
-| `student_count` | Active, non-demo student accounts |
-| `staff_count` | Active, non-demo supervisor, coordinator and HOD accounts |
-| `programme_count` | All programmes, demo ones included |
+**Demo rows follow the viewer** (`for_viewer` in `apps/accounts/views.py`): a demo account (`is_demo`) counts demo **and** real rows, so `demo.admin` and `demo.coordinator` see the demo story; a real account counts real rows only, so sample data never inflates real numbers. The lists beside the counters (registrations on the admin portal and Admin tools, the coordinator and HOD portal lists) use the same rule, so a number and its list agree.
+
+| Key | Meaning | Real viewer counts | Demo viewer counts |
+|---|---|---|---|
+| `pending_count` | Student registrations waiting for review | Real rows | Demo and real rows |
+| `student_count` | Active student accounts | Real rows | Demo and real rows |
+| `staff_count` | Active supervisor, coordinator and HOD accounts | Real rows | Demo and real rows |
+| `programme_count` | Programmes | Real rows | Demo and real rows |
 
 ### 200 for a coordinator (their own department only)
 
@@ -64,7 +66,7 @@ The 401 is JSON on purpose, not a redirect to the login page, so the script can 
 
 | Key | Meaning |
 |---|---|
-| `active_count` | Projects in the department that are not archived |
+| `active_count` | Projects in the department that are not archived (demo projects only for a demo viewer, as above) |
 | `unassigned_count` | Of those, projects with no supervisor |
 | `approval_count` | Projects at "Supervisor accepted", whose signed form the coordinator must log |
 | `defence_count` | Projects at "Submitted for examination", whose defence outcome must be recorded |

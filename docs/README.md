@@ -47,6 +47,7 @@ New here? Read [`overview.md`](overview.md) first, then [`code_map.md`](code_map
 | File | Read it for |
 |---|---|
 | [`demo_script.md`](demo_script.md) | A 7-minute demo, one role per step |
+| [`sample_import.csv`](sample_import.csv) | Demo-only CSV for **Import past projects**; imports after `seed_demo` |
 | [`defence/defence-qa.md`](defence/defence-qa.md) | Likely defence questions with short answers |
 | [`review/01-inventory-and-workflows.md`](review/01-inventory-and-workflows.md) | Code review: inventory, history, workflows, permissions, data model |
 | [`review/02-admin-and-ui-questions.md`](review/02-admin-and-ui-questions.md) | Code review: admin portal and UI questions |

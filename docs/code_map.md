@@ -58,6 +58,8 @@
 | The Alerts page (list, mark as read) | `apps/supervision/views.py` | `def notifications` |
 | The unread count in the menu | `apps/supervision/context_processors.py` | `def notifications` |
 | What `/api/summary/` returns to each role | `apps/accounts/views.py` | `def api_summary` |
+| Which rows a counter and its list include (a demo viewer counts demo and real rows; a real viewer, real rows only) | `apps/accounts/views.py` | `def for_viewer` |
+| The pending-registration list behind `pending_count` (admin portal and Admin tools) | `apps/accounts/views.py` | `def _pending_registrations` |
 | The admin portal counters | `apps/accounts/views.py` | `def admin_counts` |
 | The 30-second polling used by every live page | `static/js/poll.js` | `ProjectHubPoll` |
 
