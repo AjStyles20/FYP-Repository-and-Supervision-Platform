@@ -98,6 +98,8 @@ The CSV import link is also duplicated: `admin.html:32` and `admin_tools.html:5`
 
 ## 6. Django admin configuration
 
+> **Update 2026-10-10:** fixed since this review. In the Django admin, a project's `stage`, `approval_date`, `submission_date`, `defence_date`, `archived` and `supervisor` are now read-only, and projects cannot be deleted. `ProjectApprovalForm`, `ProjectCompletion` and `SupervisionMeeting` (with its `MeetingRecordEdit` rows) joined the fully read-only list. The findings below describe the code as it was at review time; line numbers are from then. Current state: `docs/explain/admin-integrity.md`; tests: `apps/projects/tests_admin.py`, `apps/supervision/tests_admin.py`.
+
 **Who can open `/admin/`:** any user with Django's `is_staff=True`. `seed_demo` sets this for the demo admin (`seed_demo.py:202-204`). The portal shows the "Django administration" link only to such users (`templates/portals/admin.html:32`). (VERIFIED)
 
 **Fully read-only (no add, change or delete) (VERIFIED)**
@@ -116,7 +118,7 @@ The CSV import link is also duplicated: `admin.html:32` and `admin_tools.html:5`
 
 **Fully editable:** `Faculty`, `Department`, `Programme` (`apps/academics/admin.py:5-7`); `User`, `StudentProfile`, `SupervisorProfile` (`apps/accounts/admin.py:7-20`); `ProjectDocument`, `ProjectApprovalForm`, `ProjectCompletion`, `ArchivedProject` (`projects/admin.py:43-47`, `:109-128`); `SupervisionMeeting`, `Announcement`, `SharedResource`, `SupervisionLogEntry` (`supervision/admin.py:34-70`). The supervision models have no append-only guard of their own (VERIFIED: `grep PermissionError apps/supervision` finds nothing).
 
-**Can Projects → Change set a status without a status event? Yes. (VERIFIED + INFERRED)**
+**Can Projects → Change set a status without a status event? Yes at review time; no since 2026-10-10 (see the update above). (VERIFIED + INFERRED)**
 
 - `stage` is an ordinary editable field (`apps/projects/models/project.py:72`) and is not in `readonly_fields` (`projects/admin.py:55`).
 - `Project` has no `save()` override and there are no signals (`grep` for `def save`, `post_save`, `receiver` finds none for `Project`). So saving the admin form writes the new stage directly. No `ProjectStatusEvent` is created and no `log_event` runs.

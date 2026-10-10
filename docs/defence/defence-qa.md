@@ -75,17 +75,18 @@ Likely examiner questions, with a short answer to say aloud, how it works, where
 
 ### 6. How do you know nobody edited the history?
 
-**Say:** "History tables are append-only. Project status changes, approval decisions and supervisor assignments cannot be edited or deleted through the application, and the audit log is additionally protected inside MySQL by database triggers, so even direct SQL from the app account is refused."
+**Say:** "History is added to, never overwritten. Project status events and approval decisions are refused at the model and queryset level if anything tries to update or delete them. Supervisor assignments are never overwritten either: a change closes the current row and adds a new one with the reason, although that model has no append-only guard of its own. The audit log has a third layer: database triggers, on MySQL and on SQLite, refuse UPDATE and DELETE even from direct SQL."
 
 **How it works:**
 - Model and QuerySet guards raise `PermissionError` on update/delete (`apps/projects/models/project.py`, `approval.py`, `apps/audit/models.py`).
-- MySQL triggers on `audit_auditevent` (`apps/audit/migrations/0003_append_only_triggers.py`) block UPDATE and DELETE at the database level.
+- Triggers on `audit_auditevent` (`apps/audit/migrations/0003_append_only_triggers.py`) block UPDATE and DELETE at the database level. They are created on MySQL and on SQLite, so the SQLite test run exercises them too.
+- A supervisor change goes through `assign_project_supervisor` (`apps/projects/services/assignment.py`): it sets `ended_at` on the current row, adds a new row with `change_reason`, and writes an audit event with the reason.
 - Meeting records keep every edit as a version (`MeetingRecordEdit`) and both student and supervisor confirm or dispute them.
-- Django admin shows these tables read-only.
+- The Django admin shows all of these records read-only: no add, change or delete (`apps/projects/admin.py`, `apps/supervision/admin.py`, `apps/audit/admin.py`).
 
 **Show it:** a workflow page's *Approval decisions* list (Adaeze's declined then accepted proposal) and the Audit log.
 
-**Be ready for:** "Is anything not protected?" — Django admin can still change a project's stage directly without a status event (documented in `docs/review/02-admin-and-ui-questions.md`, question 6); in production only the administrator has Django admin access.
+**Be ready for:** "Is anything not protected?" — see Q16-19: the Django admin can no longer change a project's stage, dates or archived flag, but milestones and documents are still editable there, and deleting a student outside the admin cascades. The triggers are not absolute either: Q17 explains that the app account, with the documented grant, could drop them.
 
 ### 7. Why did MySQL need `SET PERSIST log_bin_trust_function_creators = 1`?
 
@@ -155,9 +156,9 @@ Likely examiner questions, with a short answer to say aloud, how it works, where
 
 ### 15. How did you test it?
 
-**Say:** "There are 158 automated tests, run on both SQLite and MySQL, because MySQL behaves differently in places such as time zones, constraints and triggers. Every feature has tests for the allowed case, the forbidden case and edge cases. The layout was checked in a headless browser on every page at 360, 768 and 1280 pixels wide for horizontal scrolling."
+**Say:** "There are more than 200 automated tests, run on both SQLite and MySQL, because MySQL behaves differently in places such as time zones, constraints and triggers. Every feature has tests for the allowed case, the forbidden case and edge cases. The layout was checked in a headless browser on every page at 360, 768 and 1280 pixels wide for horizontal scrolling."
 
-**Show it:** `.\run_tests.ps1` from the repository root (SQLite), or `manage.py test apps` with MySQL configured.
+**Show it:** `.\run_tests.ps1` from the repository root (SQLite); it prints the exact count ("Ran N tests"). Or `manage.py test apps` with MySQL configured.
 
 ---
 
@@ -174,6 +175,8 @@ Likely examiner questions, with a short answer to say aloud, how it works, where
 **Say:** "Three layers. The Django admin shows audit entries read-only. The model and its queryset refuse every update and delete. And the database itself refuses UPDATE and DELETE on the audit table with triggers. Only `audit_auditevent` has triggers; no other table does. The triggers are not absolute: an account with MySQL's TRIGGER privilege can drop them, and that includes a database administrator and, with the setup in this project, the application account, which is granted all privileges on its own database."
 
 **Details:** guards in `apps/audit/models.py`; triggers in `apps/audit/migrations/0003_append_only_triggers.py` (created on MySQL and on SQLite, so the tests exercise them); read-only admin in `apps/audit/admin.py`. The grant is in `PROGRESS.md`, "Run it on Windows", step 2. Tightening it means a separate migration account that owns the triggers and an application account without the TRIGGER privilege.
+
+**Be ready for:** "Could you stop the app account dropping the triggers?" — Yes: run migrations with a separate account that owns the triggers, and give the application account no TRIGGER privilege. That is not done yet; it is listed in `docs/known_limits.md`.
 
 ### 18. Which records are protected, and how?
 
