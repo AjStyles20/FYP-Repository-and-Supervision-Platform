@@ -66,6 +66,25 @@ class SupervisorStudentWorkflowTests(TestCase):
         )
         return user
 
+    def test_the_author_is_not_asked_to_acknowledge_their_own_notice(self):
+        notice = Announcement.objects.create(
+            author=self.supervisor, project=self.project, department=self.department,
+            requires_acknowledgement=True, title="Bring chapter two", body="Bring a printed copy on Thursday.",
+        )
+        self.client.force_login(self.supervisor)
+        page = self.client.get(reverse("announcements"))
+        self.assertContains(page, "Bring chapter two")
+        self.assertNotContains(page, "Acknowledge notice")
+        self.assertContains(page, "You posted this notice")
+        ack = self.client.post(reverse("announcements"), {"action": "acknowledge", "notice_id": notice.pk})
+        self.assertEqual(ack.status_code, 403)
+        self.assertFalse(AnnouncementAcknowledgement.objects.filter(announcement=notice, user=self.supervisor).exists())
+
+        self.client.force_login(self.student)
+        self.assertContains(self.client.get(reverse("announcements")), "Acknowledge notice")
+        self.client.post(reverse("announcements"), {"action": "acknowledge", "notice_id": notice.pk})
+        self.assertIsNotNone(AnnouncementAcknowledgement.objects.get(announcement=notice, user=self.student).acknowledged_at)
+
     def test_saving_availability_notifies_current_students(self):
         self.client.force_login(self.supervisor)
         response = self.client.post(reverse("supervisor_availability"), {

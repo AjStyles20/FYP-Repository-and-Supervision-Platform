@@ -209,6 +209,10 @@ def announcements(request):
     rows = rows.select_related("project", "department", "author")
     notice_cards = []
     for notice in rows:
+        if notice.author_id == request.user.pk:
+            # The author is not part of their own notice's audience: no "seen" stamp, no acknowledge button.
+            notice_cards.append({"notice": notice, "acknowledgement": None, "is_author": True})
+            continue
         acknowledgement, _ = AnnouncementAcknowledgement.objects.get_or_create(announcement=notice, user=request.user)
         if acknowledgement.seen_at is None:
             acknowledgement.seen_at = timezone.now()
@@ -259,7 +263,7 @@ def announcements(request):
             return redirect("announcements")
     if request.method == "POST" and request.POST.get("action") == "acknowledge":
         notice = get_object_or_404(rows, pk=request.POST.get("notice_id"))
-        if not notice.requires_acknowledgement:
+        if not notice.requires_acknowledgement or notice.author_id == request.user.pk:
             raise PermissionDenied
         acknowledgement, _ = AnnouncementAcknowledgement.objects.get_or_create(announcement=notice, user=request.user)
         if acknowledgement.acknowledged_at is None:
