@@ -42,7 +42,7 @@ Read order for a new developer or AI agent: `overview.md` → `product-blueprint
 
 ## 4. Proposed stack (confirm in `decisions.md`)
 
-- **Django 5 (Python 3.12)** monolith, server-rendered HTML templates, plain CSS, a little JavaScript (HTMX optional)
+- **Django 5.2 (Python 3.14)** monolith, server-rendered HTML templates, plain CSS, a little JavaScript (HTMX optional)
 - **MySQL 8** (InnoDB, `utf8mb4`) with the `mysqlclient` driver
 - Uploaded files stored on disk (not in the database), served only through permission-checked views
 - Optional later: scikit-learn / sentence-transformers for the topic-similarity module
@@ -67,7 +67,7 @@ projecthub/
 
 ## 5. Local setup (outline)
 
-1. Install Python 3.12, MySQL Server 8 and MySQL Workbench.
+1. Install Python 3.14, MySQL Server 8.4 and MySQL Workbench.
 2. Create a virtual environment and install Django and `mysqlclient`.
 3. In MySQL: create the database `baze_projecthub` (utf8mb4) and an application user with only the privileges it needs (see the end of `database_schema.sql`).
 4. Put database credentials in environment variables, **never in source control**.

@@ -43,7 +43,7 @@ Requirement IDs (R-xx, N-xx) refer to `requirements.md`. Question IDs (Q-xx) ref
 
 ## Phase C — Foundation
 
-- [ ] Install Python 3.12, MySQL 8, Workbench; create the virtual environment
+- [ ] Install Python 3.14, MySQL 8.4, Workbench; create the virtual environment
 - [ ] Create the Django project and the apps (accounts, academics, projects, supervision, audit)
 - [ ] Connect to MySQL; load credentials from environment variables
 - [ ] Custom user model with role field

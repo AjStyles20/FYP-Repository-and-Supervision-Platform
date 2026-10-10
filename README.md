@@ -4,6 +4,19 @@ A Django application for managing final-year project accounts, supervision, appr
 
 The active application is in [`projecthub_slice1`](./projecthub_slice1/). It is the only application in this repository.
 
+## Where things are
+
+| Path | What it holds |
+|---|---|
+| [`projecthub_slice1/`](./projecthub_slice1/) | The Django project: `manage.py`, `config/` (settings, URLs), `apps/`, `templates/`, `static/`, `requirements.txt`, `.env.example` |
+| [`projecthub_slice1/apps/`](./projecthub_slice1/apps/) | `accounts`, `academics`, `projects`, `supervision`, `audit` |
+| [`projecthub_slice1/PROGRESS.md`](./projecthub_slice1/PROGRESS.md) | What is done and what is outstanding |
+| [`docs/`](./docs/) | All documentation; start at [`docs/README.md`](./docs/README.md) |
+| [`docs/code_map.md`](./docs/code_map.md) | Where to change what |
+| `run_tests.ps1`, `run_demo.ps1` | Run the tests on SQLite; run the demo on its own SQLite database |
+
+Runtime versions in use: **Python 3.14.0**, **Django 5.2.18**, **MySQL 8.4**. The virtual environment is `projecthub_slice1\.venv`.
+
 ## Run the automated tests
 
 From PowerShell at the repository root:

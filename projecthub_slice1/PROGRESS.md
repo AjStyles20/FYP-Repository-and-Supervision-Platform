@@ -36,9 +36,9 @@
 - `manage.py test apps`: all 41 tests pass (SQLite), including role-specific portal and student/alumni routing tests.
 - Browser smoke checks from the earlier repository slice are documented below; the role portals still need an interactive visual review.
 
-## Run it on Windows (Python 3.12, MySQL 8.4)
+## Run it on Windows (Python 3.14, MySQL 8.4)
 1. Unzip, open a terminal in the folder, then:
-   `py -3.12 -m venv .venv` → `.venv\Scripts\activate` → `pip install -r requirements.txt`
+   `py -3.14 -m venv .venv` → `.venv\Scripts\activate` → `pip install -r requirements.txt`
    (If `mysqlclient` fails to install, tell me the error text.)
 2. In MySQL Workbench (as root) run:
    ```sql
