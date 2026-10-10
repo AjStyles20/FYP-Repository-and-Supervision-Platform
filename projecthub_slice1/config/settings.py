@@ -78,25 +78,29 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "config.wsgi.application"
 
-if env("DB_ENGINE", "mysql") == "sqlite":
-    DATABASES = {
-        "default": {
-            "ENGINE": "django.db.backends.sqlite3",
-            "NAME": env("DB_NAME", str(BASE_DIR / "db.sqlite3")),
-        }
-    }
-else:
-    DATABASES = {
+def database_settings(environ):
+    """DB_NAME is the MySQL database name only. SQLite reads SQLITE_PATH, so switching to SQLite with
+    the MySQL .env never creates a stray file named after the MySQL database. A relative SQLITE_PATH is
+    taken from this folder, not from wherever the command was started."""
+    if environ.get("DB_ENGINE", "mysql") == "sqlite":
+        path = Path(environ.get("SQLITE_PATH", "db.sqlite3"))
+        if not path.is_absolute():
+            path = BASE_DIR / path
+        return {"default": {"ENGINE": "django.db.backends.sqlite3", "NAME": str(path)}}
+    return {
         "default": {
             "ENGINE": "django.db.backends.mysql",
-            "NAME": env("DB_NAME", "baze_projecthub"),
-            "USER": env("DB_USER", "projecthub_app"),
-            "PASSWORD": env("DB_PASSWORD", ""),
-            "HOST": env("DB_HOST", "127.0.0.1"),
-            "PORT": env("DB_PORT", "3306"),
+            "NAME": environ.get("DB_NAME", "baze_projecthub"),
+            "USER": environ.get("DB_USER", "projecthub_app"),
+            "PASSWORD": environ.get("DB_PASSWORD", ""),
+            "HOST": environ.get("DB_HOST", "127.0.0.1"),
+            "PORT": environ.get("DB_PORT", "3306"),
             "OPTIONS": {"charset": "utf8mb4"},
         }
     }
+
+
+DATABASES = database_settings(os.environ)
 
 AUTH_USER_MODEL = "accounts.User"
 AUTH_PASSWORD_VALIDATORS = [

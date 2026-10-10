@@ -12,12 +12,12 @@ param([switch]$Fresh, [switch]$NoServer)
 $app = Join-Path $PSScriptRoot "projecthub_slice1"
 $python = Join-Path $app ".venv\Scripts\python.exe"
 $database = Join-Path $app "demo.sqlite3"
-$saved = @{ DB_ENGINE = $env:DB_ENGINE; DB_NAME = $env:DB_NAME }
+$saved = @{ DB_ENGINE = $env:DB_ENGINE; SQLITE_PATH = $env:SQLITE_PATH }
 
 Push-Location $app
 try {
     $env:DB_ENGINE = "sqlite"
-    $env:DB_NAME = $database
+    $env:SQLITE_PATH = $database
     if ($Fresh -and (Test-Path $database)) { Remove-Item $database }
     & $python manage.py migrate --noinput
     & $python manage.py seed_demo --force
@@ -28,6 +28,6 @@ try {
 }
 finally {
     $env:DB_ENGINE = $saved.DB_ENGINE
-    $env:DB_NAME = $saved.DB_NAME
+    $env:SQLITE_PATH = $saved.SQLITE_PATH
     Pop-Location
 }
