@@ -2,7 +2,17 @@
 {% block title %}Admin tools · Baze Project Hub{% endblock %}
 {% block content %}
 <section class="page-heading"><p class="eyebrow">System administration</p><h1>Admin tools</h1>
-<div class="actions"><a class="btn btn-primary" href="{% url 'add_staff_account' %}">Add staff account</a><a class="btn" href="{% url 'manage_structure' %}">Academic structure</a><a class="btn" href="{% url 'audit_log' %}">View audit log</a><a class="btn" href="{% url 'import_projects' %}">Import past projects from CSV</a></div></section>
+<p>Every administration tool is on this page. Project decisions stay with the department roles and their workflow pages.</p></section>
+<section class="card" aria-labelledby="admin-tools-heading">
+  <h2 id="admin-tools-heading">Tools</h2>
+  <ul class="plain-list">
+    <li><a href="{% url 'add_staff_account' %}">Add staff account</a> <span class="muted">· supervisors, coordinators, HODs and administrators</span></li>
+    <li><a href="{% url 'manage_structure' %}">Academic structure</a> <span class="muted">· faculties, departments and programmes</span></li>
+    <li><a href="{% url 'import_projects' %}">Import past projects from CSV</a> <span class="muted">· historic project summaries, checked row by row</span></li>
+    <li><a href="{% url 'audit_log' %}">Audit log</a> <span class="muted">· account and workflow events, read-only</span></li>
+    {% if user.is_staff %}<li><a href="{% url 'admin:index' %}">Django administration</a> <span class="muted">· workflow records are view-only there</span></li>{% endif %}
+  </ul>
+</section>
 <section class="card">
   <h2>Student account approvals</h2>
   {% if pending_students %}

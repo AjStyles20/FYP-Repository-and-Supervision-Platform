@@ -184,6 +184,25 @@ class LoginAndRolesTests(TestCase):
         self.login("demo.admin")
         self.assertEqual(self.client.get(reverse("admin_tools")).status_code, 200)
 
+    def test_admin_tools_is_the_one_hub_for_the_audit_log_and_csv_import(self):
+        self.login("demo.admin")
+        hub = self.client.get(reverse("admin_tools"))
+        portal = self.client.get(reverse("dashboard"), follow=True)
+        for name in ("audit_log", "import_projects", "manage_structure"):
+            link = f'href="{reverse(name)}"'
+            self.assertEqual(hub.content.decode().count(link), 1, name)
+            if name != "manage_structure":
+                self.assertNotContains(portal, link)  # neither the portal nor the menu repeats them
+        self.assertContains(hub, f'href="{reverse("admin:index")}"')
+        self.assertContains(portal, f'href="{reverse("admin_tools")}"')
+
+    def test_audit_log_and_csv_import_stay_admin_only(self):
+        for username in ("demo.amina", "demo.okoro", "demo.coordinator", "demo.hod"):
+            self.client.logout()
+            self.login(username)
+            for name in ("audit_log", "import_projects"):
+                self.assertEqual(self.client.get(reverse(name)).status_code, 403, (username, name))
+
     def test_wrong_password_is_rejected(self):
         response = self.client.post(reverse("login"), {"username": "demo.amina", "password": "wrong"})
         self.assertEqual(response.status_code, 200)

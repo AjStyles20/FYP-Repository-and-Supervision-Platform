@@ -9,7 +9,7 @@
     <p class="eyebrow">Administrator · System administration</p>
     <h1>Keep the university workspace healthy</h1>
     <p>Manage account review, academic structure, project imports, and the audit trail. Academic decisions stay with the department roles.</p>
-    <div class="hero-actions"><a class="btn btn-primary" href="{% url 'admin_tools' %}">Open account administration</a><a class="btn btn-quiet" href="{% url 'audit_log' %}">View audit log</a></div>
+    <div class="hero-actions"><a class="btn btn-primary" href="{% url 'admin_tools' %}">Open admin tools</a></div>
   </div>
 </section>
 
@@ -32,7 +32,7 @@
 
   <div class="stack">
     <div class="section-title"><div><p class="eyebrow">System tools</p><h2>Platform setup</h2></div></div>
-    <div class="card"><ul class="plain-list"><li><a href="{% url 'academic_structure' %}">Faculty, department, and programme structure</a></li><li><a href="{% url 'import_projects' %}">Import completed project records</a></li><li><a href="{% url 'audit_log' %}">Review account and workflow audit events</a></li>{% if user.is_staff %}<li><a href="/admin/">Django administration</a></li>{% endif %}</ul></div>
+    <div class="card"><p>Staff accounts, academic structure, past-project import, the audit log and Django administration are all on one page.</p><a class="btn btn-sm" href="{% url 'admin_tools' %}">Open admin tools</a></div>
     <aside class="form-note">Use department portals for supervision allocation, project approvals, and HOD completion sign-off.</aside>
   </div>
 </section>

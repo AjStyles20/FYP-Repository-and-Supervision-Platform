@@ -50,7 +50,6 @@
         <a href="{% url 'academic_structure' %}">Academic structure</a>
       {% elif user.role == 'admin' %}
         <a href="{% url 'admin_tools' %}">System administration</a>
-        <a href="{% url 'audit_log' %}">Audit log</a>
         <a href="{% url 'academic_structure' %}">Academic structure</a>
       {% endif %}
       <a href="{% url 'notifications' %}" class="nav-alerts" data-alerts-link aria-label="Alerts{% if unread_notification_count %}, {{ unread_notification_count }} unread{% endif %}">Alerts <span class="nav-count" data-counter="unread_notifications"{% if not unread_notification_count %} hidden{% endif %}>{{ unread_notification_count|default:0 }}</span></a>
