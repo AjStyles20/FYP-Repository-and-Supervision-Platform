@@ -2,6 +2,7 @@
 
 The admin must not bypass the workflow. On a project, the supervisor, stage, stage dates and
 archived flag are read-only: they change only through the audited assignment and workflow pages.
+A project cannot be deleted here, because its workflow records would go with it.
 Workflow records (status events, assignments, approval decisions, approval forms and completions)
 can be viewed here but not added, changed or deleted.
 """
@@ -72,6 +73,11 @@ class ProjectAdmin(admin.ModelAdmin):
         "created_at", "updated_at",
     )
     inlines = (ProjectMilestoneInline, ProjectDocumentInline, ProjectStatusEventInline)
+
+    def has_delete_permission(self, request, obj=None):
+        # Deleting a project would take its status events, approvals and completion with it.
+        # purge_demo removes demo projects through the ORM, which this does not affect.
+        return False
 
 
 @admin.register(ProjectSupervisorAssignment)

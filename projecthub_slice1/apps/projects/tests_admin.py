@@ -1,8 +1,10 @@
 """The Django admin cannot bypass the workflow: stage, stage dates and archived, and the workflow records."""
 
 from datetime import date
+from io import StringIO
 
 from django.contrib import admin
+from django.core.management import call_command
 from django.test import TestCase
 from django.urls import reverse
 
@@ -102,6 +104,29 @@ class AdminCannotBypassWorkflowTests(TestCase):
         self.completion.refresh_from_db()
         self.assertEqual(self.approval_form.proposed_title, "Attendance tracker")
         self.assertEqual(self.completion.signed_on, date(2026, 7, 1))
+
+    def test_project_cannot_be_deleted_in_the_admin_one_at_a_time_or_in_bulk(self):
+        ProjectStatusEvent.objects.create(project=self.project, to_stage=ProjectStage.APPROVED, actor=self.admin_user)
+
+        delete = self.client.post(reverse("admin:projects_project_delete", args=[self.project.pk]), {"post": "yes"})
+        bulk = self.client.post(reverse("admin:projects_project_changelist"),
+                                {"action": "delete_selected", "_selected_action": [self.project.pk], "post": "yes"})
+
+        self.assertEqual(delete.status_code, 403)
+        self.assertNotEqual(bulk.status_code, 500)
+        self.assertNotIn("delete_selected", admin.site._registry[Project].get_actions(delete.wsgi_request))
+        self.assertTrue(Project.objects.filter(pk=self.project.pk).exists())
+        self.assertEqual(self.project.status_events.count(), 1)
+        self.assertTrue(ProjectCompletion.objects.filter(pk=self.completion.pk).exists())
+
+    def test_purge_demo_still_deletes_demo_projects(self):
+        Project.objects.filter(pk=self.project.pk).update(is_demo=True)
+        ProjectStatusEvent.objects.create(project=self.project, to_stage=ProjectStage.APPROVED)
+
+        call_command("purge_demo", stdout=StringIO())
+
+        self.assertFalse(Project.objects.filter(pk=self.project.pk).exists())
+        self.assertFalse(ProjectStatusEvent.objects.filter(project_id=self.project.pk).exists())
 
     def test_every_workflow_record_is_view_only_in_the_admin(self):
         request = self.client.get(reverse("admin:index")).wsgi_request
