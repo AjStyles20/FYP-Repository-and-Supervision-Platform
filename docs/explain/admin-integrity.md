@@ -14,13 +14,14 @@ Paths are relative to `projecthub_slice1/`.
 
 | File | Role in the feature |
 |---|---|
-| `apps/projects/admin.py` | `ReadOnlyAdmin` refuses add, change and delete. Status events, supervisor assignments, approval decisions, approval forms and completions use it. `ProjectAdmin` lists `supervisor`, `stage`, `approval_date`, `submission_date`, `defence_date` and `archived` in `readonly_fields` |
+| `apps/projects/admin.py` | `ReadOnlyAdmin` refuses add, change and delete. Status events, supervisor assignments, approval decisions, approval forms and completions use it. `ProjectAdmin` lists `supervisor`, `stage`, `approval_date`, `submission_date`, `defence_date` and `archived` in `readonly_fields`, and refuses delete |
+| `apps/supervision/admin.py` | `SupervisionMeetingAdmin` uses `ReadOnlyAdmin`, so meeting records and their version rows (the inline) are view-only |
 | `apps/audit/admin.py` | `AuditEventAdmin` is view-only in the same way (unchanged) |
 | `apps/projects/models/project.py`, `apps/projects/models/approval.py`, `apps/audit/models.py` | Model guards: status events, approval decisions and audit events refuse update and delete even outside the admin (unchanged) |
 | `apps/audit/migrations/0003_append_only_triggers.py` | Database triggers on `audit_auditevent` refuse UPDATE and DELETE (unchanged) |
 | `templates/admin_tools.html` | The admin hub: one list of tools (staff accounts, academic structure, CSV import, audit log, Django administration), then registrations and staff accounts |
 | `templates/base.html`, `templates/portals/admin.html` | The administrator's menu and portal link to the hub instead of repeating the audit-log and CSV links |
-| `apps/projects/tests_admin.py`, `apps/accounts/tests.py` | Prove the rules below |
+| `apps/projects/tests_admin.py`, `apps/supervision/tests_admin.py`, `apps/accounts/tests.py` | Prove the rules below |
 
 ## Flow
 
@@ -34,11 +35,16 @@ Paths are relative to `projecthub_slice1/`.
 ## Rules
 
 - **The workflow is the only way to change stage, stage dates or archived.** The admin shows them read-only on both the add and the change page; a new project added in the admin starts at **Proposed**.
-- **Workflow records are view-only in the admin.** No add, change or delete for status events, supervisor assignments, approval decisions, approval forms, completions and audit events.
+- **Projects cannot be deleted in the admin**, one at a time or in bulk, because their workflow records would go with them. `purge_demo` still removes demo projects through the ORM.
+- **Workflow records are view-only in the admin.** No add, change or delete for status events, supervisor assignments, approval decisions, approval forms, completions, meeting records with their versions, and audit events.
 - **Defence in depth for the history tables.** Status events, approval decisions and audit events also refuse update and delete in the model, and audit events are protected by database triggers as well.
 - **One admin hub.** The audit log and CSV import are linked only from Admin tools; the menu and the admin portal link to the hub.
 - **Logs stay admin-only.** `audit_log` and `import_projects` use `role_required(Role.ADMIN)`.
-- **Known gap:** a superuser can still delete a whole project in the Django admin. That deletes its status events, approvals, completion and assignments with it (the audit entries remain). Milestones and documents are still editable there too.
+- **Known gaps:**
+  - Milestones and project documents can still be added, changed and deleted in the admin.
+  - A student account without a project can be deleted in the admin. Once the student has a project, the admin refuses, because the delete would take records it may not delete.
+  - On MySQL without time zone tables, the admin's meeting list fails because of its `date_hierarchy`. The meeting change pages work.
+  - Outside the admin (shell or code), deleting a student cascades to their projects and every workflow record on them (`Project.student` is `CASCADE`). Only `PROTECT` stops it: when the student is the actor of an audit event, or has an archived project.
 
 ## Self-test
 
