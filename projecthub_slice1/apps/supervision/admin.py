@@ -1,6 +1,12 @@
-"""Admin screens for the supervision record."""
+"""Admin screens for the supervision record.
+
+Meeting records and their edit history are view-only here: a record is written and corrected on the
+meeting pages, where every change adds a version row and the student can confirm or dispute it.
+"""
 
 from django.contrib import admin
+
+from apps.projects.admin import ReadOnlyAdmin
 
 from .models import (
     Announcement,
@@ -33,7 +39,7 @@ class MeetingRecordEditInline(admin.TabularInline):
 
 
 @admin.register(SupervisionMeeting)
-class SupervisionMeetingAdmin(admin.ModelAdmin):
+class SupervisionMeetingAdmin(ReadOnlyAdmin):
     list_display = ("project", "scheduled_for", "mode", "status", "venue")
     list_filter = ("status", "mode", "scheduled_for")
     search_fields = ("project__title", "venue", "agenda")
