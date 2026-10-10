@@ -52,15 +52,15 @@ With `--loop`, a run that fails is logged with its traceback and the loop carrie
 
 Run it every 15 minutes, using the project's virtual environment.
 
-1. Create `run_automation.cmd` next to `manage.py` (adjust the path):
+1. Create `run_automation.cmd` next to `manage.py`. In both steps below, replace `<path-to-repo>` with the folder you cloned the repository into (for example `C:\Dev\baze-projecthub`):
    ```bat
    @echo off
-   cd /d C:\Users\User\Downloads\FYP\Real_project\projecthub_slice1
+   cd /d <path-to-repo>\projecthub_slice1
    .venv\Scripts\python.exe manage.py run_automation >> "%USERPROFILE%\projecthub-automation.log" 2>&1
    ```
 2. Register the task (one line, in a Command Prompt):
    ```bat
-   schtasks /Create /TN "ProjectHub automation" /TR "C:\Users\User\Downloads\FYP\Real_project\projecthub_slice1\run_automation.cmd" /SC MINUTE /MO 15 /F
+   schtasks /Create /TN "ProjectHub automation" /TR "<path-to-repo>\projecthub_slice1\run_automation.cmd" /SC MINUTE /MO 15 /F
    ```
    Or in the Task Scheduler window: *Create Basic Task* → trigger *Daily*, then in the task's properties set *Repeat task every 15 minutes for 1 day*. The action is *Start a program* with the `.cmd` file.
 3. Check it: `schtasks /Run /TN "ProjectHub automation"`, then look at the end of `%USERPROFILE%\projecthub-automation.log`.
