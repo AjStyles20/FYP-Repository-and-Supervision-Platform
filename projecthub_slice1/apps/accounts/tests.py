@@ -640,6 +640,23 @@ class SummaryApiTests(TestCase):
             recipient=cls.admin, kind=NotificationKind.PENDING_REGISTRATION, object_type="accounts.User",
             object_id=str(cls.student.pk), title="Registration waiting",
         )
+        # Demo rows beside the real ones (a mixed database): a demo programme, staff, students and project.
+        cls.programme = programme
+        demo_programme = Programme.objects.create(department=cls.department, name="Computer Science", degree_type="MSc", is_demo=True)
+        cls.demo_admin = User.objects.create(username="summary.demo.admin", role=Role.ADMIN, is_demo=True)
+        cls.demo_coordinator = User.objects.create(username="summary.demo.coordinator", role=Role.COORDINATOR,
+                                                   department=cls.department, is_demo=True)
+        User.objects.create(username="summary.demo.supervisor", role=Role.SUPERVISOR, department=cls.department, is_demo=True)
+        demo_pending = User.objects.create(username="summary.demo.pending", role=Role.STUDENT, is_active=False, is_demo=True)
+        StudentProfile.objects.create(user=demo_pending, student_number="BU26DEMO1", programme=demo_programme,
+                                      registration_status=StudentProfile.RegistrationStatus.PENDING)
+        Project.objects.create(
+            student=User.objects.create(username="summary.demo.student", role=Role.STUDENT, is_demo=True),
+            title="Demo topic", stage=ProjectStage.PROPOSED, department=cls.department, programme=demo_programme, is_demo=True,
+        )
+
+    REAL_ADMIN_COUNTERS = {"pending_count": 1, "student_count": 4, "staff_count": 3, "programme_count": 2}
+    REAL_COORDINATOR_COUNTERS = {"active_count": 2, "unassigned_count": 1, "approval_count": 1, "defence_count": 0}
 
     def _get(self, user=None):
         if user:
@@ -654,16 +671,11 @@ class SummaryApiTests(TestCase):
         body = response.json()
         self.assertEqual(set(body), {"role", "counters", "unread_notifications", "generated_at"})
         self.assertEqual(body["role"], "admin")
-        self.assertEqual(body["counters"], {
-            "pending_count": 1,
-            "student_count": User.objects.filter(role=Role.STUDENT, is_active=True, is_demo=False).count(),
-            "staff_count": 3,
-            "programme_count": 2,
-        })
+        self.assertEqual(body["counters"], self.REAL_ADMIN_COUNTERS)  # the demo rows are not counted
         self.assertEqual(body["unread_notifications"], 1)
 
     def test_response_contains_numbers_only_and_no_personal_data(self):
-        for user in (self.admin, self.coordinator):
+        for user in (self.admin, self.coordinator, self.demo_admin, self.demo_coordinator):
             response = self._get(user)
             for private in ("kemi", "Private", "@", "BU/26", "summary."):
                 self.assertNotIn(private, response.content.decode(), f"{user.username}: {private}")
@@ -675,11 +687,50 @@ class SummaryApiTests(TestCase):
         body = self._get(self.coordinator).json()
 
         self.assertEqual(body["role"], "coordinator")
-        self.assertEqual(body["counters"], {"active_count": 2, "unassigned_count": 1, "approval_count": 1, "defence_count": 0})
+        self.assertEqual(body["counters"], self.REAL_COORDINATOR_COUNTERS)  # the demo project is not counted
         self.assertEqual(body["unread_notifications"], 0)
 
+    def test_a_real_admin_on_a_mixed_database_sees_only_real_rows(self):
+        self.assertEqual(self._get(self.admin).json()["counters"], self.REAL_ADMIN_COUNTERS)
+        portal = self.client.get(reverse("dashboard"))
+        tools = self.client.get(reverse("admin_tools"))
+        for page in (portal, tools):
+            self.assertContains(page, "Kemi")
+            self.assertNotContains(page, "summary.demo.pending")
+
+    def test_a_demo_admin_sees_demo_and_real_rows(self):
+        self.assertEqual(self._get(self.demo_admin).json()["counters"],
+                         {"pending_count": 2, "student_count": 5, "staff_count": 5, "programme_count": 3})
+        self.assertEqual([row.username for row in self.client.get(reverse("dashboard")).context["pending_students"]],
+                         [self.student.username, "summary.demo.pending"])
+
+    @override_settings(STUDENT_ID_REGEX=r"^[A-Za-z0-9]{5,15}$",
+                       PASSWORD_HASHERS=["django.contrib.auth.hashers.MD5PasswordHasher"])
+    def test_a_new_registration_raises_the_demo_admins_pending_count_by_one(self):
+        before = self._get(self.demo_admin).json()["counters"]["pending_count"]
+        self.client.logout()
+        self.client.post(reverse("register_student"), {
+            "first_name": "Tolu", "last_name": "Ade", "email": "tolu.ade@bazeuniversity.edu.ng",
+            "student_number": "BU23CS5001", "programme": self.programme.pk,
+            "student_status": StudentProfile.Status.CURRENT,
+            "password1": "Ex4mple-Passphrase!", "password2": "Ex4mple-Passphrase!",
+        })
+        tolu = User.objects.get(email="tolu.ade@bazeuniversity.edu.ng")
+        self.assertFalse(tolu.is_demo)
+        self.assertEqual(self._get(self.demo_admin).json()["counters"]["pending_count"], before + 1)
+        # ... and the demo admin can approve that registration.
+        self.client.post(reverse("review_student_registration", args=[tolu.pk]), {"action": "approve"})
+        tolu.refresh_from_db()
+        self.assertTrue(tolu.is_active)
+
+    def test_a_real_coordinator_does_not_count_demo_projects_and_a_demo_coordinator_does(self):
+        self.assertEqual(self._get(self.coordinator).json()["counters"], self.REAL_COORDINATOR_COUNTERS)
+        self.assertEqual(self._get(self.demo_coordinator).json()["counters"],
+                         {"active_count": 3, "unassigned_count": 2, "approval_count": 1, "defence_count": 0})
+        self.assertIn("Demo topic", [p.title for p in self.client.get(reverse("dashboard")).context["queue_projects"]])
+
     def test_counters_match_the_portal_page(self):
-        for user in (self.admin, self.coordinator):
+        for user in (self.admin, self.coordinator, self.demo_admin, self.demo_coordinator):
             counters = self._get(user).json()["counters"]
             page = self.client.get(reverse("dashboard"))
             for name, value in counters.items():

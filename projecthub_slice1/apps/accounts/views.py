@@ -127,7 +127,7 @@ def dashboard(request):
         return render(request, "portals/coordinator.html", _department_portal_context(user))
     if user.role == Role.HOD:
         return render(request, "portals/hod.html", _hod_portal_context(user))
-    return render(request, "portals/admin.html", _admin_portal_context())
+    return render(request, "portals/admin.html", _admin_portal_context(user))
 
 
 @role_required(Role.STUDENT)
@@ -207,8 +207,17 @@ def _alumni_portal_response(request, profile):
     )
 
 
+def for_viewer(queryset, user):
+    """The counter rule: a demo account counts demo and real rows; a real account counts real rows only.
+
+    Used by the portal counters, /api/summary/ and the lists beside them, so a number and its list
+    always agree. Review pages in apps/projects/views.py do not use it yet (docs/known_limits.md).
+    """
+    return queryset if user.is_demo else queryset.filter(is_demo=False)
+
+
 def _department_projects(user):
-    projects = Project.objects.filter(archived=False)
+    projects = for_viewer(Project.objects.filter(archived=False), user)
     if user.department_id:
         projects = projects.filter(department_id=user.department_id)
     else:
@@ -291,34 +300,33 @@ def _hod_portal_context(user):
     }
 
 
-def _pending_registrations():
-    return User.objects.filter(
+def _pending_registrations(user):
+    return for_viewer(User.objects.filter(
         role=Role.STUDENT,
-        is_demo=False,
         student_profile__registration_status=StudentProfile.RegistrationStatus.PENDING,
-    )
+    ), user)
 
 
-def admin_counts():
-    """The four admin portal counters. Shared by the portal page and /api/summary/."""
+def admin_counts(user):
+    """The four admin portal counters for this viewer. Shared by the portal page and /api/summary/."""
     return {
-        "pending_count": _pending_registrations().count(),
-        "student_count": User.objects.filter(role=Role.STUDENT, is_active=True, is_demo=False).count(),
-        "staff_count": User.objects.filter(role__in=(Role.SUPERVISOR, Role.COORDINATOR, Role.HOD), is_active=True, is_demo=False).count(),
-        "programme_count": Programme.objects.count(),
+        "pending_count": _pending_registrations(user).count(),
+        "student_count": for_viewer(User.objects.filter(role=Role.STUDENT, is_active=True), user).count(),
+        "staff_count": for_viewer(User.objects.filter(role__in=(Role.SUPERVISOR, Role.COORDINATOR, Role.HOD), is_active=True), user).count(),
+        "programme_count": for_viewer(Programme.objects.all(), user).count(),
     }
 
 
-def _admin_portal_context():
-    pending_students = _pending_registrations().select_related("department", "student_profile__programme").order_by("date_joined")
+def _admin_portal_context(user):
+    pending_students = _pending_registrations(user).select_related("department", "student_profile__programme").order_by("date_joined")
     return {
         "role": Role.ADMIN,
         "pending_students": pending_students[:5],
-        **admin_counts(),
+        **admin_counts(user),
     }
 
 
-SUMMARY_COUNTERS = {Role.ADMIN: lambda user: admin_counts(), Role.COORDINATOR: department_counts}
+SUMMARY_COUNTERS = {Role.ADMIN: admin_counts, Role.COORDINATOR: department_counts}
 
 
 @require_GET
@@ -345,11 +353,7 @@ def api_summary(request):
 @role_required(Role.ADMIN)
 def admin_tools(request):
     pending_students = (
-        User.objects.filter(
-            role=Role.STUDENT,
-            is_demo=False,
-            student_profile__registration_status=StudentProfile.RegistrationStatus.PENDING,
-        )
+        _pending_registrations(request.user)
         .select_related("department", "student_profile__programme")
         .order_by("date_joined")
     )
