@@ -17,3 +17,11 @@ db.sqlite3
 .idea/
 .DS_Store
 Thumbs.db
+
+# Logs, scratch and local environments
+*.log
+*.err
+.venv*/
+venv/
+.test-tmp/
+media/
