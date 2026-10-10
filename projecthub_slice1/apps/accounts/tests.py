@@ -254,6 +254,58 @@ class SeedAndPurgeTests(TestCase):
         self.assertFalse(real.is_demo)
         self.assertFalse(real.departments.exists())
 
+    def assertValidPdf(self, content):
+        self.assertTrue(content.startswith(b"%PDF-1."))
+        self.assertTrue(content.rstrip().endswith(b"%%EOF"))
+        xref = int(content.rsplit(b"startxref", 1)[1].split()[0])
+        self.assertEqual(content[xref:xref + 4], b"xref")
+        entries = content[xref:].split(b"\n")[3:]  # "xref", "0 N", the free entry, then one per object
+        for number, entry in enumerate(entries[: int(content[xref:].split(b"\n")[1].split()[1]) - 1], start=1):
+            offset = int(entry.split()[0])
+            self.assertTrue(content[offset:].startswith(f"{number} 0 obj".encode()), number)
+
+    def test_no_seeded_resource_links_to_an_external_url(self):
+        run("seed_demo")
+        resources = SharedResource.objects.filter(author__is_demo=True)
+        self.assertTrue(resources.exists())
+        for resource in resources:
+            self.assertEqual(resource.url, "", resource.title)
+            self.assertTrue(resource.file, resource.title)
+            self.assertFalse(resource.link_href.startswith(("http:", "https:", "//")), resource.title)
+
+    def test_seeded_downloads_are_valid_pdfs(self):
+        run("seed_demo")
+        guide = SharedResource.objects.get(title="Literature review checklist")
+        student = guide.projects.select_related("student").first().student
+        self.client.force_login(student)
+        response = self.client.get(reverse("download_shared_resource", args=[guide.pk]))
+        self.assertEqual(response.status_code, 200)
+        self.assertValidPdf(b"".join(response.streaming_content))
+
+        document = ProjectDocument.objects.filter(is_demo=True).select_related("uploaded_by").first()
+        self.client.force_login(document.uploaded_by)
+        response = self.client.get(reverse("download_project_document", args=[document.pk]))
+        self.assertEqual(response.status_code, 200)
+        self.assertValidPdf(b"".join(response.streaming_content))
+
+    def test_seed_replaces_an_older_external_demo_link_with_the_pdf(self):
+        run("seed_demo")
+        guide = SharedResource.objects.get(title="Literature review checklist")
+        SharedResource.objects.filter(pk=guide.pk).update(url="https://example.com/literature-checklist", file="")
+        run("seed_demo")
+        guide.refresh_from_db()
+        self.assertEqual(guide.url, "")
+        self.assertTrue(guide.file.name.endswith(".pdf"))
+
+    def test_purge_removes_the_seeded_resource_file(self):
+        run("seed_demo")
+        path = Path(SharedResource.objects.get(title="Literature review checklist").file.path)
+        self.assertTrue(path.exists())
+        with self.captureOnCommitCallbacks(execute=True):
+            run("purge_demo")
+        self.assertFalse(SharedResource.objects.filter(author__is_demo=True).exists())
+        self.assertFalse(path.exists())
+
     def test_seed_tells_the_demo_story(self):
         run("seed_demo")
         stages = Counter(Project.objects.filter(is_demo=True).values_list("stage", flat=True))

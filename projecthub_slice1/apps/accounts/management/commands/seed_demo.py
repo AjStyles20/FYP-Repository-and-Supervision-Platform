@@ -20,6 +20,7 @@ from django.db import transaction
 from django.utils import timezone
 
 from apps.academics.models import Department, Faculty, Programme
+from apps.accounts.demo_pdf import demo_pdf
 from apps.accounts.models import Role, StudentProfile, SupervisorProfile, User
 from apps.projects.models import (
     DocumentType,
@@ -244,6 +245,7 @@ class Command(BaseCommand):
             self._supervision_records()
         if not ProjectMilestone.objects.filter(project__is_demo=True).exists():
             self._health_story()
+        self._replace_external_demo_links()
 
         self.stdout.write(self.style.SUCCESS(f"Demo data ready ({built} new projects)."))
         self.stdout.write(f"Log in as any demo.* user. Password: {opts['password']}")
@@ -421,7 +423,7 @@ class Command(BaseCommand):
                 project=project, title=title, document_type=kind, visibility=visibility,
                 uploaded_by=student, is_demo=True,
             )
-            content = f"%PDF-1.4\n% Synthetic demo file: {title} for {project.title}\n".encode()
+            content = demo_pdf(title, (f"Project: {project.title}", f"Student: {student.get_full_name()}"))
             document.file.save(f"demo-{slug}-{kind}.pdf", ContentFile(content), save=False)
             document.save()
 
@@ -459,14 +461,31 @@ class Command(BaseCommand):
             title="Software Engineering defence schedule",
             body="Defences run in the last week of the semester. Book a slot with the coordinator.",
         )
-        guide = SharedResource.objects.create(
+        guide = SharedResource(
             author=okoro, department=okoro.department, title="Literature review checklist",
-            description="Use this before sending me your chapter two.", url="https://example.com/literature-checklist",
+            description="Use this before sending me your chapter two.",
         )
+        guide.file.save("literature-review-checklist.pdf", ContentFile(self._checklist_pdf()), save=False)
+        guide.save()
         guide.projects.set(Project.objects.filter(supervisor=okoro, archived=False, is_demo=True))
         SupervisorAvailability.objects.create(
             supervisor=okoro, weekday=1, start_time="10:00", end_time="12:00", venue="Room B12",
         )
+
+    def _checklist_pdf(self):
+        return demo_pdf("Literature review checklist", (
+            "1. At least 15 sources, most from the last five years.",
+            "2. Each source summarised in your own words.",
+            "3. Themes compared, not just listed.",
+            "4. The research gap stated in one paragraph.",
+        ))
+
+    def _replace_external_demo_links(self):
+        """Older demo databases linked the checklist to example.com; give them the PDF instead."""
+        for resource in SharedResource.objects.filter(author__is_demo=True).exclude(url=""):
+            resource.url = ""
+            resource.file.save("literature-review-checklist.pdf", ContentFile(self._checklist_pdf()), save=False)
+            resource.save(update_fields=["url", "file", "updated_at"])
 
     # --- health score story ---------------------------------------------------------------------
 
