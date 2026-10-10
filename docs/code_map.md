@@ -76,3 +76,16 @@
 | The portal greeting and its hours | `apps/accounts/templatetags/greeting.py` | `def part_of_day` |
 | The theme colours | `static/css/tokens.css` | `--accent` |
 | The back arrow shown on inner pages | `templates/base.html` | `block back` |
+
+## Admin integrity and the admin hub
+
+| To change… | Open | Look for |
+|---|---|---|
+| Which workflow records the Django admin may only view (no add, change or delete) | `apps/projects/admin.py` | `class ReadOnlyAdmin` |
+| Which project fields the Django admin cannot change (supervisor, stage, stage dates, archived) | `apps/projects/admin.py` | `class ProjectAdmin` |
+| The tests proving an admin POST cannot bypass the workflow | `apps/projects/tests_admin.py` | `class AdminCannotBypassWorkflowTests` |
+| The admin hub: the one list of administration tools | `templates/admin_tools.html` | `admin-tools-heading` |
+| The administrator's menu links | `templates/base.html` | `System administration` |
+| The admin portal's links to the hub | `templates/portals/admin.html` | `Open admin tools` |
+| The tests for the hub and the admin-only audit log and CSV import | `apps/accounts/tests.py` | `def test_admin_tools_is_the_one_hub_for_the_audit_log_and_csv_import` |
+| The explainer for this feature | `../docs/explain/admin-integrity.md` | `## Self-test` |

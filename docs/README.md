@@ -33,6 +33,7 @@ New here? Read [`overview.md`](overview.md) first, then [`code_map.md`](code_map
 | [`explain/automation.md`](explain/automation.md) | The `run_automation` command and scheduling it |
 | [`explain/health-score.md`](explain/health-score.md) | Project health score |
 | [`explain/similarity.md`](explain/similarity.md) | Similar-topic checker |
+| [`explain/admin-integrity.md`](explain/admin-integrity.md) | Why the Django admin cannot bypass the workflow, and the admin hub |
 
 ## Diagrams and screenshots
 
