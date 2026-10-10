@@ -1,7 +1,9 @@
 """Admin screens for project records.
 
-The supervisor field on a project is read-only here: reassignment must go through the audited
-assignment workspace, not through the admin.
+The admin must not bypass the workflow. On a project, the supervisor, stage, stage dates and
+archived flag are read-only: they change only through the audited assignment and workflow pages.
+Workflow records (status events, assignments, approval decisions, approval forms and completions)
+can be viewed here but not added, changed or deleted.
 """
 
 from django.contrib import admin
@@ -17,6 +19,19 @@ from .models import (
     ProjectStatusEvent,
     ProjectSupervisorAssignment,
 )
+
+
+class ReadOnlyAdmin(admin.ModelAdmin):
+    """View-only: no add, change or delete, so the record keeps what the workflow wrote."""
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
 
 
 class ProjectMilestoneInline(admin.TabularInline):
@@ -52,69 +67,45 @@ class ProjectAdmin(admin.ModelAdmin):
     list_display = ("title", "student", "department", "programme", "stage", "supervisor", "archived")
     list_filter = ("department", "programme", "stage", "archived", "is_demo")
     search_fields = ("title", "keywords", "student__first_name", "student__last_name", "supervisor__first_name")
-    readonly_fields = ("supervisor", "created_at", "updated_at")
+    readonly_fields = (
+        "supervisor", "stage", "approval_date", "submission_date", "defence_date", "archived",
+        "created_at", "updated_at",
+    )
     inlines = (ProjectMilestoneInline, ProjectDocumentInline, ProjectStatusEventInline)
 
 
 @admin.register(ProjectSupervisorAssignment)
-class ProjectSupervisorAssignmentAdmin(admin.ModelAdmin):
+class ProjectSupervisorAssignmentAdmin(ReadOnlyAdmin):
     list_display = ("project", "supervisor", "assigned_at", "ended_at", "assigned_by")
     list_filter = ("supervisor", "assigned_at", "ended_at")
     search_fields = ("project__title", "supervisor__first_name", "supervisor__last_name")
     readonly_fields = ("project", "supervisor", "assigned_by", "assigned_at", "ended_at", "change_reason")
 
-    def has_add_permission(self, request):
-        return False
-
-    def has_change_permission(self, request, obj=None):
-        return False
-
-    def has_delete_permission(self, request, obj=None):
-        return False
-
 
 @admin.register(ProjectStatusEvent)
-class ProjectStatusEventAdmin(admin.ModelAdmin):
+class ProjectStatusEventAdmin(ReadOnlyAdmin):
     list_display = ("project", "from_stage", "to_stage", "actor", "created_at")
     list_filter = ("to_stage", "created_at")
     search_fields = ("project__title",)
     readonly_fields = ("project", "from_stage", "to_stage", "actor", "note", "created_at")
 
-    def has_add_permission(self, request):
-        return False
-
-    def has_change_permission(self, request, obj=None):
-        return False
-
-    def has_delete_permission(self, request, obj=None):
-        return False
-
 
 @admin.register(ProjectApprovalDecision)
-class ProjectApprovalDecisionAdmin(admin.ModelAdmin):
+class ProjectApprovalDecisionAdmin(ReadOnlyAdmin):
     list_display = ("project", "step", "decision", "decided_by", "decided_on", "created_at")
     list_filter = ("step", "decision", "created_at")
     search_fields = ("project__title", "proposed_title")
 
-    def has_add_permission(self, request):
-        return False
-
-    def has_change_permission(self, request, obj=None):
-        return False
-
-    def has_delete_permission(self, request, obj=None):
-        return False
-
 
 @admin.register(ProjectApprovalForm)
-class ProjectApprovalFormAdmin(admin.ModelAdmin):
+class ProjectApprovalFormAdmin(ReadOnlyAdmin):
     list_display = ("project", "supervisor_decision", "supervisor_signed_on", "coordinator_logged_on")
     list_filter = ("supervisor_decision", "coordinator_logged_on")
     search_fields = ("project__title", "proposed_title")
 
 
 @admin.register(ProjectCompletion)
-class ProjectCompletionAdmin(admin.ModelAdmin):
+class ProjectCompletionAdmin(ReadOnlyAdmin):
     list_display = ("project", "hod", "signed_on", "graduation_verified", "graduation_year")
     list_filter = ("graduation_verified", "signed_on")
     search_fields = ("project__title",)
