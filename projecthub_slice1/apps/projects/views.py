@@ -673,7 +673,10 @@ def import_projects(request):
             form.add_error("file", error.messages[0])
         else:
             log_event(actor=request.user, action="repository.csv_import", summary=f"Imported {imported} archived project records", details={"imported": imported, "rejected_rows": len(row_errors)})
-            messages.success(request, f"Imported {imported} archived project{'' if imported == 1 else 's'}.")
+            if row_errors:
+                messages.error(request, "Nothing was imported. Correct the rows listed below and upload the whole file again.")
+            else:
+                messages.success(request, f"Imported {imported} archived project{'' if imported == 1 else 's'}.")
     return render(request, "projects/import_projects.html", {"form": form, "imported": imported, "row_errors": row_errors})
 
 

@@ -1,0 +1,4 @@
+title,description,keywords,year,completed_on,department,programme,degree_type,student_username,supervisor_username,gap_summary,previous_supervisors
+Library Seat Booking System,A web app for reserving library study seats in two-hour slots.,"booking, library, web",2024,2024-07-05,Computer Science,Computer Science,BSc,demo.tobi,demo.eze,No-show handling and waiting lists were not built.,demo.danjuma
+Student Feedback Sentiment Dashboard,A dashboard that groups anonymous course feedback by sentiment and topic.,"sentiment analysis, dashboard",2025,2025-06-28,Software Engineering,Software Engineering,BSc,demo.grace,demo.nwosu,Feedback in Hausa and Yoruba was not handled.,
+Cafeteria Queue Time Predictor,Estimates cafeteria queue times from recent order counts.,"prediction, queues",2023,2023-07-12,Computer Science,Computer Science,BSc,demo.tunde,demo.okoro,Only one cafeteria was modelled.,demo.danjuma;demo.eze

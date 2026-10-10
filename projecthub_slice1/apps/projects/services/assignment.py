@@ -16,17 +16,26 @@ from ..models import Project, ProjectSupervisorAssignment
 SUPERVISOR_ROLES = (Role.SUPERVISOR, Role.COORDINATOR, Role.HOD)
 
 
+def can_supervise_in(user, department_id, *, require_active=True):
+    """The supervisor rule: academic staff (supervisor, coordinator or HOD) of the project's department.
+
+    The CSV importer passes require_active=False, because a historic project may name someone who
+    has since left; assigning a running project always needs an active account.
+    """
+    return (
+        user.role in SUPERVISOR_ROLES
+        and user.department_id == department_id
+        and (user.is_active or not require_active)
+    )
+
+
 @transaction.atomic
 def assign_project_supervisor(project_id, supervisor, assigned_by, change_reason=""):
     """Point `project_id` at `supervisor`, recording the change. Returns (project, assignment, changed)."""
     project = Project.objects.select_for_update().get(pk=project_id)
     if project.archived:
         raise ValidationError("Archived projects cannot be reassigned.")
-    if (
-        supervisor.role not in SUPERVISOR_ROLES
-        or supervisor.department_id != project.department_id
-        or not supervisor.is_active
-    ):
+    if not can_supervise_in(supervisor, project.department_id):
         raise ValidationError("Choose an active academic staff member from the project's department.")
 
     now = timezone.now()
