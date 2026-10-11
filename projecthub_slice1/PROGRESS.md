@@ -14,6 +14,7 @@
 - Registration status page behind a signed, expiring link that updates itself every 30 seconds (`docs/explain/registration-status.md`)
 - Sign-in with Baze email or full student ID (a plain username still works for demo accounts and the server-created admin); superusers receive the application administrator role
 - Administrator-created staff accounts with a one-time temporary password and a forced password change at first sign-in
+- **My details** (`/account/contact/`) for every account: personal email and phone, each with its own visibility (only me, staff only, all signed-in users); shown on project pages for the student and the supervisor; current students without a personal email are reminded to add one
 - The HOD appoints the FYP coordinator and the staff allowed to assign supervisors (D-19)
 - Login and logout (logout is POST only), role-based dashboard
 - Separate portals and role-aware navigation for current students, alumni, supervisors, coordinators, HODs and system administrators

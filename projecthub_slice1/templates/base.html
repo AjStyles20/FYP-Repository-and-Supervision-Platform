@@ -53,6 +53,7 @@
         <a href="{% url 'academic_structure' %}">Academic structure</a>
       {% endif %}
       <a href="{% url 'notifications' %}" class="nav-alerts" data-alerts-link aria-label="Alerts{% if unread_notification_count %}, {{ unread_notification_count }} unread{% endif %}">Alerts <span class="nav-count" data-counter="unread_notifications"{% if not unread_notification_count %} hidden{% endif %}>{{ unread_notification_count|default:0 }}</span></a>
+      <a href="{% url 'my_contact' %}">My details</a>
       <span class="who">{{ user.get_full_name|default:user.username }} · {{ user.get_role_display }}</span>
       <form method="post" action="{% url 'logout' %}" class="inline-form">{% csrf_token %}<button type="submit" class="btn btn-sm">Log out</button></form>
     {% else %}

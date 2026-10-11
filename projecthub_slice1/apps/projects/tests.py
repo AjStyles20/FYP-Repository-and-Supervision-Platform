@@ -78,10 +78,9 @@ class RepositoryTests(TestCase):
             user=cls.student,
             student_number="BU/26/CS/1234",
             programme=cls.programme,
-            contact_email="ada.contact@example.com",
-            contact_consent=True,
             graduation_year=2026,
         )
+        User.objects.filter(pk=cls.student.pk).update(personal_email="ada.contact@example.com", personal_email_visibility="signed_in")
         cls.alumni = User.objects.create_user(
             username="repository.alumni@bazeuniversity.edu.ng",
             email="repository.alumni@bazeuniversity.edu.ng",
@@ -96,9 +95,8 @@ class RepositoryTests(TestCase):
             programme=cls.programme,
             student_status=StudentProfile.Status.GRADUATED,
             graduation_year=2025,
-            contact_email="grace.contact@example.com",
-            contact_consent=True,
         )
+        User.objects.filter(pk=cls.alumni.pk).update(personal_email="grace.contact@example.com", personal_email_visibility="signed_in")
         cls.supervisor = User.objects.create_user(
             username="supervisor.okoro",
             email="okoro@bazeuniversity.edu.ng",

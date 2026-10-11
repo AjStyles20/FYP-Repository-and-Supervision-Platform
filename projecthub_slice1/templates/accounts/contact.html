@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}My contact details · Baze Project Hub{% endblock %}
+{% block content %}
+<section class="card narrow">
+  <h1>My contact details</h1>
+  <p class="muted">Keep these up to date so students, alumni and staff can reach you for collaboration or information. You choose who sees each detail; nothing here is ever shown to people who are not signed in.</p>
+  <dl class="fact-list">
+    <div><dt>Baze email</dt><dd>{{ user.email|default:"Not recorded" }} <small class="muted">(your sign-in; it cannot be changed here)</small></dd></div>
+  </dl>
+  <form method="post" class="stack-form">
+    {% csrf_token %}
+    {{ form.non_field_errors }}
+    {% for field in form %}
+      <div class="form-row">
+        {{ field.label_tag }}{{ field }}
+        {% if field.help_text %}<small class="muted">{{ field.help_text }}</small>{% endif %}
+        {% for error in field.errors %}<p class="error">{{ error }}</p>{% endfor %}
+      </div>
+    {% endfor %}
+    <button type="submit" class="primary">Save contact details</button>
+  </form>
+  <aside class="form-note"><strong>Who sees what.</strong> "Only me" keeps a detail private. "Staff only" shows it to supervisors, coordinators, Heads of Department and administrators. "All signed-in Baze users" also shows it to students and alumni, for example on your project page.</aside>
+</section>
+{% endblock %}

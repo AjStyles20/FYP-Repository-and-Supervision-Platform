@@ -62,7 +62,6 @@ class SupervisorStudentWorkflowTests(TestCase):
         )
         StudentProfile.objects.create(
             user=user, student_number=f"BU/26/CS/{username[-1] * 4}", programme=cls.programme,
-            contact_consent=False,
         )
         return user
 

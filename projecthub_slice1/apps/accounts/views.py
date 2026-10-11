@@ -25,7 +25,7 @@ from apps.supervision.models import NotificationKind
 from apps.supervision.services import notify
 
 from .forms import (
-    ProjectAuthenticationForm, StaffAccountForm, StaffEditForm, StudentRegistrationForm, active_admin_count,
+    ContactDetailsForm, ProjectAuthenticationForm, StaffAccountForm, StaffEditForm, StudentRegistrationForm, active_admin_count,
     generate_temporary_password,
 )
 from .models import STAFF_ROLES, Role, StudentProfile, SupervisorProfile, User
@@ -348,6 +348,17 @@ def api_summary(request):
         response = JsonResponse(summary)
     response["Cache-Control"] = "no-store"
     return response
+
+
+@login_required
+def my_contact(request):
+    """Everyone keeps their own personal email and phone number up to date, and chooses who sees each."""
+    form = ContactDetailsForm(request.POST or None, instance=request.user)
+    if request.method == "POST" and form.is_valid():
+        form.save()
+        messages.success(request, "Your contact details are saved.")
+        return redirect("my_contact")
+    return render(request, "accounts/contact.html", {"form": form})
 
 
 @role_required(Role.ADMIN)

@@ -8,6 +8,7 @@ from .models import StudentProfile, SupervisorProfile, User
 class ProjectHubUserAdmin(UserAdmin):
     fieldsets = UserAdmin.fieldsets + (
         ("Project Hub", {"fields": ("role", "department", "can_assign_supervisors", "must_change_password", "is_demo")}),
+        ("Contact details", {"fields": ("personal_email", "personal_email_visibility", "phone", "phone_visibility")}),
     )
     add_fieldsets = UserAdmin.add_fieldsets + (
         ("Project Hub", {"fields": ("role", "department", "can_assign_supervisors")}),

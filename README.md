@@ -71,6 +71,7 @@ To try that staff workflow locally, sign in as `demo.coordinator` with password 
 - Create the initial administrator with `python manage.py createsuperuser`. The account is assigned the administrator role automatically. If its password is forgotten, reset it with `python manage.py changepassword <username>`.
 - The administrator adds supervisor, coordinator, HOD and further administrator accounts in **System administration → Add staff account**. A temporary password is shown once; the person must choose their own at first sign-in. The same page per staff member edits role and department, resets the password, and deactivates or reactivates the account.
 - Assignment access is a separate staff permission, not a job title: tick **Can assign supervisors in their department** on the staff account. A supervisor or HOD may supervise projects and can be delegated the allocation responsibility independently.
+- Everyone (students, alumni and staff) keeps their own contact details under **My details** (`/account/contact/`): a personal email and a phone number, each with its own choice of who sees it (only me, staff only, or all signed-in Baze users). The Baze email is fixed. A personal email matters most for alumni, whose Baze address may close after graduation.
 - Local demo users are created with `seed_demo` and removed with `purge_demo`.
 
 ## MySQL setup

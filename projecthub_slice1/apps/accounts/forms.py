@@ -304,3 +304,30 @@ class StaffEditForm(forms.Form):
                 profile.title = data["title"]
                 profile.save(update_fields=["title"])
         return changes
+
+
+class ContactDetailsForm(forms.ModelForm):
+    """A person's own contact details. The Baze email is fixed; everything here they may change."""
+
+    class Meta:
+        model = User
+        fields = ("personal_email", "personal_email_visibility", "phone", "phone_visibility")
+        labels = {
+            "personal_email": "Personal email",
+            "personal_email_visibility": "Who can see your personal email",
+            "phone": "Phone number",
+            "phone_visibility": "Who can see your phone number",
+        }
+        help_texts = {
+            "personal_email": "Not your Baze email. Keep one here so people can still reach you after you graduate.",
+            "phone": "Include the country code, for example +234 803 123 4567.",
+        }
+
+    def clean_personal_email(self):
+        email = self.cleaned_data["personal_email"].strip().lower()
+        if email.endswith(BAZE_EMAIL_DOMAIN):
+            raise ValidationError("Use a personal address here. Your Baze email is already on your account.")
+        return email
+
+    def clean_phone(self):
+        return " ".join(self.cleaned_data["phone"].split())

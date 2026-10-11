@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load contact %}
 {% block title %}{{ project.title }} · Baze Project Hub{% endblock %}
 {% block main_class %}wide{% endblock %}
 {% block back %}<p class="breadcrumb back-link"><a href="{% url 'repository' %}?section={% if is_past %}past{% else %}current{% endif %}"><span aria-hidden="true">←</span> Repository</a></p>{% endblock %}
@@ -74,12 +75,22 @@
       {% endif %}
       {% if is_past %}<div><dt>Archive year</dt><dd>{{ project.year }}</dd></div>{% endif %}
     </dl>
-    {% if student_profile.contact_consent and student_profile.contact_email %}
+    {% contact_for project.student as student_contact %}
+    {% if student_contact %}
       <div class="contact-panel">
         <strong>Student contact</strong>
-        <a href="mailto:{{ student_profile.contact_email }}">{{ student_profile.contact_email }}</a>
-        <small>Shared with consent</small>
+        {% for label, value, href in student_contact %}<span>{{ label }}: <a href="{{ href }}">{{ value }}</a></span>{% endfor %}
+        <small>Shared by the student</small>
       </div>
+    {% endif %}
+    {% if project.supervisor %}{% contact_for project.supervisor as supervisor_contact %}
+      {% if supervisor_contact %}
+        <div class="contact-panel">
+          <strong>Supervisor contact</strong>
+          {% for label, value, href in supervisor_contact %}<span>{{ label }}: <a href="{{ href }}">{{ value }}</a></span>{% endfor %}
+          <small>Shared by the supervisor</small>
+        </div>
+      {% endif %}
     {% endif %}
   </aside>
 </div>

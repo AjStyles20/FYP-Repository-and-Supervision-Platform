@@ -1,4 +1,5 @@
 from django.contrib.auth.models import AbstractUser, UserManager
+from django.core.validators import RegexValidator
 from django.db import models
 
 
@@ -11,6 +12,19 @@ class Role(models.TextChoices):
 
 
 STAFF_ROLES = (Role.SUPERVISOR, Role.COORDINATOR, Role.HOD, Role.ADMIN)
+
+
+class ContactVisibility(models.TextChoices):
+    """Who may see one contact detail. Nothing is ever shown to people who are not signed in."""
+
+    HIDDEN = "hidden", "Only me"
+    STAFF = "staff", "Staff only"
+    SIGNED_IN = "signed_in", "All signed-in Baze users"
+
+
+phone_validator = RegexValidator(
+    r"^\+?[0-9][0-9 ()-]{6,19}$", "Enter a phone number such as +234 803 123 4567 (digits, spaces, brackets and dashes)."
+)
 
 
 class ProjectHubUserManager(UserManager):
@@ -36,11 +50,39 @@ class User(AbstractUser):
         help_text="Set when an administrator creates the account with a temporary password; "
                   "the person must choose their own password before using the site.",
     )
+    # Contact details each person keeps up to date themselves. The Baze email (email) is fixed; a
+    # personal email still works after graduation, when the Baze address may be closed.
+    personal_email = models.EmailField(blank=True)
+    personal_email_visibility = models.CharField(
+        max_length=10, choices=ContactVisibility.choices, default=ContactVisibility.HIDDEN
+    )
+    phone = models.CharField(max_length=20, blank=True, validators=[phone_validator])
+    phone_visibility = models.CharField(
+        max_length=10, choices=ContactVisibility.choices, default=ContactVisibility.HIDDEN
+    )
 
     @property
     def has_staff_role(self):
         """True for supervisor, coordinator, HOD and admin roles (not the same as Django's is_staff)."""
         return self.role in STAFF_ROLES
+
+    def contact_for(self, viewer):
+        """The contact details `viewer` may see, as (label, value, href) rows. The owner sees all."""
+        rows = []
+        for label, value, visibility, scheme in (
+            ("Personal email", self.personal_email, self.personal_email_visibility, "mailto:"),
+            ("Phone", self.phone, self.phone_visibility, "tel:"),
+        ):
+            if not value or not getattr(viewer, "is_authenticated", False):
+                continue
+            allowed = (
+                viewer.pk == self.pk
+                or visibility == ContactVisibility.SIGNED_IN
+                or (visibility == ContactVisibility.STAFF and viewer.role in STAFF_ROLES)
+            )
+            if allowed:
+                rows.append((label, value, scheme + value.replace(" ", "")))
+        return rows
 
     def __str__(self):
         return self.get_full_name() or self.username
@@ -69,8 +111,6 @@ class StudentProfile(models.Model):
         default=RegistrationStatus.APPROVED,
     )
     graduation_year = models.PositiveSmallIntegerField(null=True, blank=True)
-    contact_email = models.EmailField(blank=True)
-    contact_consent = models.BooleanField(default=False, help_text="Contact is shown publicly only if True")
 
     @property
     def award(self):

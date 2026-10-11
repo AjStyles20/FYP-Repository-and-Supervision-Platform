@@ -17,7 +17,7 @@
   <div class="bento-cell"><span class="bento-label">Programme</span><strong class="bento-value bento-value-small">{{ student_profile.programme.award }}</strong></div>
   <div class="bento-cell"><span class="bento-label">Graduation year</span><strong class="bento-value">{{ student_profile.graduation_year|default:"—" }}</strong></div>
   <div class="bento-cell"><span class="bento-label">Archived projects</span><strong class="bento-value">{{ archived_projects|length }}</strong></div>
-  <div class="bento-cell"><span class="bento-label">Contact preference</span><strong class="bento-value bento-value-small">{% if student_profile.contact_consent %}Opted in{% else %}Private{% endif %}</strong></div>
+  <div class="bento-cell"><span class="bento-label">Contact details</span><strong class="bento-value bento-value-small"><a href="{% url 'my_contact' %}">{% if user.personal_email %}Update{% else %}Add a personal email{% endif %}</a></strong></div>
 </section>
 
 <section class="stack">

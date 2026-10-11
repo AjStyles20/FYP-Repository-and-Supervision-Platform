@@ -106,3 +106,15 @@
 | The demo-only sample CSV | `../docs/sample_import.csv` | `student_username` |
 | The notice author is not asked to acknowledge their own notice | `apps/supervision/views.py` | `is_author` |
 | The "You posted this notice" line in place of the button | `templates/supervision/announcements.html` | `card.is_author` |
+
+## Contact details
+
+| To change… | Open | Look for |
+|---|---|---|
+| The contact fields and who may see each (only me, staff only, all signed-in users) | `apps/accounts/models.py` | `class ContactVisibility` |
+| The rule deciding which details a viewer sees | `apps/accounts/models.py` | `def contact_for` |
+| The accepted phone number format | `apps/accounts/models.py` | `phone_validator` |
+| The "My details" form (personal email must not be a Baze address) | `apps/accounts/forms.py` | `class ContactDetailsForm` |
+| The "My details" page | `apps/accounts/views.py` | `def my_contact` |
+| Showing a person's contact on a page | `apps/accounts/templatetags/contact.py` | `def contact_for` |
+| The student and supervisor contact panels on a project page | `templates/projects/project_detail.html` | `contact_for` |

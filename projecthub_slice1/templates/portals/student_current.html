@@ -21,6 +21,7 @@
     {% if unread_notice_count %}<span class="notification-count">{{ unread_notice_count }}</span>{% endif %}
   </a>
 </section>
+{% if not user.personal_email %}<p class="form-note">Add a personal email in <a href="{% url 'my_contact' %}">My details</a> so people can still reach you after you graduate, when your Baze email may close.</p>{% endif %}
 
 {% if is_project_complete %}
   <div class="form-note"><strong>FYP complete.</strong> Your project has been signed off and is listed in the completed project repository. Graduation is recorded separately by the department.</div>
