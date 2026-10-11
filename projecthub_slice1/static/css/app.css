@@ -566,3 +566,15 @@ td form { display: flex; flex-wrap: wrap; gap: var(--space-2); margin: 0; }
 .back-link { margin: 0; }
 .back-link a { display: inline-flex; align-items: center; gap: var(--space-1); font-weight: 600; text-decoration: none; }
 .back-link a:hover { text-decoration: underline; }
+
+/* ---------- Password show / hide (static/js/password-toggle.js) ---------- */
+.password-field { position: relative; display: block; }
+.password-field input { padding-right: 3rem; }
+.password-toggle {
+  position: absolute; top: 50%; right: var(--space-1); transform: translateY(-50%);
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 2.5rem; height: 2.25rem; padding: 0; border: 0; border-radius: var(--radius-sm);
+  background: transparent; color: var(--gray-500); cursor: pointer;
+}
+.password-toggle:hover { color: var(--accent); }
+.password-toggle:focus-visible { outline: none; box-shadow: var(--focus); color: var(--accent); }

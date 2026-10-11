@@ -1287,3 +1287,22 @@ class DemoCredentialHintTests(TestCase):
     @override_settings(DEBUG=True)
     def test_shown_on_a_debug_demo(self):
         self.assertContains(self.client.get(reverse("login")), "demo.amina / ChangeMe123!")
+
+
+class PasswordToggleTests(TestCase):
+    """Every page with a password field loads the show/hide (eye) button script."""
+
+    def test_password_pages_load_the_toggle_script(self):
+        user = User.objects.create_user(username="toggle@bazeuniversity.edu.ng", password="Long-enough-pass-77",
+                                        role=Role.SUPERVISOR)
+        pages = [self.client.get(reverse("login")), self.client.get(reverse("register_student"))]
+        self.client.force_login(user)
+        pages.append(self.client.get(reverse("password_change")))
+        for page in pages:
+            self.assertContains(page, 'type="password"')
+            self.assertContains(page, "js/password-toggle.js")
+
+    def test_the_script_targets_password_fields_and_labels_its_button(self):
+        script = (settings.BASE_DIR / "static" / "js" / "password-toggle.js").read_text(encoding="utf-8")
+        for expected in ('input[type="password"]', "Show password", "Hide password", "aria-pressed"):
+            self.assertIn(expected, script)

@@ -78,6 +78,7 @@
 | The portal greeting and its hours | `apps/accounts/templatetags/greeting.py` | `def part_of_day` |
 | The theme colours | `static/css/tokens.css` | `--accent` |
 | The back arrow shown on inner pages | `templates/base.html` | `block back` |
+| The show/hide (eye) button on every password field | `static/js/password-toggle.js` | `password-toggle` |
 
 ## Admin integrity and the admin hub
 
