@@ -80,27 +80,27 @@ HOD = {CS: "demo.hod", SE: "demo.se.hod"}
 
 # username, first, last, student number, department
 STUDENTS = [
-    ("demo.amina", "Amina", "Bello", "BU/22/CS/4012", CS),
-    ("demo.chinedu", "Chinedu", "Okafor", "BU/22/CS/3988", CS),
-    ("demo.ibrahim", "Ibrahim", "Musa", "BU/22/CS/3901", CS),
-    ("demo.tunde", "Tunde", "Bakare", "BU/21/CS/3850", CS),
-    ("demo.kemi", "Kemi", "Adebayo", "BU/22/CS/4020", CS),
-    ("demo.musa", "Musa", "Garba", "BU/22/CS/4033", CS),
-    ("demo.adaeze", "Adaeze", "Nnamdi", "BU/22/CS/4041", CS),
-    ("demo.sadiq", "Sadiq", "Umar", "BU/22/CS/4057", CS),
-    ("demo.ngozi", "Ngozi", "Chukwu", "BU/22/CS/4068", CS),
-    ("demo.femi", "Femi", "Ojo", "BU/22/CS/4075", CS),
-    ("demo.fatima", "Fatima", "Sule", "BU/22/SE/4101", SE),
-    ("demo.grace", "Grace", "Eze", "BU/21/SE/3877", SE),
-    ("demo.halima", "Halima", "Bala", "BU/22/SE/4112", SE),
-    ("demo.obinna", "Obinna", "Kalu", "BU/22/SE/4125", SE),
-    ("demo.zainab", "Zainab", "Aliyu", "BU/22/SE/4133", SE),
-    ("demo.yemi", "Yemi", "Alade", "BU/22/SE/4140", SE),
-    ("demo.aisha", "Aisha", "Danladi", "BU/22/SE/4152", SE),
-    ("demo.kunle", "Kunle", "Afolabi", "BU/22/SE/4160", SE),
-    ("demo.bisi", "Bisi", "Akande", "BU/22/SE/4171", SE),
-    ("demo.ikenna", "Ikenna", "Obi", "BU/22/SE/4188", SE),
-    ("demo.tobi", "Tobi", "Okon", "BU/20/CS/3720", CS),
+    ("demo.amina", "Amina", "Bello", "BU/22A/CS/4012", CS),
+    ("demo.chinedu", "Chinedu", "Okafor", "BU/22B/CS/3988", CS),
+    ("demo.ibrahim", "Ibrahim", "Musa", "BU/22C/CS/3901", CS),
+    ("demo.tunde", "Tunde", "Bakare", "BU/21A/CS/3850", CS),
+    ("demo.kemi", "Kemi", "Adebayo", "BU/22B/CS/4020", CS),
+    ("demo.musa", "Musa", "Garba", "BU/22C/CS/4033", CS),
+    ("demo.adaeze", "Adaeze", "Nnamdi", "BU/22A/CS/4041", CS),
+    ("demo.sadiq", "Sadiq", "Umar", "BU/22B/CS/4057", CS),
+    ("demo.ngozi", "Ngozi", "Chukwu", "BU/22C/CS/4068", CS),
+    ("demo.femi", "Femi", "Ojo", "BU/22A/CS/4075", CS),
+    ("demo.fatima", "Fatima", "Sule", "BU/22B/SE/4101", SE),
+    ("demo.grace", "Grace", "Eze", "BU/21C/SE/3877", SE),
+    ("demo.halima", "Halima", "Bala", "BU/22A/SE/4112", SE),
+    ("demo.obinna", "Obinna", "Kalu", "BU/22B/SE/4125", SE),
+    ("demo.zainab", "Zainab", "Aliyu", "BU/22C/SE/4133", SE),
+    ("demo.yemi", "Yemi", "Alade", "BU/22A/SE/4140", SE),
+    ("demo.aisha", "Aisha", "Danladi", "BU/22B/SE/4152", SE),
+    ("demo.kunle", "Kunle", "Afolabi", "BU/22C/SE/4160", SE),
+    ("demo.bisi", "Bisi", "Akande", "BU/22A/SE/4171", SE),
+    ("demo.ikenna", "Ikenna", "Obi", "BU/22B/SE/4188", SE),
+    ("demo.tobi", "Tobi", "Okon", "BU/20C/CS/3720", CS),
 ]
 
 # Target stages. "proposed" variants all end at PROPOSED; "history" ends APPROVED with a
@@ -229,10 +229,13 @@ class Command(BaseCommand):
                 )
         for username, first, last, number, dep in STUDENTS:
             user = self._user(username, first, last, Role.STUDENT, departments[dep], opts["password"])
-            StudentProfile.objects.get_or_create(
+            profile, _ = StudentProfile.objects.get_or_create(
                 user=user,
                 defaults={"student_number": number, "programme": programmes[dep], "enrolment_year": 2022},
             )
+            if profile.student_number != number:  # an older demo database used IDs without the batch letter
+                profile.student_number = number
+                profile.save(update_fields=["student_number"])
 
         built = 0
         for spec in PROJECTS:

@@ -9,10 +9,10 @@
 - MySQL connection (utf8mb4); SQLite for the tests, the demo and a quick tryout
 - Custom user model with roles: student, supervisor, coordinator, HOD, admin
 - Student and supervisor profiles (student number, programme, consent flag, student status)
-- Student registration with Baze email and a student ID in the `STUDENT_ID_REGEX` format, pending administrator review, and approve/reject actions
+- Student registration with Baze email and a full student ID in the Baze format (`BU/23B/IT/7892`: year, batch A-C, department code, number; `STUDENT_ID_REGEX`), pending administrator review, and approve/reject actions
 - Decision email to the student on approval or rejection (with the reason, if given), and an "Account approved" alert waiting at first sign-in
 - Registration status page behind a signed, expiring link that updates itself every 30 seconds (`docs/explain/registration-status.md`)
-- Sign-in with Baze email, student ID, or staff username; superusers receive the application administrator role
+- Sign-in with Baze email or full student ID (a plain username still works for demo accounts and the server-created admin); superusers receive the application administrator role
 - Administrator-created staff accounts with a one-time temporary password and a forced password change at first sign-in
 - The HOD appoints the FYP coordinator and the staff allowed to assign supervisors (D-19)
 - Login and logout (logout is POST only), role-based dashboard

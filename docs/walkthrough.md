@@ -4,7 +4,7 @@ This guide describes the account flow currently implemented in Django and the ac
 
 ## Account access
 
-1. Visitors can sign in using a Baze email address, student ID, or staff account username.
+1. Visitors sign in with their Baze email address; students can also use their full student ID (like `BU/23B/IT/7892`). Demo accounts and the server-created administrator also accept a plain username.
 2. Current and past final-year students can submit an account registration with a Baze email address ending in `@bazeuniversity.edu.ng`, student ID, programme, and password.
 3. Student registrations remain inactive until an administrator verifies the submitted details and approves the account.
 4. Staff and administrator accounts are provisioned separately; public registration cannot assign those roles.

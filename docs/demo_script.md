@@ -2,7 +2,7 @@
 
 This walkthrough follows one department through a term. Each step is one role, about one minute. Every click below was checked against the seeded data with a scripted run of the same URLs; all 42 checks passed.
 
-All demo accounts use the password **`ChangeMe123!`**. Usernames start with `demo.`. Students can also sign in with their Baze email or student ID.
+All demo accounts use the password **`ChangeMe123!`**. Usernames start with `demo.`. Students can also sign in with their Baze email or their full student ID.
 
 ---
 
@@ -18,7 +18,7 @@ From `projecthub_slice1/`, in PowerShell:
 ```
 
 1. In a private browser window, open `http://127.0.0.1:8000/register/` and register a **real** test student:
-   - Tolu Ade, `tolu.ade@bazeuniversity.edu.ng`, student ID `BU/23/CS/5001`, programme "Computer Science BSc", status "Current final-year student".
+   - Tolu Ade, `tolu.ade@bazeuniversity.edu.ng`, student ID `BU/23A/CS/5001`, programme "Computer Science BSc", status "Current final-year student".
    - Choose any strong password.
    - This leaves one registration waiting for step 7.
 2. Close that window and open `http://127.0.0.1:8000/` in a normal window.
@@ -45,7 +45,7 @@ From `projecthub_slice1/`, in PowerShell:
 
 ## Step 1 (0:00–1:00): Student, `demo.adaeze`: the decision history nobody can rewrite
 
-1. Log in with the **student ID `BU/22/CS/4041`** to show that students can sign in with their ID.
+1. Log in with the **student ID `BU/22A/CS/4041`** to show that students can sign in with their ID.
 2. The student portal opens. Point at the stage track: "Approved by the department".
 3. Click **View progress** to open the Project workflow.
 4. Scroll to **History**: every stage change, with who made it and when.
@@ -154,7 +154,7 @@ From `projecthub_slice1/`, in PowerShell:
 
 | Step | Role | Account | Minutes |
 |---|---|---|---|
-| 1 | Student | `demo.adaeze` (ID `BU/22/CS/4041`) | 0:00–1:00 |
+| 1 | Student | `demo.adaeze` (ID `BU/22A/CS/4041`) | 0:00–1:00 |
 | 2 | Supervisor | `demo.danjuma` | 1:00–2:00 |
 | 3 | Coordinator | `demo.coordinator` | 2:00–3:00 |
 | 4 | Supervisor | `demo.okoro` | 3:00–4:00 |

@@ -143,11 +143,11 @@ DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL", "Baze Project Hub <no-reply@bazeu
 
 # --- Project Hub product settings -------------------------------------------------------------
 
-# Student ID format for self-registration, from .env. The default (5-15 letters or digits) is a
-# placeholder until the real Baze format is confirmed; STUDENT_ID_HELP is the message shown when an
-# ID does not match, so change both together.
-STUDENT_ID_REGEX = env("STUDENT_ID_REGEX", r"^[A-Za-z0-9]{5,15}$")
-STUDENT_ID_HELP = env("STUDENT_ID_HELP", "5 to 15 letters or digits, with no spaces, slashes or other symbols")
+# Student ID format for self-registration, from .env. The Baze ID is BU / year and batch (A, B or C)
+# / department code / number, e.g. BU/23B/IT/7892. Input is upper-cased before it is checked and
+# stored. STUDENT_ID_HELP is the message shown when an ID does not match, so change both together.
+STUDENT_ID_REGEX = env("STUDENT_ID_REGEX", r"^BU/\d{2}[A-C]/[A-Z]{2,4}/\d{3,5}$")
+STUDENT_ID_HELP = env("STUDENT_ID_HELP", "BU, your year and batch, your department code and your number, separated by slashes, like BU/23B/IT/7892")
 try:
     re.compile(STUDENT_ID_REGEX)
 except re.error as error:

@@ -52,7 +52,7 @@ $env:DB_ENGINE = "sqlite"
 
 Open <http://127.0.0.1:8000/> in a browser.
 
-For local testing, sign in as `demo.amina` with password `ChangeMe123!`. The Amina demo account can also sign in with `amina@bazeuniversity.edu.ng` or student ID `BU/22/CS/4012`. Open **Repository** to see synthetic current and past project records. Demo accounts and projects are clearly labelled test fixtures, not real university accounts or project submissions.
+For local testing, sign in as `demo.amina` with password `ChangeMe123!`. The Amina demo account can also sign in with `amina@bazeuniversity.edu.ng` or student ID `BU/22A/CS/4012`. Open **Repository** to see synthetic current and past project records. Demo accounts and projects are clearly labelled test fixtures, not real university accounts or project submissions.
 
 Sample files for past projects can be added through Django Admin under **Project documents**. Select one project parent, choose the visibility, and attach an allowed PDF/Office/ZIP file (maximum 25 MB). Student downloads are restricted to files marked for all signed-in Baze users; staff-only files remain staff-only. Never expose the `media` directory through an unauthenticated static-file server.
 
@@ -62,7 +62,8 @@ To try that staff workflow locally, sign in as `demo.coordinator` with password 
 
 ## Account access
 
-- Current and past final-year students can submit a registration using a `@bazeuniversity.edu.ng` email, student ID, programme, and password.
+- Current and past final-year students can submit a registration using a `@bazeuniversity.edu.ng` email, their full student ID (for example `BU/23B/IT/7892`: Baze University, year 23, batch B, department IT, number 7892), programme, and password.
+- Everyone signs in with their Baze email; students can also use their full student ID. The short number alone (`7892`) is not accepted, because another year or department can have the same number.
 - New student accounts stay inactive until an administrator reviews the registration.
 - The student is emailed at their Baze address when the registration is approved or rejected (with the reason, if the administrator gives one). Signing in with the right password before then shows whether the registration is still pending or was not approved.
 - Email settings live in `projecthub_slice1/.env` (see `.env.example`). Without them, emails are printed in the server terminal instead of being sent, which is fine for development; at launch, add the SMTP details from Baze ICT.

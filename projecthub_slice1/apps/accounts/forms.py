@@ -18,13 +18,17 @@ BAZE_EMAIL_DOMAIN = "@bazeuniversity.edu.ng"
 class ProjectAuthenticationForm(AuthenticationForm):
     status_message = ""  # set by clean() when the right password meets an inactive account
     username = forms.CharField(
-        label="Baze email, student ID, or staff username",
+        label="Baze email or student ID",
+        help_text="Students can use their full student ID, like BU/23B/IT/7892.",
         widget=forms.TextInput(attrs={"autofocus": True, "autocomplete": "username"}),
     )
 
     def clean(self):
         identifier = self.cleaned_data.get("username")
         if identifier:
+            identifier = identifier.strip()
+            # Staff and students sign in with their Baze email or student ID. A plain username still
+            # works underneath, for the server-created administrator and the demo.* accounts.
             account = User.objects.filter(email__iexact=identifier).first()
             if account is None:
                 profile = (
@@ -68,7 +72,7 @@ class StudentRegistrationForm(forms.Form):
     first_name = forms.CharField(max_length=150, label="First name")
     last_name = forms.CharField(max_length=150, label="Last name")
     email = forms.EmailField(label="Baze email address")
-    student_number = forms.CharField(max_length=30, label="Student ID", help_text=settings.STUDENT_ID_HELP.capitalize() + ".")
+    student_number = forms.CharField(max_length=30, label="Student ID", help_text=settings.STUDENT_ID_HELP[0].upper() + settings.STUDENT_ID_HELP[1:] + ".")
     programme = forms.ModelChoiceField(
         queryset=Programme.objects.none(),
         empty_label="Select your programme",
@@ -104,10 +108,10 @@ class StudentRegistrationForm(forms.Form):
         return email
 
     def clean_student_number(self):
-        student_number = self.cleaned_data["student_number"].strip()
+        student_number = self.cleaned_data["student_number"].strip().upper()
         if not re.fullmatch(settings.STUDENT_ID_REGEX, student_number):
             raise ValidationError(
-                f"Enter your student ID exactly as it appears on your Baze ID card: {settings.STUDENT_ID_HELP}."
+                f"Enter your full student ID as it appears on your Baze ID card: {settings.STUDENT_ID_HELP}."
             )
         if StudentProfile.objects.filter(student_number__iexact=student_number).exists():
             raise ValidationError("An account already exists with this student ID.")
