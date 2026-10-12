@@ -1365,3 +1365,17 @@ class PasswordToggleTests(TestCase):
         script = (settings.BASE_DIR / "static" / "js" / "password-toggle.js").read_text(encoding="utf-8")
         for expected in ('input[type="password"]', "Show password", "Hide password", "aria-pressed"):
             self.assertIn(expected, script)
+
+
+class ThemeTests(TestCase):
+    """UI_THEME: the glass look by default, one setting back to the classic look."""
+
+    def test_glass_is_the_default_and_classic_switches_it_off(self):
+        self.assertContains(self.client.get(reverse("login")), "css/theme-glass.css")
+        with override_settings(UI_THEME="classic"):
+            self.assertNotContains(self.client.get(reverse("login")), "css/theme-glass.css")
+
+    def test_the_sign_in_hint_no_longer_offers_a_staff_username(self):
+        page = self.client.get(reverse("login"))
+        self.assertContains(page, "Use your Baze email. Students can also use their full student ID.")
+        self.assertNotContains(page, "account username")

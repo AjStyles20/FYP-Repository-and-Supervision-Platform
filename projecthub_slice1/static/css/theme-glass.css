@@ -1,0 +1,126 @@
+/* Glass theme (UI_THEME=glass): frosted, semi-transparent surfaces over a soft crimson "aurora".
+   Loaded after app.css and only re-styles surfaces; layouts, spacing and markup are unchanged, so
+   UI_THEME=classic switches straight back. Text stays dark on light glass (WCAG AA); browsers
+   without backdrop-filter, and people who ask for reduced transparency, get solid surfaces. */
+
+:root {
+  --glass: rgba(255, 255, 255, 0.64);
+  --glass-strong: rgba(255, 255, 255, 0.82);
+  --glass-edge: rgba(255, 255, 255, 0.75);
+  --glass-dark: rgba(24, 18, 20, 0.9);
+  --glass-blur: blur(18px) saturate(160%);
+  --glass-shadow: 0 10px 34px rgba(60, 20, 30, 0.10), 0 1px 2px rgba(60, 20, 30, 0.06);
+  --border: 1px solid rgba(255, 255, 255, 0.7);
+  --shadow-sm: var(--glass-shadow);
+  --shadow: var(--glass-shadow);
+  --radius: 12px;
+  --radius-lg: 18px;
+}
+
+/* The aurora: pastel glows of the Baze crimson behind every page. */
+body {
+  background-color: #f3f1f4;
+  background-image:
+    radial-gradient(48rem 32rem at 8% -6%, rgba(200, 30, 50, 0.28), transparent 70%),
+    radial-gradient(40rem 30rem at 96% 8%, rgba(255, 170, 120, 0.3), transparent 70%),
+    radial-gradient(44rem 36rem at 70% 105%, rgba(150, 90, 200, 0.16), transparent 70%),
+    radial-gradient(36rem 28rem at 0% 90%, rgba(255, 120, 150, 0.14), transparent 70%);
+  background-attachment: fixed;
+}
+
+/* Light glass: cards, counters, messages, lists. */
+.card, .bento-cell, .supervisor-metric, .msg, .directory-item, .workload-card, .project-card,
+.assignment-project, .repository-filter, .contact-panel, .media-item img {
+  background: var(--glass);
+  -webkit-backdrop-filter: var(--glass-blur);
+  backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-edge);
+  box-shadow: var(--glass-shadow);
+}
+.contact-panel { padding: var(--space-3); border-radius: var(--radius); }
+
+/* Fields: a little more solid, so typing stays crisp. */
+input:not([type=checkbox]):not([type=radio]):not([type=hidden]), select, textarea {
+  background: var(--glass-strong);
+  border: 1px solid rgba(120, 100, 110, 0.28);
+}
+input:focus, select:focus, textarea:focus { background: #ffffff; }
+
+/* Dark glass: header, its menu, heroes and footer, with a crimson glow on the heroes. */
+.top {
+  background: var(--glass-dark);
+  -webkit-backdrop-filter: var(--glass-blur);
+  backdrop-filter: var(--glass-blur);
+}
+.nav-js .top-nav {
+  background: rgba(28, 22, 24, 0.86);
+  -webkit-backdrop-filter: var(--glass-blur);
+  backdrop-filter: var(--glass-blur);
+}
+.hero-band, .repository-hero, .supervisor-welcome, .detail-hero {
+  background:
+    radial-gradient(30rem 18rem at 100% 0%, rgba(220, 40, 60, 0.45), transparent 70%),
+    linear-gradient(135deg, rgba(120, 0, 10, 0.88), rgba(28, 22, 24, 0.9));
+  -webkit-backdrop-filter: var(--glass-blur);
+  backdrop-filter: var(--glass-blur);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+}
+.site-footer {
+  background: var(--glass-dark);
+  -webkit-backdrop-filter: var(--glass-blur);
+  backdrop-filter: var(--glass-blur);
+}
+
+/* Cards sitting on a dark band (e.g. the student's Notifications box) stay dark glass, so their
+   white text keeps its contrast. */
+.hero-band .card, .repository-hero .card, .supervisor-welcome .card, .detail-hero .card {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.22);
+  box-shadow: none;
+}
+
+/* Buttons: a crimson gradient with a soft glow; the others are glass. */
+.btn-primary, .button, button.primary {
+  background: linear-gradient(135deg, #b0001a, #860000);
+  border-color: transparent;
+  box-shadow: 0 6px 18px rgba(160, 0, 0, 0.28);
+}
+.btn-primary:hover, .button:hover, button.primary:hover {
+  background: linear-gradient(135deg, #c8001f, #9a0000);
+}
+.btn:not(.btn-primary):not(.btn-quiet),
+button:not(.primary):not(.btn-primary):not(.btn-quiet):not(.password-toggle):not(.nav-toggle) {
+  background: var(--glass-strong);
+  border: 1px solid rgba(120, 100, 110, 0.28);
+}
+.hero-band .btn, .repository-hero .btn, .supervisor-welcome .btn, .detail-hero .btn { background: rgba(255, 255, 255, 0.12); border-color: rgba(255, 255, 255, 0.35); }
+.hero-band .btn-primary, .repository-hero .btn-primary, .supervisor-welcome .btn-primary { background: #ffffff; color: #8a0000; box-shadow: none; }
+.password-toggle { background: transparent; }
+
+/* Tags: small glass pills. */
+.tag, .status-pill, .sample-label { background: rgba(255, 255, 255, 0.55); border: 1px solid rgba(120, 100, 110, 0.22); }
+.tag-live, .status-pill:not(.past) { background: rgba(160, 0, 0, 0.1); border-color: rgba(160, 0, 0, 0.25); }
+
+/* Tables read better on a slightly stronger glass. */
+.table-wrap { background: var(--glass-strong); border-radius: var(--radius); }
+
+/* No backdrop-filter (older browsers): solid, readable surfaces instead of see-through ones. */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  :root { --glass: rgba(255, 255, 255, 0.94); --glass-strong: #ffffff; --glass-dark: #1e1a1b; }
+}
+
+/* People who ask the system for less transparency get solid surfaces. */
+@media (prefers-reduced-transparency: reduce) {
+  :root { --glass: #ffffff; --glass-strong: #ffffff; --glass-dark: #1e1a1b; }
+  .card, .bento-cell, .supervisor-metric, .msg, .directory-item, .workload-card, .project-card,
+  .assignment-project, .repository-filter, .contact-panel, .top, .nav-js .top-nav, .site-footer {
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+}
+
+/* Print: plain paper. */
+@media print {
+  body { background: #ffffff; }
+  .card, .bento-cell, .msg { background: #ffffff; box-shadow: none; -webkit-backdrop-filter: none; backdrop-filter: none; }
+}

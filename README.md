@@ -82,6 +82,7 @@ To try that staff workflow locally, sign in as `demo.coordinator` with password 
 - Everyone (students, alumni and staff) keeps their own contact details under **My details** (`/account/contact/`): a personal email and a phone number, each with its own choice of who sees it (only me, staff only, or all signed-in Baze users). People cannot change their own Baze email there; an administrator corrects it if it is wrong. A personal email matters most for alumni, whose Baze address may close after graduation.
 - When someone entered wrong details or forgot their password, the administrator fixes it. Staff: open them from the staff list in **System administration**. Students: search by name, Baze email or student ID under **Student accounts** on the same page, then correct their name, Baze email, student ID or programme, reset a forgotten password, or deactivate or reactivate the account. Every change is audited.
 - Every password field has an eye button to show or hide the password while typing.
+- The look is set by `UI_THEME` in `.env`: `glass` (default: frosted, semi-transparent cards over a soft crimson background) or `classic` (the original flat look). Browsers that cannot blur, and people who ask their system for less transparency, get solid cards.
 - Local demo users are created with `seed_demo` and removed with `purge_demo`.
 
 ## MySQL setup

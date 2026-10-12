@@ -160,6 +160,9 @@ REGISTRATION_STATUS_MAX_AGE_DAYS = int(env("REGISTRATION_STATUS_MAX_AGE_DAYS", "
 # Student accounts are created by an administrator or the department's coordinator (D-28), so the
 # public "Create student account" page is closed unless this is switched on in .env.
 STUDENT_SELF_REGISTRATION = env("STUDENT_SELF_REGISTRATION", "False").lower() == "true"
+
+# The look of the site: "glass" (frosted surfaces over a soft crimson background) or "classic".
+UI_THEME = env("UI_THEME", "glass") if env("UI_THEME", "glass") in ("glass", "classic") else "glass"
 SITE_NAME = "Baze Project Hub"
 
 # Repository access follows D-09: signed-in Baze Project Hub accounts only.

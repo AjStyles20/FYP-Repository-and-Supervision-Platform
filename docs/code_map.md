@@ -99,6 +99,8 @@
 | Where emails go (terminal or a mail server) | `config/settings.py` | `EMAIL_BACKEND` |
 | The portal greeting and its hours | `apps/accounts/templatetags/greeting.py` | `def part_of_day` |
 | The theme colours | `static/css/tokens.css` | `--accent` |
+| The glass look (surfaces, background, fallbacks) | `static/css/theme-glass.css` | `--glass` |
+| Switching between the glass and classic looks | `config/settings.py` | `UI_THEME` |
 | The back arrow shown on inner pages | `templates/base.html` | `block back` |
 | The show/hide (eye) button on every password field | `static/js/password-toggle.js` | `password-toggle` |
 
