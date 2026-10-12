@@ -935,8 +935,8 @@ class ManageStaffAccountTests(TestCase):
         return self.client.post(reverse("manage_staff_account", args=[user.pk]), {"action": action, **data})
 
     def _details(self, **overrides):
-        data = {"first_name": "Kemi", "last_name": "Lecturer", "role": Role.SUPERVISOR,
-                "department": self.department.pk, "title": "Mr."}
+        data = {"first_name": "Kemi", "last_name": "Lecturer", "email": "lecturer@bazeuniversity.edu.ng",
+                "role": Role.SUPERVISOR, "department": self.department.pk, "title": "Mr."}
         data.update(overrides)
         return data
 
@@ -947,6 +947,59 @@ class ManageStaffAccountTests(TestCase):
         self.client.force_login(self.admin)
         self.assertEqual(self.client.get(url).status_code, 200)
         self.assertEqual(self.client.get(reverse("manage_staff_account", args=[self.student.pk])).status_code, 404)
+
+    def test_admin_corrects_a_staff_email_and_the_sign_in_moves_with_it(self):
+        response = self._post(self.supervisor, "save", **self._details(email="Kemi.Lecturer@BazeUniversity.edu.ng"))
+
+        self.assertRedirects(response, reverse("manage_staff_account", args=[self.supervisor.pk]))
+        self.supervisor.refresh_from_db()
+        self.assertEqual((self.supervisor.email, self.supervisor.username),
+                         ("kemi.lecturer@bazeuniversity.edu.ng", "kemi.lecturer@bazeuniversity.edu.ng"))
+        self.assertEqual(AuditEvent.objects.get(action="account.staff_updated").details["email"],
+                         {"from": "lecturer@bazeuniversity.edu.ng", "to": "kemi.lecturer@bazeuniversity.edu.ng"})
+        self.assertEqual([message.to for message in mail.outbox], [["kemi.lecturer@bazeuniversity.edu.ng"]])
+        self.assertIn("They now sign in with kemi.lecturer@bazeuniversity.edu.ng.",
+                      [str(m) for m in get_messages(response.wsgi_request)])
+
+        self.client.logout()
+        for identifier, signed_in in (("kemi.lecturer@bazeuniversity.edu.ng", True), ("lecturer@bazeuniversity.edu.ng", False)):
+            response = self.client.post(reverse("login"), {"username": identifier, "password": "Old-pass-2026!"})
+            self.assertEqual(response.status_code, 302 if signed_in else 200, identifier)
+            self.client.logout()
+
+    def test_an_admin_can_set_their_own_email(self):
+        response = self._post(self.admin, "save", first_name="Solomon", last_name="Admin", role=Role.ADMIN,
+                              email="solomon.admin@bazeuniversity.edu.ng")
+
+        self.assertRedirects(response, reverse("manage_staff_account", args=[self.admin.pk]))
+        self.admin.refresh_from_db()
+        self.assertEqual(self.admin.email, "solomon.admin@bazeuniversity.edu.ng")
+        self.assertEqual(self.admin.username, "manage.admin")  # a server-made username is left as it is
+        self.client.logout()
+        response = self.client.post(reverse("login"), {"username": "solomon.admin@bazeuniversity.edu.ng",
+                                                       "password": "Admin-pass-2026!"})
+        self.assertEqual(response.status_code, 302)
+
+    def test_a_wrong_email_is_refused_and_nothing_changes(self):
+        User.objects.create(username="taken@bazeuniversity.edu.ng", email="taken@bazeuniversity.edu.ng", role=Role.SUPERVISOR)
+        for email, message in (("kemi@gmail.com", "Use a Baze email address"),
+                               ("TAKEN@bazeuniversity.edu.ng", "Another account already uses this email address"),
+                               ("", "Enter their Baze email address")):
+            with self.subTest(email):
+                response = self._post(self.supervisor, "save", **self._details(email=email))
+                self.assertEqual(response.status_code, 200)
+                self.assertContains(response, message)
+        self.supervisor.refresh_from_db()
+        self.assertEqual(self.supervisor.email, "lecturer@bazeuniversity.edu.ng")
+        self.assertEqual(mail.outbox, [])
+
+    def test_the_email_change_is_kept_when_the_notice_cannot_be_sent(self):
+        from unittest import mock
+        with mock.patch("apps.accounts.views.send_mail", side_effect=OSError("mail server down")):
+            response = self._post(self.supervisor, "save", **self._details(email="new.lecturer@bazeuniversity.edu.ng"))
+        self.supervisor.refresh_from_db()
+        self.assertEqual(self.supervisor.email, "new.lecturer@bazeuniversity.edu.ng")
+        self.assertTrue(any("could not be sent" in str(m) for m in get_messages(response.wsgi_request)))
 
     def test_promote_to_coordinator_in_another_department_is_saved_and_audited(self):
         response = self._post(self.supervisor, "save", **self._details(

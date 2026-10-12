@@ -5,7 +5,7 @@
   <h1>My contact details</h1>
   <p class="muted">Keep these up to date so students, alumni and staff can reach you for collaboration or information. You choose who sees each detail; nothing here is ever shown to people who are not signed in.</p>
   <dl class="fact-list">
-    <div><dt>Baze email</dt><dd>{{ user.email|default:"Not recorded" }} <small class="muted">(your sign-in; it cannot be changed here)</small></dd></div>
+    <div><dt>Baze email</dt><dd>{{ user.email|default:"Not recorded" }} <small class="muted">(your sign-in; if it is wrong, ask the system administrator to correct it)</small></dd></div>
   </dl>
   <form method="post" class="stack-form">
     {% csrf_token %}

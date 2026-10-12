@@ -406,6 +406,10 @@ def manage_staff_account(request, user_id):
         if changes:
             log_event(actor=request.user, action="account.staff_updated", summary=f"Updated staff account {staff.username}", obj=staff, details=changes)
             messages.success(request, f"Saved the changes to {staff.get_full_name() or staff.username}.")
+            if "email" in changes:
+                messages.info(request, f"They now sign in with {staff.email}.")
+                if not _email_sign_in_change(request, staff):
+                    messages.warning(request, f"The change is saved, but the notice to {staff.email} could not be sent. Please tell them directly.")
         else:
             messages.info(request, "Nothing changed.")
         return redirect("manage_staff_account", user_id=staff.pk)
@@ -549,6 +553,19 @@ def review_student_registration(request, user_id):
     if not _email_registration_decision(request, student, approved=action == "approve", reason=reason):
         messages.warning(request, f"The decision is saved, but the email to {student.email} could not be sent. Please tell the student directly.")
     return redirect("admin_tools")
+
+
+def _email_sign_in_change(request, person):
+    """Tell someone their sign-in email was changed, at the new address. Returns False if sending failed."""
+    body = (f"Hello {person.first_name or 'there'},\n\nAn administrator changed the email you use to sign in to "
+            f"Baze Project Hub. From now on, sign in with {person.email} at:\n"
+            f"{request.build_absolute_uri(reverse('login'))}\n\nYour password has not changed. If you did not expect "
+            "this, contact the system administrator.\n\nBaze Project Hub")
+    try:
+        send_mail("Your Baze Project Hub sign-in email has changed", body, settings.DEFAULT_FROM_EMAIL, [person.email])
+    except Exception:  # a mail outage must not undo the change
+        return False
+    return True
 
 
 def _email_registration_decision(request, student, *, approved, reason=""):

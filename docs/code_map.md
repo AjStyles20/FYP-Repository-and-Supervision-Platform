@@ -10,6 +10,8 @@
 | Which roles may open a page | `apps/accounts/permissions.py` | `def role_required` |
 | The admin's "Add staff account" form | `apps/accounts/forms.py` | `class StaffAccountForm` |
 | Editing, deactivating or resetting a staff account | `apps/accounts/views.py` | `def manage_staff_account` |
+| Correcting a staff member's Baze email (checks, and moving the sign-in) | `apps/accounts/forms.py` | `class StaffEditForm` |
+| The notice sent to the new address after an email correction | `apps/accounts/views.py` | `def _email_sign_in_change` |
 | How long and how random a temporary password is | `apps/accounts/forms.py` | `def generate_temporary_password` |
 | The forced password change at first sign-in | `apps/accounts/middleware.py` | `class ForcePasswordChangeMiddleware` |
 | The HOD appointing the FYP coordinator and allocators | `apps/accounts/views.py` | `def department_staff` |

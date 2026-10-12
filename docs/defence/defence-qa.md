@@ -217,7 +217,7 @@ Guards: `apps/audit/models.py`, `apps/projects/models/project.py`, `apps/project
 
 ### 21. Who can see a person's phone number or personal email?
 
-**Say:** "Only who the owner chooses. Everyone, students, alumni and staff, has a My details page with a personal email and a phone number, and for each one they pick 'Only me', 'Staff only' or 'All signed-in Baze users'. The default is 'Only me', and nothing is ever shown to someone who isn't signed in. The Baze email is fixed; everything else the owner can change at any time. A personal email matters most for alumni, because their Baze email may close after they graduate."
+**Say:** "Only who the owner chooses. Everyone, students, alumni and staff, has a My details page with a personal email and a phone number, and for each one they pick 'Only me', 'Staff only' or 'All signed-in Baze users'. The default is 'Only me', and nothing is ever shown to someone who isn't signed in. People can't change their own Baze email, because it's how they sign in, but an administrator can correct it if it was entered wrongly; everything else the owner can change at any time. A personal email matters most for alumni, because their Baze email may close after they graduate."
 
 **How it works:** fields and `ContactVisibility` on `User` (`apps/accounts/models.py`); `User.contact_for(viewer)` returns only what the viewer may see, so hidden details never reach the page; `ContactDetailsForm` refuses a Baze address as the personal email and checks the phone format. Tests: `apps/accounts/tests_contact.py`. Decision D-21, the interim answer to Q-04 until the supervisor confirms.
 

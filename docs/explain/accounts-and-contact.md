@@ -33,7 +33,7 @@ Paths are relative to `projecthub_slice1/`.
 
 ## Rules
 
-- **The Baze email is fixed.** It is the sign-in name and is not editable on My details. Everything else on that page belongs to its owner.
+- **The Baze email is the sign-in.** Its owner cannot change it on My details. An administrator can correct a staff member's Baze email, including their own, on that person's page in System administration; the sign-in moves to the new address and a notice is sent to it. Everything else on My details belongs to its owner.
 - **Contact details are opt-in.** New details start as "Only me". Nothing is ever shown to people who are not signed in (D-09).
 - **The full student ID, not the short number.** It is unique; the last digits alone are not.
 - **One setting for the ID format.** If Baze's format differs, change `STUDENT_ID_REGEX` and `STUDENT_ID_HELP` in `.env` together.

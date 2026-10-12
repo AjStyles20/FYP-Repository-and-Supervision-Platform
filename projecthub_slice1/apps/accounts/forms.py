@@ -240,15 +240,20 @@ class StaffAccountForm(forms.Form):
 
 
 class StaffEditForm(forms.Form):
-    """Admin-only: change a staff member's name, role, department, title and allocation permission.
+    """Admin-only: change a staff member's name, Baze email, role, department, title and allocation permission.
 
-    The email is not editable here because it is the sign-in username. Two guards stop an admin
-    locking everyone out: you cannot remove your own administrator role, and the last active
-    administrator cannot be given another role.
+    The Baze email is the sign-in, so correcting it (a typo at creation, a new address from Baze ICT)
+    also moves the sign-in to the new address; it must be a Baze address no other account uses.
+    Two guards stop an admin locking everyone out: you cannot remove your own administrator role,
+    and the last active administrator cannot be given another role.
     """
 
     first_name = forms.CharField(max_length=150, label="First name")
     last_name = forms.CharField(max_length=150, label="Last name")
+    email = forms.EmailField(
+        required=False, label="Baze email (sign-in)",
+        help_text="Correct it here if it is wrong. From now on they sign in with the new address, and a notice is sent to it.",
+    )
     role = forms.ChoiceField(choices=StaffAccountForm.ROLE_CHOICES, label="Role", help_text="Administrators manage accounts and setup across the whole system, so they have no department, title or allocation permission.")
     department = forms.ModelChoiceField(
         queryset=Department.objects.none(), required=False, empty_label="Select a department",
@@ -261,12 +266,25 @@ class StaffEditForm(forms.Form):
         self.staff, self.editor = staff, editor
         profile = getattr(staff, "supervisor_profile", None)
         kwargs.setdefault("initial", {
-            "first_name": staff.first_name, "last_name": staff.last_name, "role": staff.role,
+            "first_name": staff.first_name, "last_name": staff.last_name, "email": staff.email, "role": staff.role,
             "department": staff.department_id, "title": profile.title if profile else "",
             "can_assign_supervisors": staff.can_assign_supervisors,
         })
         super().__init__(*args, **kwargs)
         self.fields["department"].queryset = Department.objects.select_related("faculty")
+
+    def clean_email(self):
+        email = self.cleaned_data["email"].strip().lower()
+        if not email:
+            if self.staff.email:
+                raise ValidationError("Enter their Baze email address; it is how they sign in.")
+            return ""
+        if not email.endswith(BAZE_EMAIL_DOMAIN):
+            raise ValidationError(f"Use a Baze email address ending in {BAZE_EMAIL_DOMAIN}.")
+        others = User.objects.exclude(pk=self.staff.pk)
+        if others.filter(email__iexact=email).exists() or others.filter(username__iexact=email).exists():
+            raise ValidationError("Another account already uses this email address.")
+        return email
 
     def clean(self):
         cleaned = super().clean()
@@ -297,6 +315,15 @@ class StaffEditForm(forms.Form):
             name: {"from": str(before[name] or ""), "to": str(data[name] or "")}
             for name in self.FIELDS if before[name] != data[name]
         }
+        if data["email"] != (staff.email or "").lower():
+            old_email = staff.email or ""
+            changes["email"] = {"from": old_email, "to": data["email"]}
+            # Accounts created in the app use their email as the username; keep the two together so
+            # the new address is the sign-in. Other usernames (demo.*, createsuperuser) are left alone.
+            if staff.username.lower() == old_email.lower():
+                staff.username = data["email"]
+            staff.email = data["email"]
+            staff.save(update_fields=["email", "username"])
         if staff.role != Role.ADMIN:
             profile, _ = SupervisorProfile.objects.get_or_create(user=staff)
             if profile.title != data["title"]:

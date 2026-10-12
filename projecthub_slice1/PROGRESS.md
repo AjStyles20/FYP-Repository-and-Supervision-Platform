@@ -13,7 +13,7 @@
 - Decision email to the student on approval or rejection (with the reason, if given), and an "Account approved" alert waiting at first sign-in
 - Registration status page behind a signed, expiring link that updates itself every 30 seconds (`docs/explain/registration-status.md`)
 - Sign-in with Baze email or full student ID (a plain username still works for demo accounts and the server-created admin); superusers receive the application administrator role; an eye button shows or hides any password field
-- Administrator-created staff accounts with a one-time temporary password and a forced password change at first sign-in
+- Administrator-created staff accounts with a one-time temporary password and a forced password change at first sign-in; administrators can correct a staff member's Baze email (their own too), which moves the sign-in and is audited
 - **My details** (`/account/contact/`) for every account: personal email and phone, each with its own visibility (only me, staff only, all signed-in users); shown on project pages for the student and the supervisor; current students without a personal email are reminded to add one
 - The HOD appoints the FYP coordinator and the staff allowed to assign supervisors (D-19)
 - Login and logout (logout is POST only), role-based dashboard
@@ -53,7 +53,7 @@
 - Live counters and the lists beside them follow the viewer: a demo account counts demo and real rows, a real account real rows only
 
 ## Verification status
-- `manage.py test apps`: **251 tests pass on SQLite (`DB_ENGINE=sqlite`) and on MySQL 8.4** (2026-10-11).
+- `manage.py test apps`: **255 tests pass on SQLite (`DB_ENGINE=sqlite`) and on MySQL 8.4** (2026-10-12).
 - `apps/accounts/tests_docs.py` checks that every row of `docs/code_map.md` names a real file and name.
 - Runtime in use: Python 3.14.0, Django 5.2.18, MySQL 8.4.
 
