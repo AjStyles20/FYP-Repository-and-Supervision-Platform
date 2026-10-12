@@ -35,6 +35,13 @@
       </section>
     {% endif %}
 
+    {% if media or can_add_media %}
+      <section class="documents-panel">
+        <div class="section-title"><h2>Screenshots and demo</h2>{% if can_add_media %}<a class="btn btn-sm" href="{% url 'add_archived_media' project.pk %}">Add screenshot or video</a>{% endif %}</div>
+        {% if media %}{% include "projects/_media_gallery.html" with can_remove=can_add_media %}{% else %}<p class="muted">No screenshots or videos yet.</p>{% endif %}
+      </section>
+    {% endif %}
+
     {% if is_past %}
       <section class="documents-panel">
         <h2>Available project files</h2>

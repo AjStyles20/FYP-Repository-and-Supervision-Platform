@@ -132,3 +132,15 @@
 | The "My details" page | `apps/accounts/views.py` | `def my_contact` |
 | Showing a person's contact on a page | `apps/accounts/templatetags/contact.py` | `def contact_for` |
 | The student and supervisor contact panels on a project page | `templates/projects/project_detail.html` | `contact_for` |
+
+## Screenshots and demo videos
+
+| To change… | Open | Look for |
+|---|---|---|
+| The media model, allowed types, sizes and per-project limits | `apps/projects/models/media.py` | `MAXIMUM_IMAGES_PER_PROJECT` |
+| The content check that refuses renamed files | `apps/projects/models/media.py` | `def validate_media_upload` |
+| The accepted video link hosts | `apps/projects/models/media.py` | `VIDEO_LINK_HOSTS` |
+| The add form and its rules | `apps/projects/forms.py` | `class ProjectMediaForm` |
+| Adding, serving and removing media | `apps/projects/views.py` | `def project_media_file` |
+| The gallery shown on project pages | `templates/projects/_media_gallery.html` | `media-gallery` |
+| Moving media to the archive at sign-off | `apps/projects/services/lifecycle.py` | `project.media.update` |

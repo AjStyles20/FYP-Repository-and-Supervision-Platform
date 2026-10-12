@@ -36,3 +36,31 @@ def demo_pdf(title, lines=()):
     out += b"".join(f"{offset:010d} 00000 n \n".encode() for offset in offsets)
     out += f"trailer\n<< /Size {len(objects) + 1} /Root 1 0 R >>\nstartxref\n{xref}\n%%EOF\n".encode()
     return bytes(out)
+
+
+def demo_png(width=480, height=300):
+    """A valid PNG that looks like a simple app screen (a dark header bar, a sidebar and content
+    rows), built in code like demo_pdf(), so demo screenshots need no committed image files."""
+    import struct
+    import zlib
+
+    dark, accent, light, line = (32, 32, 32), (160, 0, 0), (246, 247, 249), (215, 218, 224)
+    rows = []
+    for y in range(height):
+        row = bytearray()
+        for x in range(width):
+            if y < 56:
+                colour = accent if x < 56 else dark
+            elif x < 150:
+                colour = line if (y - 80) % 40 < 16 and 16 < x < 134 else light
+            else:
+                colour = line if (y - 90) % 48 < 14 and 180 < x < width - 30 else light
+            row += bytes(colour)
+        rows.append(b"\x00" + bytes(row))
+    raw = zlib.compress(b"".join(rows), 9)
+
+    def chunk(kind, data):
+        return struct.pack(">I", len(data)) + kind + data + struct.pack(">I", zlib.crc32(kind + data) & 0xFFFFFFFF)
+
+    header = struct.pack(">IIBBBBB", width, height, 8, 2, 0, 0, 0)
+    return b"\x89PNG\r\n\x1a\n" + chunk(b"IHDR", header) + chunk(b"IDAT", raw) + chunk(b"IEND", b"")

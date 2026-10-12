@@ -2,10 +2,12 @@ from pathlib import Path
 
 from django.contrib import messages
 from django.core.exceptions import PermissionDenied, ValidationError
+from django.db import transaction
 from django.db.models import Count, Q
 from django.http import FileResponse, Http404, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
+from django.views.decorators.http import require_POST
 
 from apps.audit.services import log_event
 from apps.accounts.models import Role, STAFF_ROLES, StudentProfile, User
@@ -13,9 +15,9 @@ from apps.accounts.permissions import role_required
 
 from .forms import (
     CompletionForm, CoordinatorApprovalForm, ProjectCsvImportForm, ProjectDocumentForm, ProjectProposalForm, ProjectStartForm, StageActionForm,
-    SupervisorAssignmentForm, SupervisorDecisionForm, SupervisorProjectEditForm, UnassignedSuperviseeForm,
+    ProjectMediaForm, SupervisorAssignmentForm, SupervisorDecisionForm, SupervisorProjectEditForm, UnassignedSuperviseeForm,
 )
-from .models import ArchivedProject, Project, ProjectCompletion, ProjectDocument, ProjectStage, ProjectStatusEvent
+from .models import ArchivedProject, Project, ProjectCompletion, ProjectDocument, ProjectMedia, ProjectStage, ProjectStatusEvent
 from .imports import import_archived_projects
 from .services.health import HEALTH_PREFETCH, can_see_health, health_score
 from .services.similarity import similar_archived_projects, similarity_threshold
@@ -130,6 +132,7 @@ def current_project_detail(request, project_id):
             "can_see_student_id": request.user.role in STAFF_ROLES,
             "student_profile": _student_profile(project.student),
             "previous_supervisors": [],
+            "media": [item for item in project.media.all() if _can_open_current_project_files(request.user, item)],
             "similar_projects": similar_archived_projects(project.title, project.description),
             "similarity_threshold": similarity_threshold(),
         },
@@ -159,6 +162,8 @@ def past_project_detail(request, project_id):
             "student_profile": _student_profile(project.student),
             "previous_supervisors": list(project.previous_supervisors.all()),
             "documents": project.documents.filter(visible_documents),
+            "media": project.media.filter(visible_documents),
+            "can_add_media": request.user.role == Role.ADMIN,
             "similar_projects": similar_archived_projects(project.title, project.description, exclude_id=project.pk),
             "similarity_threshold": similarity_threshold(),
         },
@@ -182,6 +187,90 @@ def download_project_document(request, document_id):
         as_attachment=True,
         filename=Path(document.file.name).name,
     )
+
+
+def _save_media(request, form, *, project=None, archived_project=None):
+    data = form.cleaned_data
+    parent = project or archived_project
+    item = ProjectMedia(
+        project=project, archived_project=archived_project, kind=data["kind"], caption=data["caption"],
+        video_url=data["video_url"] or "", visibility=data["visibility"], uploaded_by=request.user,
+        is_demo=parent.is_demo,
+    )
+    if data["file"]:
+        item.file = data["file"]
+    item.save()
+    log_event(actor=request.user, action="project.media_added", summary=f"{item.get_kind_display()} added to {parent.title}",
+              obj=parent, details={"kind": item.kind, "caption": item.caption})
+    return item
+
+
+@role_required(Role.STUDENT)
+def add_project_media(request, project_id):
+    """The student adds a screenshot or a demo video to their running project (D-30)."""
+    project = get_object_or_404(Project, pk=project_id, student=request.user, archived=False)
+    form = ProjectMediaForm(request.POST or None, request.FILES or None, parent=project)
+    if request.method == "POST" and form.is_valid():
+        _save_media(request, form, project=project)
+        messages.success(request, "Added. Your supervisor and department staff can see it; it joins the archive when the project is signed off.")
+        return redirect("my_project")
+    return render(request, "projects/media_upload.html", {"form": form, "parent": project, "back_url": reverse("my_project")})
+
+
+@role_required(Role.ADMIN)
+def add_archived_media(request, project_id):
+    """An administrator adds a screenshot or a demo video to an archived project (D-30)."""
+    project = get_object_or_404(ArchivedProject, pk=project_id)
+    form = ProjectMediaForm(request.POST or None, request.FILES or None, parent=project)
+    if request.method == "POST" and form.is_valid():
+        _save_media(request, form, archived_project=project)
+        messages.success(request, "Added to the archived project.")
+        return redirect("past_project_detail", project_id=project.pk)
+    return render(request, "projects/media_upload.html", {
+        "form": form, "parent": project, "back_url": reverse("past_project_detail", args=[project.pk]),
+    })
+
+
+def _can_view_media(user, item):
+    if item.project_id:
+        return _can_open_current_project_files(user, item)
+    if user.role in STAFF_ROLES or item.visibility == ProjectDocument.Visibility.BAZE_USERS:
+        return True
+    return item.archived_project.student_id == user.pk
+
+
+@role_required(*REPOSITORY_ROLES)
+def project_media_file(request, media_id):
+    """Show an uploaded screenshot or play an uploaded video, after the same checks as project files."""
+    item = get_object_or_404(ProjectMedia.objects.select_related("project", "archived_project"), pk=media_id)
+    if not item.file or not _can_view_media(request.user, item):
+        raise Http404  # 404, not 403, so an ID does not confirm the file exists
+    response = FileResponse(item.file.open("rb"), content_type=item.content_type)
+    response["Content-Disposition"] = "inline"
+    response["X-Content-Type-Options"] = "nosniff"
+    response["Cache-Control"] = "private, max-age=3600"
+    return response
+
+
+@require_POST
+@role_required(Role.STUDENT, Role.ADMIN)
+def remove_project_media(request, media_id):
+    """The student removes media from their running project; an administrator from any project."""
+    item = get_object_or_404(ProjectMedia.objects.select_related("project", "archived_project"), pk=media_id)
+    is_owner = item.project_id and item.project.student_id == request.user.pk and not item.project.archived
+    if request.user.role != Role.ADMIN and not is_owner:
+        raise PermissionDenied
+    parent = item.parent
+    if item.file:
+        stored = item.file
+        transaction.on_commit(lambda: stored.delete(save=False))
+    item.delete()
+    log_event(actor=request.user, action="project.media_removed", summary=f"{item.get_kind_display()} removed from {parent.title}",
+              obj=parent, details={"kind": item.kind, "caption": item.caption})
+    messages.success(request, "Removed.")
+    if item.archived_project_id:
+        return redirect("past_project_detail", project_id=item.archived_project_id)
+    return redirect("my_project" if is_owner else "current_project_detail", **({} if is_owner else {"project_id": item.project_id}))
 
 
 def _can_open_current_project_files(user, document):
@@ -220,7 +309,8 @@ def my_project(request):
         .first()
     )
     documents = project.documents.filter(Q(visibility=ProjectDocument.Visibility.BAZE_USERS) | Q(uploaded_by=request.user)) if project else []
-    return render(request, "projects/my_project.html", {"project": project, "documents": documents})
+    media = project.media.all() if project else []
+    return render(request, "projects/my_project.html", {"project": project, "documents": documents, "media": media})
 
 
 @role_required(Role.STUDENT)

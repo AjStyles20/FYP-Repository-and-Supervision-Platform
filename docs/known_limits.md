@@ -19,6 +19,8 @@ These are things the platform does **not** do yet. Each entry says what is missi
 | Milestones can't be created or edited in the app | Milestones are read-only in the app and editable in the Django admin |
 | `SupervisionLogEntry` (running log) has no screens | Meeting records and notices cover progress tracking |
 | No pagination on the repository | All matching projects are listed on one page |
+| Uploaded videos may not allow skipping ahead | Django serves uploaded videos without range requests, so a browser plays them from the start; some browsers cannot jump to a later point. Production should serve media through the web server (or use a video link) |
+| Uploaded videos use server disk space | Up to 2 videos of 100 MB per project. Baze ICT should agree the storage, or students should use a YouTube, Google Drive or Vimeo link |
 | A newly allocated student's project shows "Topic to be agreed" | Until the student submits their proposal, the project created at allocation carries that placeholder title, including in Running topics |
 | Students cannot request a supervisor change in the app | They ask the coordinator in person (D-27); the coordinator records the reason when making the change |
 | The Django admin (`/admin/`) shows every model to superusers | Meeting records are restricted to the people R-33 names in the app itself, but a Django superuser can still view them in the admin (view-only there) |

@@ -578,3 +578,11 @@ td form { display: flex; flex-wrap: wrap; gap: var(--space-2); margin: 0; }
 }
 .password-toggle:hover { color: var(--accent); }
 .password-toggle:focus-visible { outline: none; box-shadow: var(--focus); color: var(--accent); }
+
+/* ---------- Screenshots and demo videos (templates/projects/_media_gallery.html) ---------- */
+.media-gallery { display: grid; gap: var(--space-4); grid-template-columns: repeat(auto-fill, minmax(min(100%, 14rem), 1fr)); margin: var(--space-3) 0; }
+.media-item { margin: 0; display: grid; gap: var(--space-2); align-content: start; }
+.media-item img, .media-item video { width: 100%; height: auto; aspect-ratio: 16 / 10; object-fit: cover; border: var(--border); border-radius: var(--radius-sm); background: var(--gray-25); }
+.media-item video { object-fit: contain; background: #000; }
+.media-item figcaption { font-size: var(--text-sm); color: var(--gray-500); }
+.media-link { justify-self: start; }

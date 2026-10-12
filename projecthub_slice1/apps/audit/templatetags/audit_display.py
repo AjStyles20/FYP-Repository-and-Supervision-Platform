@@ -32,6 +32,8 @@ ACTION_LABELS = {
     "project.archived": "Project signed off and archived",
     "project.created": "Project record created",
     "project.document_uploaded": "Project file uploaded",
+    "project.media_added": "Screenshot or video added",
+    "project.media_removed": "Screenshot or video removed",
     "project.proposed": "Proposal submitted",
     "project.stage_changed": "Project stage changed",
     "project.supervisor_assigned": "Supervisor assigned",

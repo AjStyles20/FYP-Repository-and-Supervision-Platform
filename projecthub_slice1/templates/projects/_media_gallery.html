@@ -1,0 +1,18 @@
+{# Screenshots and demo videos (D-30). Expects `media`; `can_remove` shows a Remove button on each item. #}
+<div class="media-gallery">
+  {% for item in media %}
+    <figure class="media-item">
+      {% if item.kind == "image" %}
+        <a href="{% url 'project_media_file' item.pk %}" target="_blank" rel="noopener"><img src="{% url 'project_media_file' item.pk %}" alt="{{ item.caption }}" loading="lazy"></a>
+      {% elif item.file %}
+        <video controls preload="metadata" src="{% url 'project_media_file' item.pk %}"></video>
+      {% else %}
+        <a class="btn media-link" href="{{ item.video_url }}" target="_blank" rel="noopener noreferrer">▶ Watch demo video</a>
+      {% endif %}
+      <figcaption>{{ item.caption }}{% if item.visibility == "staff_only" %} <span class="tag tag-quiet">Staff only</span>{% endif %}</figcaption>
+      {% if can_remove %}
+        <form method="post" action="{% url 'remove_project_media' item.pk %}" class="inline-form">{% csrf_token %}<button type="submit" class="btn-sm">Remove</button></form>
+      {% endif %}
+    </figure>
+  {% endfor %}
+</div>

@@ -22,6 +22,7 @@ from .document import (
     ProjectDocument,
     validate_project_document_size,
 )
+from .media import ProjectMedia
 from .approval import (
     ApprovalDecisionStep,
     ProjectApprovalDecision,
@@ -42,6 +43,7 @@ __all__ = [
     "ProjectApprovalForm",
     "ProjectCompletion",
     "ProjectDocument",
+    "ProjectMedia",
     "ProjectMilestone",
     "ProjectStage",
     "ProjectStatusEvent",

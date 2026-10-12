@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}Add a screenshot or video · Baze Project Hub{% endblock %}
+{% block back %}<p class="breadcrumb back-link"><a href="{{ back_url }}"><span aria-hidden="true">←</span> Back</a></p>{% endblock %}
+{% block content %}
+<section class="card narrow">
+  <h1>Add a screenshot or video</h1>
+  <p class="muted">{{ parent.title }}</p>
+  <form method="post" enctype="multipart/form-data" class="stack-form">
+    {% csrf_token %}
+    {% for error in form.non_field_errors %}<p class="error">{{ error }}</p>{% endfor %}
+    {% for field in form %}
+      <div class="form-row">
+        {{ field.label_tag }}{{ field }}
+        {% if field.help_text %}<small class="muted">{{ field.help_text }}</small>{% endif %}
+        {% for error in field.errors %}<p class="error">{{ error }}</p>{% endfor %}
+      </div>
+    {% endfor %}
+    <button type="submit" class="primary">Add</button>
+  </form>
+</section>
+{% endblock %}

@@ -167,6 +167,7 @@ def _archive_project(project, completion):
 
     # Approved files belong to the archived record from now on.
     project.documents.update(archived_project=archived, project=None)
+    project.media.update(archived_project=archived, project=None)
 
     project.archived = True
     project.stage = ProjectStage.COMPLETED

@@ -2,7 +2,11 @@ from django import forms
 from django.utils import timezone
 
 from apps.accounts.models import User
-from .models import Project, ProjectDocument, ProjectStage, SupervisorDecision
+from .models import Project, ProjectDocument, ProjectMedia, ProjectStage, SupervisorDecision
+from .models.media import (
+    MAXIMUM_IMAGE_BYTES, MAXIMUM_IMAGES_PER_PROJECT, MAXIMUM_VIDEO_BYTES, MAXIMUM_VIDEOS_PER_PROJECT,
+    validate_media_upload, validate_video_link,
+)
 
 
 class SupervisorChoiceField(forms.ModelChoiceField):
@@ -157,3 +161,52 @@ class ProjectDocumentForm(forms.ModelForm):
     class Meta:
         model = ProjectDocument
         fields = ("title", "document_type", "file")
+
+
+class ProjectMediaForm(forms.Form):
+    """Add a screenshot or a demo video (an upload or a link) to a running or archived project (D-30)."""
+
+    kind = forms.ChoiceField(choices=ProjectMedia.Kind.choices, label="Type")
+    caption = forms.CharField(max_length=180, label="Short description", help_text="For example \"Login screen\" or \"Full demo\".")
+    file = forms.FileField(
+        required=False, label="File",
+        help_text=(f"Screenshots: JPG, PNG or WebP, up to {MAXIMUM_IMAGE_BYTES // (1024 * 1024)} MB. "
+                   f"Videos: MP4 or WebM, up to {MAXIMUM_VIDEO_BYTES // (1024 * 1024)} MB."),
+    )
+    video_url = forms.URLField(
+        required=False, label="Or a video link", assume_scheme="https",
+        help_text="For a video only: a YouTube, Google Drive or Vimeo link instead of uploading the file.",
+    )
+    visibility = forms.ChoiceField(
+        choices=ProjectDocument.Visibility.choices, label="Who can see it in the archive",
+        help_text="While the project is running, only you, your supervisor and staff of the department can see it.",
+    )
+
+    def __init__(self, *args, parent, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.parent = parent
+
+    def clean(self):
+        cleaned = super().clean()
+        kind, upload, link = cleaned.get("kind"), cleaned.get("file"), cleaned.get("video_url")
+        if not kind:
+            return cleaned
+        if kind == ProjectMedia.Kind.IMAGE:
+            if link:
+                self.add_error("video_url", "A link can only be given for a video.")
+            if not upload:
+                self.add_error("file", "Choose the image file.")
+        elif bool(upload) == bool(link):
+            self.add_error("file", "Upload the video file or give a link, not both.")
+        try:
+            if upload:
+                validate_media_upload(upload, kind)
+            if link:
+                validate_video_link(link)
+        except forms.ValidationError as error:
+            self.add_error("file" if upload else "video_url", error)
+        existing = self.parent.media.filter(kind=kind).count()
+        limit = MAXIMUM_IMAGES_PER_PROJECT if kind == ProjectMedia.Kind.IMAGE else MAXIMUM_VIDEOS_PER_PROJECT
+        if existing >= limit:
+            raise forms.ValidationError(f"This project already has the most {'screenshots' if kind == 'image' else 'videos'} allowed ({limit}). Remove one first.")
+        return cleaned

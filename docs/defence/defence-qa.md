@@ -266,3 +266,11 @@ Guards: `apps/audit/models.py`, `apps/projects/models/project.py`, `apps/project
 **How it works:** `supervisor_assignments` in `apps/projects/views.py` lists the waiting students and the active projects of the coordinator's department; `allocate_student` and `assign_project_supervisor` in `apps/projects/services/assignment.py`; the reason rule and the "(N active)" labels are in `SupervisorAssignmentForm` (`apps/projects/forms.py`). Tests: `apps/projects/tests_allocation.py`. Decision D-27.
 
 **Show it:** as `demo.coordinator`, Student allocation: the workload panel, a supervisor dropdown ordered by load, and the history on a reassigned project.
+
+### 28. What are the screenshots and demo videos for, and how are they controlled?
+
+**Say:** "So people can see a project working, not just read about it. A student adds up to six screenshots and up to two demo videos, either an uploaded file or a YouTube, Drive or Vimeo link. For supervisors who approve on a working demonstration, the video is evidence that stays after the defence, and future students browsing the archive see what was built. While the project runs, only the student, their supervisor and department staff see them; when the HOD signs off they move into the archive with the project's files."
+
+**How it works:** `ProjectMedia` (`apps/projects/models/media.py`) hangs off a running or an archived project, like documents. Uploads are checked by extension, size and their first bytes, so a script renamed `photo.png` is refused; links must be https from YouTube, Google Drive or Vimeo. Files are served by `project_media_file` after the same access check as project files, with `nosniff`. `sign_off_completion` moves media with the documents; `purge_demo` deletes demo media files. Tests: `apps/projects/tests_media.py`. Decision D-30.
+
+**Show it:** as `demo.amina`, My project → Add screenshot or video; then the archived project "Exam Seating Allocation Tool", which has a demo screenshot.

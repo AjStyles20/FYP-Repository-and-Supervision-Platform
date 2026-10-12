@@ -31,6 +31,7 @@
 ### Project workflow and supervision
 - Student project creation and a role-checked proposal-to-HOD-archive workflow, with per-supervisor approval criteria, decision snapshots and status history
 - Students upload proposal and final report files; the project cannot be submitted until a final report is present
+- Screenshots (up to 6) and demo videos (up to 2, upload or YouTube/Drive/Vimeo link) on running and archived projects, content-checked and permission-served; they move to the archive at sign-off (D-30)
 - HOD sign-off, archive and convocation list (printable and CSV)
 - Student allocation lists students who have no supervisor yet (a coordinator sees and allocates across their whole faculty, D-29); allocating creates their project record ("Topic to be agreed"). Supervisors are offered least busy first with their load; a change of supervisor needs a reason (D-27)
 - Department-scoped supervisor assignment and reassignment for individually authorised staff, with a history recording who changed it, when, and why; supervisor workload counts in the assignment workspace
@@ -55,7 +56,7 @@
 - Live counters and the lists beside them follow the viewer: a demo account counts demo and real rows, a real account real rows only
 
 ## Verification status
-- `manage.py test apps`: **277 tests pass on SQLite (`DB_ENGINE=sqlite`) and on MySQL 8.4** (2026-10-12).
+- `manage.py test apps`: **286 tests pass on SQLite (`DB_ENGINE=sqlite`) and on MySQL 8.4** (2026-10-12).
 - `apps/accounts/tests_docs.py` checks that every row of `docs/code_map.md` names a real file and name.
 - Runtime in use: Python 3.14.0, Django 5.2.18, MySQL 8.4.
 

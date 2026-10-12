@@ -16,6 +16,7 @@ from .models import (
     ProjectApprovalForm,
     ProjectCompletion,
     ProjectDocument,
+    ProjectMedia,
     ProjectMilestone,
     ProjectStatusEvent,
     ProjectSupervisorAssignment,
@@ -61,6 +62,13 @@ class ProjectDocumentAdmin(admin.ModelAdmin):
     list_display = ("title", "document_type", "visibility", "project", "archived_project", "is_demo", "uploaded_at")
     list_filter = ("visibility", "document_type", "is_demo")
     search_fields = ("title", "project__title", "archived_project__title")
+
+
+@admin.register(ProjectMedia)
+class ProjectMediaAdmin(admin.ModelAdmin):
+    list_display = ("caption", "kind", "visibility", "project", "archived_project", "is_demo", "uploaded_at")
+    list_filter = ("kind", "visibility", "is_demo")
+    search_fields = ("caption", "project__title", "archived_project__title")
 
 
 @admin.register(Project)

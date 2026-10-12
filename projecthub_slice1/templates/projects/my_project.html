@@ -16,8 +16,10 @@
       <a class="button" href="{% url 'project_workflow' project.pk %}">Project actions and approval form</a>
       <a class="btn" href="{% url 'project_meetings' project.pk %}">Supervision meetings</a>
       <a class="btn" href="{% url 'upload_project_document' project.pk %}">Upload project document</a>
+      <a class="btn" href="{% url 'add_project_media' project.pk %}">Add screenshot or video</a>
     </div>
     <p class="muted">Your supervisor schedules meetings and notifies you when a session is set.</p>
+    {% if media %}<h3>Screenshots and demo</h3>{% include "projects/_media_gallery.html" with can_remove=True %}{% endif %}
     {% if documents %}<h3>Your project files</h3><ul>{% for document in documents %}<li>{{ document.title }} · {{ document.get_document_type_display }} · <a href="{% url 'download_project_document' document.pk %}">Download</a>{% if document.visibility == 'staff_only' %} (staff only){% endif %}</li>{% endfor %}</ul>{% endif %}
 
     {% if project.milestones.all %}

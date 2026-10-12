@@ -20,12 +20,14 @@ from django.db import transaction
 from django.utils import timezone
 
 from apps.academics.models import Department, Faculty, Programme
-from apps.accounts.demo_pdf import demo_pdf
+from apps.accounts.demo_pdf import demo_pdf, demo_png
 from apps.accounts.models import Role, StudentProfile, SupervisorProfile, User
 from apps.projects.models import (
     DocumentType,
     Project,
+    ArchivedProject,
     ProjectDocument,
+    ProjectMedia,
     ProjectMilestone,
     ProjectStage,
     ProjectStatusEvent,
@@ -249,6 +251,7 @@ class Command(BaseCommand):
         if not ProjectMilestone.objects.filter(project__is_demo=True).exists():
             self._health_story()
         self._replace_external_demo_links()
+        self._demo_media()
 
         self.stdout.write(self.style.SUCCESS(f"Demo data ready ({built} new projects)."))
         self.stdout.write(f"Log in as any demo.* user. Password: {opts['password']}")
@@ -482,6 +485,18 @@ class Command(BaseCommand):
             "3. Themes compared, not just listed.",
             "4. The research gap stated in one paragraph.",
         ))
+
+    def _demo_media(self):
+        """One screenshot on an archived demo project, so the repository shows the media gallery."""
+        if ProjectMedia.objects.filter(is_demo=True).exists():
+            return
+        archived = ArchivedProject.objects.filter(is_demo=True, title="Exam Seating Allocation Tool").first()
+        if archived is None:
+            return
+        item = ProjectMedia(archived_project=archived, kind=ProjectMedia.Kind.IMAGE, caption="Seat plan screen",
+                            uploaded_by=archived.student, is_demo=True)
+        item.file.save("demo-exam-seating-screen.png", ContentFile(demo_png()), save=False)
+        item.save()
 
     def _replace_external_demo_links(self):
         """Older demo databases linked the checklist to example.com; give them the PDF instead."""
