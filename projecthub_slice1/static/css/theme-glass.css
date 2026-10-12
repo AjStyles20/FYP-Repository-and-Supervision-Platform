@@ -4,8 +4,13 @@
    without backdrop-filter, and people who ask for reduced transparency, get solid surfaces. */
 
 :root {
-  --glass: rgba(255, 255, 255, 0.64);
-  --glass-strong: rgba(255, 255, 255, 0.82);
+  --glass: rgba(255, 255, 255, 0.86);
+  --glass-strong: rgba(255, 255, 255, 0.94);
+  /* Darker greys than the classic theme, because glass sits on a tinted background:
+     secondary text #43474d is 9:1 on white, labels #2b2d30 13:1. */
+  --gray-500: #43474d;
+  --gray-700: #2b2d30;
+  --gray-900: #121314;
   --glass-edge: rgba(255, 255, 255, 0.75);
   --glass-dark: rgba(24, 18, 20, 0.9);
   --glass-blur: blur(18px) saturate(160%);
@@ -21,8 +26,8 @@
 body {
   background-color: #f3f1f4;
   background-image:
-    radial-gradient(48rem 32rem at 8% -6%, rgba(200, 30, 50, 0.28), transparent 70%),
-    radial-gradient(40rem 30rem at 96% 8%, rgba(255, 170, 120, 0.3), transparent 70%),
+    radial-gradient(48rem 32rem at 8% -6%, rgba(200, 30, 50, 0.18), transparent 70%),
+    radial-gradient(40rem 30rem at 96% 8%, rgba(255, 170, 120, 0.2), transparent 70%),
     radial-gradient(44rem 36rem at 70% 105%, rgba(150, 90, 200, 0.16), transparent 70%),
     radial-gradient(36rem 28rem at 0% 90%, rgba(255, 120, 150, 0.14), transparent 70%);
   background-attachment: fixed;
@@ -123,4 +128,35 @@ button:not(.primary):not(.btn-primary):not(.button):not(.btn-quiet):not(.passwor
 @media print {
   body { background: #ffffff; }
   .card, .bento-cell, .msg { background: #ffffff; box-shadow: none; -webkit-backdrop-filter: none; backdrop-filter: none; }
+}
+
+/* ---------- Dark bands (header, heroes, footer): keep every text and control readable ---------- */
+/* Inside a dark band the classic tokens flip (white text); restate the greys the glass :root darkened. */
+.top, .site-footer, .hero-band, .repository-hero, .supervisor-welcome, .detail-hero {
+  --gray-900: #ffffff;
+  --gray-700: #f1f1f1;
+  --gray-500: #e4e4e4;
+}
+/* Primary buttons on a dark band: white with crimson text, never crimson on crimson. */
+.hero-band .btn-primary, .hero-band .button, .hero-band button.primary,
+.repository-hero .btn-primary, .repository-hero .button, .repository-hero button.primary,
+.supervisor-welcome .btn-primary, .supervisor-welcome .button, .supervisor-welcome button.primary,
+.detail-hero .btn-primary, .detail-hero .button, .detail-hero button.primary {
+  background: #ffffff;
+  border-color: #ffffff;
+  color: #8a0000;
+  box-shadow: none;
+}
+.hero-band .btn-primary:hover, .hero-band .button:hover, .repository-hero .btn-primary:hover, .repository-hero .button:hover,
+.supervisor-welcome .btn-primary:hover, .supervisor-welcome .button:hover, .detail-hero .btn-primary:hover, .detail-hero .button:hover {
+  background: #ffe9e9;
+  color: #6e0000;
+}
+/* Tags on a dark band: a clear outline and white text. */
+.hero-band .tag, .repository-hero .tag, .supervisor-welcome .tag, .detail-hero .tag,
+.hero-band .status-pill, .detail-hero .status-pill,
+.hero-band .sample-label, .repository-hero .sample-label, .supervisor-welcome .sample-label, .detail-hero .sample-label {
+  background: rgba(255, 255, 255, 0.16);
+  border-color: rgba(255, 255, 255, 0.45);
+  color: #ffffff;
 }
