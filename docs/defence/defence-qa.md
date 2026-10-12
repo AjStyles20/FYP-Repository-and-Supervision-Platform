@@ -10,15 +10,15 @@ Likely examiner questions, with a short answer to say aloud, how it works, where
 
 ### 1. How do people get accounts? Can anyone become an administrator?
 
-**Say:** "Students register themselves, but their accounts stay inactive until an administrator approves them. Staff cannot register at all: an administrator creates their accounts. The very first administrator is created on the server with `createsuperuser`, so nobody can make themselves an admin through the website."
+**Say:** "Nobody creates their own account. The department's FYP coordinator, or the administrator, adds each final-year student after checking they're ready for their FYP, so only the right students get accounts. Staff accounts are created by the administrator. The very first administrator is created on the server with `createsuperuser`, so nobody can make themselves an admin through the website."
 
 **How it works:**
-- `StudentRegistrationForm` (`apps/accounts/forms.py`) always creates role **student**, `is_active=False`, registration status **pending**. It has no role field, and a test posts a forged `role=admin` to prove it is ignored.
-- Admin approves or rejects in **System administration** (`review_student_registration` in `apps/accounts/views.py`); both are audited.
+- `add_student_account` (`apps/accounts/views.py`) with `AddStudentForm` (`apps/accounts/forms.py`): administrators for any department, a coordinator only for programmes of their own department. Same checks as registration (Baze email, Baze student ID format, both unique). The account is active at once with a temporary password shown once; the student must choose their own at first sign-in. Audited as `account.student_created`. Decision D-28.
+- Public self-registration is switched off (`STUDENT_SELF_REGISTRATION`); `/register/` explains who creates accounts. If a department switches it on, `StudentRegistrationForm` always creates an inactive, pending **student** (a forged `role=admin` is ignored) for the administrator to approve or reject.
 - Staff accounts: **System administration → Add staff account** (`add_staff_account`).
 - First admin: `python manage.py createsuperuser`. The custom manager (`ProjectHubUserManager.create_superuser` in `apps/accounts/models.py`) sets role = administrator.
 
-**Show it:** the sign-up page (no role choice, "Staff?" note) → sign in as admin → Add staff account.
+**Show it:** `/register/` (closed, says who creates accounts) → sign in as a coordinator → Student allocation → **Add student** → the temporary password page.
 
 ### 2. How was the temporary password `BYmt7BHmQ5Qng6p2` made, and is it safe?
 
@@ -33,7 +33,7 @@ Likely examiner questions, with a short answer to say aloud, how it works, where
 
 **Show it:** create a test supervisor → copy the password → private window → sign in → forced to choose a password.
 
-### 2b. How does a student know their registration was approved?
+### 2b. How does a student know their registration was approved? (only if self-registration is switched on)
 
 **Say:** "They get an email at their Baze address when the administrator approves or rejects it, with the reason if it was rejected. And if they try to sign in before then with the right password, the login page tells them it is still awaiting approval. A wrong password only gets the general error, so nobody can use the login page to find out who has registered."
 

@@ -45,7 +45,7 @@
   {% endif %}
 </section>
 <section class="card" id="students">
-  <h2>Student accounts</h2>
+  <div class="section-title"><h2>Student accounts</h2><a class="btn btn-sm" href="{% url 'add_student_account' %}">Add student account</a></div>
   <p class="muted">Find a student to correct their details (name, Baze email, student ID, programme), reset a forgotten password, or deactivate or reactivate their account.</p>
   <form method="get" action="{% url 'admin_tools' %}#students" class="stack-form" role="search">
     <label for="student-search">Name, Baze email or student ID</label>

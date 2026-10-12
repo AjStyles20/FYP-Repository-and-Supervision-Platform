@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block title %}Student accounts · Baze Project Hub{% endblock %}
+{% block main_class %}narrow-shell{% endblock %}
+{% block back %}{% endblock %}
+{% block content %}
+<section class="card narrow">
+  <h1>Student accounts are created by your department</h1>
+  <p>To get an account, see your department's FYP coordinator (or the system administrator) with your Baze email address and your full student ID, like <code>BU/23B/IT/7892</code>.</p>
+  <p class="muted">They create the account and give you a temporary password. You choose your own password the first time you sign in.</p>
+  <div class="actions"><a class="btn btn-primary" href="{% url 'login' %}">Back to sign in</a></div>
+</section>
+{% endblock %}

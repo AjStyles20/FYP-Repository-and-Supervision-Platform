@@ -16,7 +16,7 @@ Paths are relative to `projecthub_slice1/`. Nothing in these diagrams comes from
 
 | Transition | Who (code check) | Code |
 |---|---|---|
-| start → Proposed | the student, with an APPROVED registration | `apps/projects/views.py` `start_project` |
+| start → Proposed | the student, with an approved account; or the coordinator, when allocating a supervisor | `apps/projects/views.py` `start_project`; `services/assignment.py` `allocate_student` |
 | Proposed → Proposed | assigned supervisor declines, then the student resubmits (the stage doesn't change) | `services/approval.py` `record_supervisor_decision` (REJECTED leaves the stage), `submit_proposal` |
 | Proposed → Supervisor accepted | the assigned supervisor (role supervisor, coordinator or HOD), with the evidence the method requires | `services/approval.py` `record_supervisor_decision`; `services/lifecycle.py` `TRANSITION_ROLES`, `SUPERVISOR_TRANSITIONS` |
 | Supervisor accepted → Approved | coordinator of the project's department | `services/approval.py` `log_approved_form`; `lifecycle.py` `TRANSITION_ROLES` |
@@ -31,7 +31,8 @@ There are no transitions other than these (VERIFIED: `TRANSITION_ROLES` has five
 
 | Use case | Roles (view guard) | View |
 |---|---|---|
-| Register | visitor | `accounts/views.py` `register_student` |
+| Add a student account | admin; coordinator (own department) | `accounts/views.py` `add_student_account` |
+| Register (off unless `STUDENT_SELF_REGISTRATION` is on) | visitor | `accounts/views.py` `register_student` |
 | Sign in | anyone | `ProjectLoginView` + `ProjectAuthenticationForm` |
 | Approve or reject a registration, audit log | admin | `review_student_registration`, `audit_log` (`role_required(ADMIN)`) |
 | Search and filter | all five roles | `repository`, `running_topics` (`REPOSITORY_ROLES`) |

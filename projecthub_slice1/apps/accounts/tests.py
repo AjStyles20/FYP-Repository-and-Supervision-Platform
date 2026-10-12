@@ -427,7 +427,8 @@ class SeedAndPurgeTests(TestCase):
             StudentProfile.objects.create(user=other, student_number=existing.student_number, programme=existing.programme)
 
 
-@override_settings(PASSWORD_HASHERS=["django.contrib.auth.hashers.MD5PasswordHasher"])
+# Self-registration is off by default (D-28); these tests cover it for a department that switches it on.
+@override_settings(PASSWORD_HASHERS=["django.contrib.auth.hashers.MD5PasswordHasher"], STUDENT_SELF_REGISTRATION=True)
 class RegistrationFlowTests(TestCase):
     @classmethod
     def setUpTestData(cls):
@@ -714,7 +715,7 @@ class SummaryApiTests(TestCase):
         self.assertEqual([row.username for row in self.client.get(reverse("dashboard")).context["pending_students"]],
                          [self.student.username, "summary.demo.pending"])
 
-    @override_settings(PASSWORD_HASHERS=["django.contrib.auth.hashers.MD5PasswordHasher"])
+    @override_settings(PASSWORD_HASHERS=["django.contrib.auth.hashers.MD5PasswordHasher"], STUDENT_SELF_REGISTRATION=True)
     def test_a_new_registration_raises_the_demo_admins_pending_count_by_one(self):
         before = self._get(self.demo_admin).json()["counters"]["pending_count"]
         self.client.logout()
@@ -882,6 +883,7 @@ class StaffAccountTests(TestCase):
         self.assertNotContains(response, "Please enter a correct username")
         self.assertNotContains(response, "demo.amina")
 
+    @override_settings(STUDENT_SELF_REGISTRATION=True)
     def test_student_sign_up_cannot_choose_a_role_and_points_staff_elsewhere(self):
         page = self.client.get(reverse("register_student"))
         self.assertContains(page, "Staff?")
@@ -1100,7 +1102,8 @@ class GreetingTests(SimpleTestCase):
         self.assertEqual([greeting_name(u) for u in (supervisor, student, unnamed)], ["Dr. Julius", "Amina", "admin"])
 
 
-@override_settings(PASSWORD_HASHERS=["django.contrib.auth.hashers.MD5PasswordHasher"])
+# Self-registration is off by default (D-28); these tests cover it for a department that switches it on.
+@override_settings(PASSWORD_HASHERS=["django.contrib.auth.hashers.MD5PasswordHasher"], STUDENT_SELF_REGISTRATION=True)
 class RegistrationDecisionNoticeTests(TestCase):
     """Students learn the outcome: by email when it is decided, and on the login page."""
 
@@ -1204,7 +1207,8 @@ class RegistrationDecisionNoticeTests(TestCase):
         self.assertContains(response, "could not be sent")
 
 
-@override_settings(PASSWORD_HASHERS=["django.contrib.auth.hashers.MD5PasswordHasher"])
+# Self-registration is off by default (D-28); these tests cover it for a department that switches it on.
+@override_settings(PASSWORD_HASHERS=["django.contrib.auth.hashers.MD5PasswordHasher"], STUDENT_SELF_REGISTRATION=True)
 class RegistrationStatusPageTests(TestCase):
     """Item 1: a signed link shows pending / approved / rejected and updates itself."""
 
@@ -1276,7 +1280,8 @@ class RegistrationStatusPageTests(TestCase):
         self.assertEqual(self.client.get("/register/status/", {"email": "noah.status@bazeuniversity.edu.ng"}).status_code, 404)
 
 
-@override_settings(PASSWORD_HASHERS=["django.contrib.auth.hashers.MD5PasswordHasher"])
+# Self-registration is off by default (D-28); these tests cover it for a department that switches it on.
+@override_settings(PASSWORD_HASHERS=["django.contrib.auth.hashers.MD5PasswordHasher"], STUDENT_SELF_REGISTRATION=True)
 class StudentIdFormatTests(TestCase):
     """Item 4: the student ID must match STUDENT_ID_REGEX, with a clear message when it does not."""
 
@@ -1345,6 +1350,7 @@ class DemoCredentialHintTests(TestCase):
 class PasswordToggleTests(TestCase):
     """Every page with a password field loads the show/hide (eye) button script."""
 
+    @override_settings(STUDENT_SELF_REGISTRATION=True)
     def test_password_pages_load_the_toggle_script(self):
         user = User.objects.create_user(username="toggle@bazeuniversity.edu.ng", password="Long-enough-pass-77",
                                         role=Role.SUPERVISOR)

@@ -15,7 +15,7 @@ Code: `projecthub_slice1/apps/supervision/automation.py` (the checks), `apps/sup
 | Check | Flags | Notifies | Link in the alert |
 |---|---|---|---|
 | `at_risk_project` | Active projects whose [health score](health-score.md) is in the At risk band (above 60) | The project's supervisor and every active coordinator in its department | Project workflow |
-| `pending_registration` | Real (non-demo) student registrations still pending more than 48 hours after sign-up | Every active admin | Admin tools |
+| `pending_registration` | Real (non-demo) student registrations still pending more than 48 hours after sign-up (only arise when self-registration is switched on) | Every active admin | Admin tools |
 | `unacknowledged_notice` | Notices that require acknowledgement, posted more than 48 hours ago | Each approved, not-graduated student in the notice's audience who has not acknowledged it | Notices page |
 
 The audience follows the same rules as the notices page: a project notice reaches that project's student, a department notice reaches the department's students, and a notice with no department reaches everyone. The notice's author is never part of its audience: they are not reminded, and the notices page does not ask them to acknowledge their own notice either.

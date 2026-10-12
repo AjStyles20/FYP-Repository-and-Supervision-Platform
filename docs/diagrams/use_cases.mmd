@@ -13,7 +13,8 @@ flowchart LR
     Admin(["Administrator"])
 
     subgraph Accounts["Accounts"]
-        UC_Register("Register as a student<br/>(pending until approved)")
+        UC_AddStudent("Add a student account<br/>(coordinator: own department)")
+        UC_Register("Register as a student<br/>(off unless switched on)")
         UC_Login("Sign in with Baze email<br/>or student ID")
         UC_Review("Approve or reject<br/>a registration")
         UC_Audit("Read the audit log")
@@ -76,6 +77,7 @@ flowchart LR
     Supervisor --> UC_Avail
     Supervisor --> UC_Criteria
 
+    Coordinator --> UC_AddStudent
     Coordinator --> UC_Search
     Coordinator --> UC_Download
     Coordinator --> UC_Structure
@@ -105,6 +107,7 @@ flowchart LR
     Supervisor -.->|"if granted allocation permission"| UC_Allocate
     Admin -.->|"if granted allocation permission"| UC_Allocate
 
+    Admin --> UC_AddStudent
     Admin --> UC_Review
     Admin --> UC_Audit
     Admin --> UC_Import

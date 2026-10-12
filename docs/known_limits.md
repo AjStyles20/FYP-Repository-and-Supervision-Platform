@@ -13,7 +13,7 @@ These are things the platform does **not** do yet. Each entry says what is missi
 | Limit | What happens today |
 |---|---|
 | No "corrections required" loop after a defence (R-11) | Stages only move forward: proposed → … → defended → completed |
-| No email verification at registration | An administrator approves each student registration by hand before the account can sign in |
+| No email verification when a student account is added | The coordinator or administrator adds each student in person, after checking their details; no code is sent to the Baze email (self-registration, which also had no verification, is off) |
 | Personal emails and phone numbers are not verified | Each person types their own under My details. The format is checked (a personal email cannot be a Baze address; a phone number must look like one), but no code is sent to confirm it |
 | Staff have no page that lists a running project's files | Files can be downloaded by the student and by staff of the project's department, but only the student's "My project" page lists them |
 | Milestones can't be created or edited in the app | Milestones are read-only in the app and editable in the Django admin |

@@ -71,6 +71,7 @@ TEMPLATES = [
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
                 "apps.supervision.context_processors.notifications",
+                "apps.accounts.context_processors.site_switches",
             ],
         },
     },
@@ -155,6 +156,10 @@ except re.error as error:
 
 # How long the signed link to the registration status page keeps working.
 REGISTRATION_STATUS_MAX_AGE_DAYS = int(env("REGISTRATION_STATUS_MAX_AGE_DAYS", "30"))
+
+# Student accounts are created by an administrator or the department's coordinator (D-28), so the
+# public "Create student account" page is closed unless this is switched on in .env.
+STUDENT_SELF_REGISTRATION = env("STUDENT_SELF_REGISTRATION", "False").lower() == "true"
 SITE_NAME = "Baze Project Hub"
 
 # Repository access follows D-09: signed-in Baze Project Hub accounts only.

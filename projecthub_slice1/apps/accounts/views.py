@@ -3,6 +3,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.views import LoginView, PasswordChangeView
 from django.core import signing
+from django.core.exceptions import PermissionDenied
 from django.core.mail import send_mail
 from django.db import IntegrityError, transaction
 from django.db.models import Exists, OuterRef, Q
@@ -25,7 +26,7 @@ from apps.supervision.models import NotificationKind
 from apps.supervision.services import notify
 
 from .forms import (
-    ContactDetailsForm, ProjectAuthenticationForm, StudentEditForm, StaffAccountForm, StaffEditForm, StudentRegistrationForm, active_admin_count,
+    AddStudentForm, ContactDetailsForm, ProjectAuthenticationForm, StudentEditForm, StaffAccountForm, StaffEditForm, StudentRegistrationForm, active_admin_count,
     generate_temporary_password,
 )
 from .models import STAFF_ROLES, Role, StudentProfile, SupervisorProfile, User
@@ -50,6 +51,9 @@ class ProjectLoginView(LoginView):
 def register_student(request):
     if request.user.is_authenticated:
         return redirect("dashboard")
+    if not settings.STUDENT_SELF_REGISTRATION:
+        # D-28: accounts are created by an administrator or the department's coordinator.
+        return render(request, "registration/closed.html")
 
     form = StudentRegistrationForm(request.POST or None)
     if request.method == "POST" and form.is_valid():
@@ -467,6 +471,34 @@ def add_staff_account(request):
         response["Cache-Control"] = "no-store"  # the page holds a password: keep it out of the browser cache
         return response
     return render(request, "accounts/staff_form.html", {"form": form})
+
+
+@role_required(Role.ADMIN, Role.COORDINATOR)
+def add_student_account(request):
+    """An administrator (any department) or a coordinator (own department) creates a student account.
+
+    The temporary password is shown once on the result page and never logged (D-28).
+    """
+    if request.user.role == Role.COORDINATOR and not request.user.department_id:
+        raise PermissionDenied
+    form = AddStudentForm(request.POST or None, creator=request.user)
+    if request.method == "POST" and form.is_valid():
+        student, password = form.save()
+        log_event(
+            actor=request.user, action="account.student_created",
+            summary=f"Created student account for {student.email}", obj=student,
+            details={"student_number": student.student_profile.student_number,
+                     "programme": str(student.student_profile.programme)},
+        )
+        response = render(request, "accounts/staff_created.html", {
+            "staff": student, "temporary_password": password,
+            "back_url": reverse("admin_tools") if request.user.role == Role.ADMIN else reverse("supervisor_assignments"),
+            "back_label": "Back to admin tools" if request.user.role == Role.ADMIN else "Back to student allocation",
+            "add_another_url": reverse("add_student_account"),
+        })
+        response["Cache-Control"] = "no-store"  # the page holds a password: keep it out of the browser cache
+        return response
+    return render(request, "accounts/student_form.html", {"form": form})
 
 
 @role_required(Role.ADMIN)

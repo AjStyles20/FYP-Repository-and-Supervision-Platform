@@ -17,15 +17,12 @@ From `projecthub_slice1/`, in PowerShell:
 .\.venv\Scripts\python.exe manage.py runserver
 ```
 
-1. In a private browser window, open `http://127.0.0.1:8000/register/` and register a **real** test student:
-   - Tolu Ade, `tolu.ade@bazeuniversity.edu.ng`, student ID `BU/23A/CS/5001`, programme "Computer Science BSc", status "Current final-year student".
-   - Choose any strong password.
-   - This leaves one registration waiting for step 7.
-2. Close that window and open `http://127.0.0.1:8000/` in a normal window.
+1. Nothing to prepare for step 7: `panel.admin` adds the test student live.
+2. Open `http://127.0.0.1:8000/` in a normal window.
 
 **Why two admins:** demo accounts are never written to the audit log, by design, so that test clicks don't pollute the real history. `panel.admin` is a real account, which is how step 7 can show a genuine audit entry.
 
-**Reset between rehearsals:** steps 2, 3, 5 and 7 change data. Run `purge_demo` then `seed_demo` again. In the Django admin (`/admin/`), delete the Tolu account if you registered it; it is not demo data, so `purge_demo` leaves it.
+**Reset between rehearsals:** steps 2, 3, 5 and 7 change data. Run `purge_demo` then `seed_demo` again. Tolu Ade (step 7) is a real account, so `purge_demo` leaves it: before the next rehearsal, deactivate Tolu from System administration → Student accounts, or use a different student ID and email each time.
 
 **What the seed contains:**
 - One faculty with two departments, Computer Science and Software Engineering.
@@ -134,19 +131,20 @@ From `projecthub_slice1/`, in PowerShell:
 - If search shows nothing, clear the filters and use the year filter, or open **Student Wellbeing Check-in Chatbot**, which is always archived in the seed.
 - If the download fails, say files are served only through a permission check, then show the file list on the page.
 
-## Step 7 (6:00–7:00): Administrator, `panel.admin`: approve a registration, read the audit log
+## Step 7 (6:00–7:00): Administrator, `panel.admin`: add a student, read the audit log
 
 1. Log in as `panel.admin`, the real admin from the setup.
-2. Click **System administration**. Tolu Ade's registration is pending; new students can't sign in until approved. Click **Approve**.
-3. Click **Audit log**. The newest entry is `account.registration_approve`, with who did it and when.
-4. **Say:**
+2. Click **System administration** → **Add student account**. Enter Tolu Ade, `tolu.ade@bazeuniversity.edu.ng`, student ID `BU/23A/CS/5001`, programme "Computer Science BSc", status "Current final-year student". Click **Create student account**; a temporary password is shown once.
+3. **Say:** "Students can't create their own accounts. The coordinator or the administrator adds each final-year student after checking they're ready, so only the right students get in. The student must choose their own password at first sign-in."
+4. Click **Audit log**. The newest entry is "Student account created", with who did it and when.
+5. **Say:**
    - "The audit log is admin-only and append-only: the database itself refuses UPDATE and DELETE on it.
    - Demo accounts are deliberately left out of it, which is why everything we clicked as `demo.*` isn't listed.
    - Real data replaces the demo with one command, `purge_demo`, plus a CSV import of past projects."
 
 **If it breaks:**
-- If Tolu isn't pending (setup skipped), register them now at `/register/` in a private window (20 seconds), then approve.
-- If `panel.admin` doesn't exist, use `demo.admin`. The approval works, but explain that it won't appear in the audit log because demo accounts are excluded.
+- If Tolu already exists from a rehearsal, use another ID and email (e.g. `BU/23A/CS/5002`, `tolu.ade2@bazeuniversity.edu.ng`).
+- If `panel.admin` doesn't exist, use `demo.admin`. Adding the student works, but explain that it won't appear in the audit log because demo accounts are excluded.
 
 ---
 

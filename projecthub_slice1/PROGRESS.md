@@ -9,9 +9,9 @@
 - MySQL connection (utf8mb4); SQLite for the tests, the demo and a quick tryout
 - Custom user model with roles: student, supervisor, coordinator, HOD, admin
 - Student and supervisor profiles (student number, programme, student status)
-- Student registration with Baze email and a full student ID in the Baze format (`BU/23B/IT/7892`: year, batch A-C, department code, number; `STUDENT_ID_REGEX`), pending administrator review, and approve/reject actions
+- Student accounts are added by the administrator or the department's coordinator (D-28), with Baze email and a full student ID in the Baze format (`BU/23B/IT/7892`: year, batch A-C, department code, number; `STUDENT_ID_REGEX`); active at once with a temporary password. Self-registration with administrator approval exists but is switched off (`STUDENT_SELF_REGISTRATION`)
 - Decision email to the student on approval or rejection (with the reason, if given), and an "Account approved" alert waiting at first sign-in
-- Registration status page behind a signed, expiring link that updates itself every 30 seconds (`docs/explain/registration-status.md`)
+- Registration status page behind a signed, expiring link that updates itself every 30 seconds, for when self-registration is on (`docs/explain/registration-status.md`)
 - Sign-in with Baze email or full student ID (a plain username still works for demo accounts and the server-created admin); superusers receive the application administrator role; an eye button shows or hides any password field
 - Administrator-created staff accounts with a one-time temporary password and a forced password change at first sign-in; administrators can correct a staff member's Baze email (their own too), which moves the sign-in and is audited
 - Student accounts in Admin tools: search by name, Baze email or student ID; correct name, Baze email, student ID and programme (not once a project exists); reset a forgotten password; deactivate or reactivate (never bypassing approval); all audited
@@ -55,7 +55,7 @@
 - Live counters and the lists beside them follow the viewer: a demo account counts demo and real rows, a real account real rows only
 
 ## Verification status
-- `manage.py test apps`: **268 tests pass on SQLite (`DB_ENGINE=sqlite`) and on MySQL 8.4** (2026-10-12).
+- `manage.py test apps`: **274 tests pass on SQLite (`DB_ENGINE=sqlite`) and on MySQL 8.4** (2026-10-12).
 - `apps/accounts/tests_docs.py` checks that every row of `docs/code_map.md` names a real file and name.
 - Runtime in use: Python 3.14.0, Django 5.2.18, MySQL 8.4.
 

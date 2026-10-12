@@ -5,9 +5,9 @@ This guide describes the account flow currently implemented in Django and the ac
 ## Account access
 
 1. Visitors sign in with their Baze email address; students can also use their full student ID (like `BU/23B/IT/7892`). Demo accounts and the server-created administrator also accept a plain username.
-2. Current and past final-year students can submit an account registration with a Baze email address ending in `@bazeuniversity.edu.ng`, student ID, programme, and password.
-3. Student registrations remain inactive until an administrator verifies the submitted details and approves the account.
-4. Staff and administrator accounts are provisioned separately; public registration cannot assign those roles.
+2. Students do not create their own accounts. The FYP coordinator (own department) or the administrator adds each final-year student with their Baze email, full student ID, programme and status; the account is active at once, and the student chooses their own password at first sign-in.
+3. Public self-registration is switched off; if a department switches it on, registrations wait for an administrator's approval.
+4. Staff and administrator accounts are created only by an administrator.
 5. An administrator reviews pending student registrations from **Admin tools**. Approval activates the account; rejection keeps it inactive. The administrator also fixes account mistakes: correcting a student's or staff member's name, Baze email, student ID or programme, and resetting forgotten passwords.
 6. Everyone keeps their own contact details under **My details**: a personal email and a phone number, each shown only to the audience they choose (only me (the default), staff only, or all signed-in Baze users). The Baze email cannot be changed there.
 7. Every password field has an eye button to show or hide what was typed.

@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}Add student account · Baze Project Hub{% endblock %}
+{% block back %}<p class="breadcrumb back-link"><a href="{% if user.role == 'admin' %}{% url 'admin_tools' %}#students{% else %}{% url 'supervisor_assignments' %}{% endif %}"><span aria-hidden="true">←</span> {% if user.role == 'admin' %}Admin tools{% else %}Student allocation{% endif %}</a></p>{% endblock %}
+{% block content %}
+<section class="card narrow">
+  <h1>Add student account</h1>
+  <p class="muted">For a final-year student{% if user.role == "coordinator" %} of {{ user.department.name }}{% endif %} you have checked in person. The account is active straight away; a temporary password is shown once, and the student must choose their own at first sign-in.</p>
+  <form method="post" class="stack-form">
+    {% csrf_token %}
+    {{ form.non_field_errors }}
+    {% for field in form %}
+      <div class="form-row">
+        {{ field.label_tag }}{{ field }}
+        {% if field.help_text %}<small class="muted">{{ field.help_text }}</small>{% endif %}
+        {% for error in field.errors %}<p class="error">{{ error }}</p>{% endfor %}
+      </div>
+    {% endfor %}
+    <button type="submit" class="primary">Create student account</button>
+  </form>
+</section>
+{% endblock %}

@@ -19,6 +19,7 @@ ACTION_LABELS = {
     "account.staff_deactivated": "Staff account deactivated",
     "account.staff_reactivated": "Staff account reactivated",
     "account.staff_updated": "Staff account updated",
+    "account.student_created": "Student account created",
     "account.student_deactivated": "Student account deactivated",
     "account.student_reactivated": "Student account reactivated",
     "account.student_updated": "Student account updated",

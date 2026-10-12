@@ -39,6 +39,7 @@
       {% elif user.role == 'coordinator' %}
         {% if user.can_assign_supervisors %}<a href="{% url 'supervisor_assignments' %}">Student allocation</a>{% endif %}
         <a href="{% url 'approvals' %}">Approval register</a>
+        <a href="{% url 'add_student_account' %}">Add student</a>
         <a href="{% url 'supervision' %}">Supervised students</a>
         <a href="{% url 'announcements' %}">Notices</a>
         <a href="{% url 'academic_structure' %}">Academic structure</a>
@@ -58,7 +59,7 @@
       <form method="post" action="{% url 'logout' %}" class="inline-form">{% csrf_token %}<button type="submit" class="btn btn-sm">Log out</button></form>
     {% else %}
       <a href="{% url 'login' %}">Log in</a>
-      <a href="{% url 'register_student' %}">Create student account</a>
+      {% if self_registration_open %}<a href="{% url 'register_student' %}">Create student account</a>{% endif %}
     {% endif %}
   </nav>
   </div>

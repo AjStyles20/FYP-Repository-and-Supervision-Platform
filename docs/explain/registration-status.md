@@ -1,5 +1,7 @@
 # Registration status page
 
+> **Applies only when self-registration is switched on** (`STUDENT_SELF_REGISTRATION=True` in `.env`). It is off by default: students are added by their coordinator or the administrator (D-28), so they never wait for approval.
+
 After a student registers, they land on a page that shows whether their registration is **waiting for review**, **approved** or **not approved**, and it updates itself when the administrator decides. It is opened by a signed link, not by typing an email address, so it cannot be used to find out who has registered.
 
 Code: `registration_status`, `registration_status_token` and `_registration_for_token` in `projecthub_slice1/apps/accounts/views.py`. Tests: `RegistrationStatusPageTests` in `projecthub_slice1/apps/accounts/tests.py`.

@@ -62,12 +62,11 @@ To try that staff workflow locally, sign in as `demo.coordinator` with password 
 
 ## Account access
 
-- Current and past final-year students can submit a registration using a `@bazeuniversity.edu.ng` email, their full student ID (for example `BU/23B/IT/7892`: Baze University, year 23, batch B, department IT, number 7892), programme, and password.
+- **Students do not create their own accounts.** The department's FYP coordinator (for their own department) or the administrator adds each final-year student under **Add student**: name, `@bazeuniversity.edu.ng` email, full student ID (for example `BU/23B/IT/7892`: Baze University, year 23, batch B, department IT, number 7892), programme and status. The account is active at once; a temporary password is shown once, and the student chooses their own at first sign-in. This keeps accounts to students the department has checked are ready for their FYP.
 - Everyone signs in with their Baze email; students can also use their full student ID. The short number alone (`7892`) is not accepted, because another year or department can have the same number.
-- New student accounts stay inactive until an administrator reviews the registration.
-- The student is emailed at their Baze address when the registration is approved or rejected (with the reason, if the administrator gives one). Signing in with the right password before then shows whether the registration is still pending or was not approved.
+- Self-registration still exists but is **off** (`STUDENT_SELF_REGISTRATION=False`). If a department switches it on in `.env`, registrations wait for an administrator's approval, the student is emailed the decision, and a status page shows the outcome.
 - Email settings live in `projecthub_slice1/.env` (see `.env.example`). Without them, emails are printed in the server terminal instead of being sent, which is fine for development; at launch, add the SMTP details from Baze ICT.
-- Staff and administrator access is not self-registerable; accounts must be provisioned by an administrator.
+- Staff and administrator accounts are created only by an administrator.
 - Create the initial administrator with `python manage.py createsuperuser`. The account is assigned the administrator role automatically. If its password is forgotten, reset it with `python manage.py changepassword <username>`.
 - The administrator adds supervisor, coordinator, HOD and further administrator accounts in **System administration → Add staff account**. A temporary password is shown once; the person must choose their own at first sign-in. The same page per staff member edits name, Baze email, role and department, resets the password, and deactivates or reactivates the account. Correcting the Baze email (for example a typo, or the demo address `admin@bazeuniversity.edu.ng`) moves the sign-in to the new address, is audited, and sends a notice to it.
 - Assignment access is a separate staff permission, not a job title: tick **Can assign supervisors in their department** on the staff account. A supervisor or HOD may supervise projects and can be delegated the allocation responsibility independently.

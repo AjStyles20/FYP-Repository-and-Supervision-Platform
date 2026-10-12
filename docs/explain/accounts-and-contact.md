@@ -26,7 +26,7 @@ Paths are relative to `projecthub_slice1/`.
 
 ## Flow
 
-1. **Registering:** the student types their full ID, for example `bu/23b/it/7892`. It is upper-cased to `BU/23B/IT/7892`, checked against `STUDENT_ID_REGEX`, and refused if another account has it.
+1. **Adding a student:** the coordinator (own department) or the administrator enters the student's details under **Add student** (`add_student_account`). The full ID, for example `bu/23b/it/7892`, is upper-cased to `BU/23B/IT/7892`, checked against `STUDENT_ID_REGEX`, and refused if another student has it. The account is active at once; the student signs in with a temporary password and chooses their own. Students cannot create accounts themselves (D-28).
 2. **Signing in:** the sign-in box accepts the Baze email or the full student ID, in any case. The short number `7892` alone is refused, because another year or department can have the same number. A plain username still works underneath, for the demo accounts and the administrator created on the server.
 3. **My details:** anyone signed in opens **My details**, sees their Baze email (fixed) and edits their personal email, phone number, and who can see each one.
 4. **Showing details:** on a project page, `contact_for` returns only the details the viewer may see: everything to the owner, "staff only" details to supervisors, coordinators, HODs and administrators, "all signed-in Baze users" details to anyone signed in. Hidden details are never sent to the page.
@@ -44,7 +44,7 @@ Paths are relative to `projecthub_slice1/`.
 
 ## Self-test
 
-1. A student types `bu/23b/it/7892` when registering. What is stored, and why is it accepted?
+1. A coordinator types `bu/23b/it/7892` when adding a student. What is stored, and why is it accepted?
 2. Why can a student not sign in with just `7892`?
 3. A student sets their phone to "Staff only". Who sees it on their project page?
 4. Why does the system ask for a personal email when every student already has a Baze email?
@@ -53,7 +53,7 @@ Paths are relative to `projecthub_slice1/`.
 <details>
 <summary>Answers</summary>
 
-1. `BU/23B/IT/7892`. `clean_student_number` upper-cases the input before checking it against `STUDENT_ID_REGEX`, so the case the student types does not matter.
+1. `BU/23B/IT/7892`. `checked_student_id` upper-cases the input before checking it against `STUDENT_ID_REGEX`, so the case typed does not matter.
 2. The number can repeat in another year or department, so it could match the wrong student. Only the full ID is unique.
 3. The student themself, and supervisors, coordinators, HODs and administrators. Other students and alumni do not (`User.contact_for`).
 4. The Baze email may close after graduation. A personal email keeps alumni reachable for collaboration and information.

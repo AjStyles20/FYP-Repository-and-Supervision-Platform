@@ -13,7 +13,7 @@
     <input type="hidden" name="next" value="{{ next }}">
     <button type="submit" class="btn btn-primary">Log in</button>
   </form>
-  <p>New student or past final-year student? <a href="{% url 'register_student' %}">Create an account</a>.</p>
+  {% if self_registration_open %}<p>New student or past final-year student? <a href="{% url 'register_student' %}">Create an account</a>.</p>{% else %}<p class="muted">No account yet? Student accounts are created by your department's FYP coordinator or the system administrator. Bring your Baze email and full student ID.</p>{% endif %}
   <p class="muted">Supervisor and lecturer accounts are provided by an administrator; contact your department if you need access.</p>
   {% if show_demo_credentials %}
     <p class="muted"><strong>Local development account:</strong> demo.amina / ChangeMe123!</p>

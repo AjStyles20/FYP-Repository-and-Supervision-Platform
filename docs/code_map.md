@@ -19,7 +19,10 @@
 | How long and how random a temporary password is | `apps/accounts/forms.py` | `def generate_temporary_password` |
 | The forced password change at first sign-in | `apps/accounts/middleware.py` | `class ForcePasswordChangeMiddleware` |
 | The HOD appointing the FYP coordinator and allocators | `apps/accounts/views.py` | `def department_staff` |
-| The student sign-up form | `apps/accounts/forms.py` | `class StudentRegistrationForm` |
+| Adding a student account (who may, which programmes, temporary password) | `apps/accounts/views.py` | `def add_student_account` |
+| The add-student form and its checks | `apps/accounts/forms.py` | `class AddStudentForm` |
+| Switching public self-registration on or off | `config/settings.py` | `STUDENT_SELF_REGISTRATION` |
+| The student sign-up form (used only when self-registration is on) | `apps/accounts/forms.py` | `class StudentRegistrationForm` |
 | The accepted student ID format and its error message | `config/settings.py` | `STUDENT_ID_REGEX` |
 | Approving or rejecting a registration | `apps/accounts/views.py` | `def review_student_registration` |
 | The approval and rejection email text | `apps/accounts/views.py` | `def _email_registration_decision` |

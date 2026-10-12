@@ -36,7 +36,7 @@ Read order for a new developer or AI agent: `overview.md` → `product-blueprint
 
 - **Language/stack:** Python and HTML, built as a **web app**. **MySQL** database, designed in **MySQL Workbench** (reported as an HOD requirement; confirm).
 - **No novelty requirement** from the school. A contribution still has to be explained at the defence.
-- **No imported student roster or project records.** The school will not release student data to other students. Students submit their own account details; an administrator reviews student IDs before activating accounts. Development fixtures are synthetic, and old students' FYPs are not collected.
+- **No imported student roster or project records.** The school will not release student data to other students. Student accounts are created by the department's FYP coordinator or the administrator, who checks the student is ready for their FYP (D-28). Development fixtures are synthetic, and old students' FYPs are not collected.
 - **Only the HOD signs off and archives** a project into the past-projects repository.
 - **Approval varies by supervisor.** There is no single fixed rule.
 

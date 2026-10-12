@@ -209,6 +209,62 @@ def checked_student_id(value, profile=None):
     return student_number
 
 
+class AddStudentForm(forms.Form):
+    """An administrator or coordinator creates a student account (D-28).
+
+    Same checks as registration (Baze email, Baze student ID format, both unique). The account is
+    approved and active at once, because the person creating it is the check; the student signs in
+    with a temporary password and must choose their own. A coordinator may only choose programmes
+    of their own department.
+    """
+
+    STUDENT_STATUS_CHOICES = (
+        (StudentProfile.Status.CURRENT, "Current final-year student"),
+        (StudentProfile.Status.FYP_COMPLETED, "Past final-year student (FYP completed)"),
+    )
+
+    first_name = forms.CharField(max_length=150, label="First name")
+    last_name = forms.CharField(max_length=150, label="Last name")
+    email = forms.EmailField(label="Baze email address", help_text="Also their sign-in.")
+    student_number = forms.CharField(max_length=30, label="Student ID", help_text="The full ID, like BU/23B/IT/7892.")
+    programme = forms.ModelChoiceField(queryset=Programme.objects.none(), empty_label="Select a programme", label="Programme")
+    student_status = forms.ChoiceField(choices=STUDENT_STATUS_CHOICES, label="Student status")
+
+    def __init__(self, *args, creator, **kwargs):
+        super().__init__(*args, **kwargs)
+        programmes = Programme.objects.select_related("department")
+        if creator.role != Role.ADMIN:
+            programmes = programmes.filter(department_id=creator.department_id) if creator.department_id else programmes.none()
+        self.fields["programme"].queryset = programmes
+
+    def clean_email(self):
+        email = self.cleaned_data["email"].strip().lower()
+        if not email.endswith(BAZE_EMAIL_DOMAIN):
+            raise ValidationError(f"Use a Baze email address ending in {BAZE_EMAIL_DOMAIN}.")
+        if User.objects.filter(email__iexact=email).exists() or User.objects.filter(username__iexact=email).exists():
+            raise ValidationError("An account already exists with this email address.")
+        return email
+
+    def clean_student_number(self):
+        return checked_student_id(self.cleaned_data["student_number"])
+
+    @transaction.atomic
+    def save(self):
+        """Create the account. Returns (user, temporary_password); the password is not stored anywhere else."""
+        password = generate_temporary_password()
+        data = self.cleaned_data
+        user = User.objects.create_user(
+            username=data["email"], email=data["email"], password=password,
+            first_name=data["first_name"], last_name=data["last_name"], role=Role.STUDENT,
+            department=data["programme"].department, must_change_password=True,
+        )
+        StudentProfile.objects.create(
+            user=user, student_number=data["student_number"], programme=data["programme"],
+            student_status=data["student_status"], registration_status=StudentProfile.RegistrationStatus.APPROVED,
+        )
+        return user, password
+
+
 class StudentEditForm(forms.Form):
     """Admin-only: correct a student's name, Baze email (sign-in), student ID and programme.
 
