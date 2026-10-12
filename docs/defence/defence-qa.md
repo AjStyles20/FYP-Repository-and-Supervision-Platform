@@ -251,10 +251,10 @@ Guards: `apps/audit/models.py`, `apps/projects/models/project.py`, `apps/project
 
 **Show it:** as the administrator, System administration → Student accounts → search "Amina" → correct a detail → open the Audit log.
 
-### 26. Why is there more than one administrator in the staff list?
+### 26. Why are there two administrators in the staff list?
 
-**Say:** "There is one administrator account per person. An earlier setup account was deactivated, not deleted, so its history stays in the audit log. The system never allows zero administrators: it refuses to deactivate or demote the last active one, and you can't deactivate or demote yourself. In production, Baze ICT would hold the administrator accounts, not the developer."
+**Say:** "It's deliberate: one is the account I use every day, the other is a backup. The system never allows zero administrators: it refuses to deactivate or demote the last active one, and nobody can deactivate or demote themselves. A second administrator means that if the main account is locked out or its password is lost, someone can still get in and fix it. The backup has its own long password and is used rarely, and everything either account does is recorded in the audit log under its name. In production, Baze ICT would hold these accounts, not the developer."
 
-**How it works:** `manage_staff_account` in `apps/accounts/views.py` refuses to deactivate your own account or the last active administrator (`active_admin_count` in `apps/accounts/forms.py`); `StaffEditForm` refuses the same for a role change. Deactivating keeps every record; it only stops sign-in. Accounts made with `createsuperuser` also get full access to the Django admin, for maintaining the system (Q4, Q16).
+**How it works:** `manage_staff_account` in `apps/accounts/views.py` refuses to deactivate your own account or the last active administrator (`active_admin_count` in `apps/accounts/forms.py`); `StaffEditForm` refuses the same for a role change. Both accounts were made with `createsuperuser`, so both also have full access to the Django admin for maintaining the system (Q4, Q16).
 
-**Show it:** System administration → staff list: one active administrator, the old setup account marked Inactive; the Audit log shows "Staff account deactivated" with who did it and when.
+**Show it:** System administration → staff list: the two administrators; open your own account and note there is no "Deactivate" button for yourself; the Audit log shows each action under the account that made it.
