@@ -42,6 +42,7 @@ Update this file whenever a decision is made or an open question is answered. Ne
 | D-31 | **Alerts are also emailed:** every in-app alert is emailed once to the recipient's Baze email, after it is saved; never to demo accounts; switchable with `EMAIL_ALERTS`. A mail failure never loses the alert | User decided 2026-10-12 |
 | D-32 | **Meeting booking:** a student requests a meeting in one of their supervisor's weekly availability windows; the supervisor accepts (the meeting is scheduled for the window's start, for the longest standard length that fits) or declines with a reason. Times that clash with a scheduled meeting cannot be requested or accepted. Both sides are alerted | User decided 2026-10-12; completes R-21 |
 | D-33 | **Deadlines and milestones:** the coordinator sets faculty-wide deadlines, which become a milestone on every running project of the faculty (and on projects started later); changing a deadline changes those milestones; removing it removes the ones not yet done. The supervisor adds extra milestones per student and marks any milestone done. Students get a reminder three days before a due date | User decided 2026-10-12 |
+| D-34 | **Project list export (CSV)** for the coordinator (their faculty), the HOD (their department) and the administrator (all): running projects with student, ID, programme, department, supervisor, stage, milestone progress and, where the viewer may see it, the health band. Formula-safe cells; audited | User decided 2026-10-12 |
 
 ## B. Proposed (not yet confirmed)
 

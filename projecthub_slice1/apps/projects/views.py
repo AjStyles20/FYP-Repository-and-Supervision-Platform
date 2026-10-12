@@ -675,6 +675,49 @@ def _csv_safe(value):
     return "'" + text if text[:1] in ("=", "+", "-", "@") else text
 
 
+PROJECT_EXPORT_COLUMNS = ("Project title", "Student name", "Student ID", "Programme", "Department", "Supervisor",
+                          "Stage", "Health", "Milestones done", "Overdue milestones", "Started on")
+
+
+@role_required(Role.COORDINATOR, Role.HOD, Role.ADMIN)
+def export_projects(request):
+    """The running projects in the viewer's scope as a CSV: a coordinator's faculty, an HOD's department,
+    every project for an administrator. Health is filled only where the viewer may see it."""
+    projects = Project.objects.filter(archived=False).select_related(
+        "student__student_profile", "programme", "department", "supervisor"
+    ).prefetch_related(*HEALTH_PREFETCH).order_by("department__name", "student__last_name", "student__first_name")
+    if request.user.role == Role.COORDINATOR:
+        projects = projects.filter(department__in=allocation_departments(request.user))
+    elif request.user.role == Role.HOD:
+        projects = projects.filter(department_id=request.user.department_id) if request.user.department_id else projects.none()
+    today = timezone.localdate()
+    response = HttpResponse(content_type="text/csv; charset=utf-8")
+    response["Content-Disposition"] = f'attachment; filename="projects-{today:%Y-%m-%d}.csv"'
+    response.write("\ufeff")  # lets Excel open the UTF-8 file with names intact
+    import csv
+
+    writer = csv.writer(response)
+    writer.writerow(PROJECT_EXPORT_COLUMNS)
+    count = 0
+    for project in projects:
+        profile = getattr(project.student, "student_profile", None)
+        health = health_score(project) if can_see_health(request.user, project) else None
+        milestones = list(project.milestones.all())
+        writer.writerow([_csv_safe(value) for value in (
+            project.title, project.student.get_full_name() or project.student.username,
+            profile.student_number if profile else "", project.programme, project.department.name,
+            project.supervisor.get_full_name() if project.supervisor else "Not assigned", project.get_stage_display(),
+            f"{health.band_label} ({health.score})" if health else "",
+            f"{sum(m.done for m in milestones)} of {len(milestones)}",
+            sum(1 for m in milestones if not m.done and m.due_date and m.due_date < today),
+            timezone.localtime(project.created_at).date().isoformat(),
+        )])
+        count += 1
+    log_event(actor=request.user, action="projects.exported", summary=f"Downloaded the project list ({count} projects)",
+              details={"projects": count})
+    return response
+
+
 @role_required(Role.HOD)
 def convocation_list(request):
     """Students whose project the HOD has signed off: the list the HOD used to write by hand."""

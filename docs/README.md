@@ -12,6 +12,7 @@ New here? Read [`overview.md`](overview.md) first, then [`code_map.md`](code_map
 | [`code_map.md`](code_map.md) | "To change X, open file Y, look for Z" (checked by `apps/accounts/tests_docs.py`) |
 | [`walkthrough.md`](walkthrough.md) | Current account flow and project workflow, as implemented |
 | [`known_limits.md`](known_limits.md) | What the system does not do yet, stated plainly |
+| [`feature-comparison.md`](feature-comparison.md) | The features an FYP management system is expected to have, and which are built here |
 
 ## Planning and decisions
 

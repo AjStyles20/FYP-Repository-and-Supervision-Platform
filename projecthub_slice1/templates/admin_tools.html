@@ -9,6 +9,7 @@
     <li><a href="{% url 'add_staff_account' %}">Add staff account</a> <span class="muted">· supervisors, coordinators, HODs and administrators</span></li>
     <li><a href="{% url 'manage_structure' %}">Academic structure</a> <span class="muted">· faculties, departments and programmes</span></li>
     <li><a href="{% url 'import_projects' %}">Import past projects from CSV</a> <span class="muted">· historic project summaries, checked row by row</span></li>
+    <li><a href="{% url 'export_projects' %}">Download project list (CSV)</a> <span class="muted">· every running project with its supervisor, stage and milestones</span></li>
     <li><a href="{% url 'audit_log' %}">Audit log</a> <span class="muted">· account and workflow events, read-only</span></li>
     {% if user.is_staff %}<li><a href="{% url 'admin:index' %}">Django administration</a> <span class="muted">· workflow records are view-only there</span></li>{% endif %}
   </ul>

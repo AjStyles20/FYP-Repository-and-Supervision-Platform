@@ -37,6 +37,7 @@ ACTION_LABELS = {
     "notice.published": "Notice published",
     "project.approval_logged": "Approval form logged",
     "project.archived": "Project signed off and archived",
+    "projects.exported": "Project list downloaded",
     "project.created": "Project record created",
     "project.document_uploaded": "Project file uploaded",
     "project.media_added": "Screenshot or video added",

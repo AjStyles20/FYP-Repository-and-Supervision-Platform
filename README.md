@@ -54,6 +54,8 @@ Open <http://127.0.0.1:8000/> in a browser.
 
 For local testing, sign in as `demo.amina` with password `ChangeMe123!`. The Amina demo account can also sign in with `amina@bazeuniversity.edu.ng` or student ID `BU/22A/CS/4012`. Open **Repository** to see synthetic current and past project records. Demo accounts and projects are clearly labelled test fixtures, not real university accounts or project submissions.
 
+**Project list download:** coordinators (their faculty), HODs (their department) and administrators (everything) can download the running projects as a CSV: title, student, student ID, programme, department, supervisor, stage, milestones done and overdue, and the health band where the viewer may see it. Cells cannot turn into spreadsheet formulas, and each download is audited.
+
 **Deadlines and milestones:** the coordinator sets common deadlines for the faculty under **Deadlines** (e.g. "Chapter 1" due 15 March). Each one becomes a milestone on every running project of the faculty, and on projects started later. On a project's **Milestones** page the supervisor adds extra milestones for that student and marks any milestone done; the student, the coordinator and the HOD can read it. Students are reminded three days before a due date (alert and email), and overdue milestones raise the project's health score.
 
 **Meetings:** supervisors publish weekly availability windows. On **Supervision meetings**, a student requests a meeting in one of those windows (a date on that day and an optional note); the supervisor accepts it, which schedules the meeting, or declines with a reason. Both are alerted, by email too. A time that already has a meeting cannot be requested.

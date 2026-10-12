@@ -15,6 +15,7 @@ urlpatterns = [
     path("repository/past/<int:project_id>/media/", views.add_archived_media, name="add_archived_media"),
     path("media/<int:media_id>/", views.project_media_file, name="project_media_file"),
     path("deadlines/", views.faculty_deadlines, name="faculty_deadlines"),
+    path("export/projects.csv", views.export_projects, name="export_projects"),
     path("<int:project_id>/milestones/", views.project_milestones, name="project_milestones"),
     path("media/<int:media_id>/remove/", views.remove_project_media, name="remove_project_media"),
     path("workflow/<int:project_id>/", views.project_workflow, name="project_workflow"),

@@ -47,6 +47,7 @@
 | Which students wait for a supervisor, and the least-busy-first order | `apps/projects/views.py` | `waiting_students` |
 | The "(N active)" labels and the reason required to change a supervisor | `apps/projects/forms.py` | `class SupervisorAssignmentForm` |
 | The HOD's convocation list and its CSV columns | `apps/projects/views.py` | `CONVOCATION_COLUMNS` |
+| The project list download, its columns and who gets which projects | `apps/projects/views.py` | `PROJECT_EXPORT_COLUMNS` |
 
 ## Similar topics and health score
 

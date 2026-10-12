@@ -31,7 +31,7 @@
 
 <section class="grid-2">
   <div class="stack">
-    <div class="section-title"><div><p class="eyebrow">Department queue</p><h2>Projects needing a next step</h2></div><a href="{% url 'approvals' %}">See all approvals</a></div>
+    <div class="section-title"><div><p class="eyebrow">Department queue</p><h2>Projects needing a next step</h2></div><span><a href="{% url 'approvals' %}">See all approvals</a> · <a href="{% url 'export_projects' %}">Download project list (CSV)</a></span></div>
     {% for project in queue_projects %}
       <article class="directory-item"><div class="directory-main"><span class="tag tag-quiet">{{ project.get_stage_display }}</span><h3><a href="{% url 'project_workflow' project.pk %}">{{ project.title }}</a></h3><p class="muted">{{ project.student.get_full_name|default:project.student.username }} · {{ project.programme.award }}</p></div><div class="directory-counts"><span class="count-label">Supervisor</span><strong>{{ project.supervisor.get_full_name|default:"Unassigned" }}</strong></div></article>
     {% empty %}

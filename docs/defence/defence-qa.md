@@ -286,3 +286,9 @@ Guards: `apps/audit/models.py`, `apps/projects/models/project.py`, `apps/project
 **Say:** "The coordinator sets them once for the whole faculty, and every running project gets them as milestones, including projects started later. The supervisor can add extra milestones for one student and marks each one done when it's handed in. Three days before a due date the student gets a reminder, by alert and email, and anything overdue raises the project's health score, so the coordinator sees who is falling behind."
 
 **How it works:** `ProjectDeadline` and `ProjectMilestone` (`apps/projects/models/milestone.py`); `create_deadline`, `update_deadline`, `remove_deadline` and `apply_faculty_deadlines` in `apps/projects/services/milestones.py`; the pages `faculty_deadlines` and `project_milestones` in `apps/projects/views.py`; the reminder is `flag_deadlines_soon` in `apps/supervision/automation.py`. Tests: `apps/projects/tests_milestones.py`. Decision D-33.
+
+### 31. Can the department get a list of all projects?
+
+**Say:** "Yes, as a spreadsheet. The coordinator downloads the faculty's running projects, the HOD the department's, and the administrator everything: student, ID, programme, supervisor, stage and milestone progress, plus the health band for those allowed to see it. A cell can't turn into a spreadsheet formula, and each download is in the audit log."
+
+**How it works:** `export_projects` in `apps/projects/views.py`, with the same `_csv_safe` guard as the convocation list. Tests: `apps/projects/tests_export.py`. Decision D-34. The full feature comparison with other FYP systems is in `docs/feature-comparison.md`.
