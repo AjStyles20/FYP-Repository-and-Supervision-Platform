@@ -250,3 +250,11 @@ Guards: `apps/audit/models.py`, `apps/projects/models/project.py`, `apps/project
 **How it works:** `manage_staff_account` and `manage_student_account` in `apps/accounts/views.py`, with `StaffEditForm` and `StudentEditForm` in `apps/accounts/forms.py`; the checks are shared (`corrected_baze_email`, `checked_student_id`). Two limits protect the workflow: reactivating an account never bypasses registration approval, and a student's programme can't change once they have a project, because the project belongs to that programme's department. Tests: `apps/accounts/tests_student_admin.py` and `ManageStaffAccountTests`. Decisions D-25 and D-26.
 
 **Show it:** as the administrator, System administration → Student accounts → search "Amina" → correct a detail → open the Audit log.
+
+### 26. Why is there more than one administrator in the staff list?
+
+**Say:** "There is one administrator account per person. An earlier setup account was deactivated, not deleted, so its history stays in the audit log. The system never allows zero administrators: it refuses to deactivate or demote the last active one, and you can't deactivate or demote yourself. In production, Baze ICT would hold the administrator accounts, not the developer."
+
+**How it works:** `manage_staff_account` in `apps/accounts/views.py` refuses to deactivate your own account or the last active administrator (`active_admin_count` in `apps/accounts/forms.py`); `StaffEditForm` refuses the same for a role change. Deactivating keeps every record; it only stops sign-in. Accounts made with `createsuperuser` also get full access to the Django admin, for maintaining the system (Q4, Q16).
+
+**Show it:** System administration → staff list: one active administrator, the old setup account marked Inactive; the Audit log shows "Staff account deactivated" with who did it and when.
