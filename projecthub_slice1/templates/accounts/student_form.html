@@ -4,7 +4,6 @@
 {% block content %}
 <section class="card narrow">
   <h1>Add student account</h1>
-  <p class="muted">For a final-year student{% if user.role == "coordinator" %} of {{ user.department.name }}{% endif %} you have checked in person. The account is active straight away; a temporary password is shown once, and the student must choose their own at first sign-in.</p>
   <form method="post" class="stack-form">
     {% csrf_token %}
     {{ form.non_field_errors }}
@@ -15,6 +14,7 @@
         {% for error in field.errors %}<p class="error">{{ error }}</p>{% endfor %}
       </div>
     {% endfor %}
+    {% if not form.fields.programme.queryset.exists %}<p class="form-note">No programmes are set up for {% if user.role == "admin" %}any faculty{% else %}your faculty{% endif %} yet. The administrator adds them under Academic structure.</p>{% endif %}
     <button type="submit" class="primary">Create student account</button>
   </form>
 </section>

@@ -17,9 +17,11 @@ class StudentAllocationTests(TestCase):
     def setUpTestData(cls):
         faculty = Faculty.objects.create(name="Allocation Faculty")
         cls.department = Department.objects.create(faculty=faculty, name="Computer Science")
-        other = Department.objects.create(faculty=faculty, name="Cyber Security")
+        cls.cyber = Department.objects.create(faculty=faculty, name="Cyber Security")
+        law = Department.objects.create(faculty=Faculty.objects.create(name="Faculty of Law"), name="Private Law")
         cls.programme = Programme.objects.create(department=cls.department, name="Computer Science", degree_type="BSc")
-        other_programme = Programme.objects.create(department=other, name="Cyber Security", degree_type="BSc")
+        cls.cyber_programme = Programme.objects.create(department=cls.cyber, name="Cyber Security", degree_type="BSc")
+        other_programme = Programme.objects.create(department=law, name="Law", degree_type="LLB")
         cls.coordinator = User.objects.create(username="coord", first_name="Babatunde", last_name="Jimoh",
                                               role=Role.COORDINATOR, department=cls.department, can_assign_supervisors=True)
         cls.julius = User.objects.create(username="julius", first_name="Julius", last_name="Makinde",
@@ -93,7 +95,32 @@ class StudentAllocationTests(TestCase):
         self.assertEqual(self.busy_project.supervisor_assignments.get(ended_at__isnull=True).change_reason,
                          "Student asked: wants a supervisor in AI")
 
-    def test_students_outside_the_department_cannot_be_allocated(self):
+    def test_a_coordinator_works_across_the_faculty_whatever_their_own_field(self):
+        cyber_coordinator = User.objects.create(username="cyber.coord", role=Role.COORDINATOR, department=self.cyber,
+                                                can_assign_supervisors=True)
+        cyber_student = User.objects.create(username="kemi", role=Role.STUDENT)
+        StudentProfile.objects.create(user=cyber_student, student_number="BU/23A/CY/2001", programme=self.cyber_programme)
+        self.client.force_login(cyber_coordinator)
+        page = self.client.get(reverse("supervisor_assignments"))
+        self.assertEqual({row["student"] for row in page.context["student_rows"]}, {self.ada, self.tolu, cyber_student})
+        self.assertIn(self.busy_project, [row["project"] for row in page.context["rows"]])
+
+        # A Computer Science supervisor for a Cyber Security student, and a change on a CS project.
+        self.client.post(reverse("supervisor_assignments"), {"student_id": cyber_student.pk, "supervisor": self.esther.pk})
+        self.assertEqual(Project.objects.get(student=cyber_student).supervisor, self.esther)
+        self.client.post(reverse("supervisor_assignments"), {"project_id": self.busy_project.pk, "supervisor": cyber_coordinator.pk,
+                                                             "reason": "Student asked the coordinator to supervise"})
+        self.busy_project.refresh_from_db()
+        self.assertEqual(self.busy_project.supervisor, cyber_coordinator)
+
+    def test_a_delegated_hod_stays_within_their_department(self):
+        hod = User.objects.create(username="cyber.hod", role=Role.HOD, department=self.cyber, can_assign_supervisors=True)
+        self.client.force_login(hod)
+        page = self.client.get(reverse("supervisor_assignments"))
+        self.assertEqual(list(page.context["student_rows"]), [])
+        self.assertEqual(list(page.context["rows"]), [])
+
+    def test_students_outside_the_faculty_cannot_be_allocated(self):
         response = self.client.post(reverse("supervisor_assignments"), {"student_id": self.elsewhere.pk, "supervisor": self.esther.pk})
         self.assertEqual(response.status_code, 404)
         self.assertFalse(Project.objects.filter(student=self.elsewhere).exists())

@@ -79,7 +79,7 @@ From `projecthub_slice1/`, in PowerShell:
 3. Enter a note (e.g. "Filed in the register"), keep today's date, then click **Save workflow step**. The stage changes to **Approved by the department**.
 4. Click **Student allocation**. Find **Lecture Attendance with QR Codes** (Musa Garba, "Unassigned").
 5. Choose **K. Danjuma**, give the reason "Topic fits Mr Danjuma", then click **Save assignment**. The card shows the new supervisor and the change is kept in the history.
-6. **Say:** "A coordinator only sees their own department. The system enforces one current supervisor per project in the database, on MySQL as well."
+6. **Say:** "A coordinator works across their faculty; a supervisor or HOD given allocation rights stays within their department. The system enforces one current supervisor per project in the database, on MySQL as well."
 
 **If it breaks:**
 - If Kemi isn't listed, use **Accessibility Checker for Course Pages**. It is in Software Engineering, so log in as `demo.se.coordinator`.

@@ -10,6 +10,7 @@ from django.utils import timezone
 
 from apps.audit.services import log_event
 from apps.accounts.models import Role
+from apps.academics.models import Department
 
 from ..models import Project, ProjectStage, ProjectStatusEvent, ProjectSupervisorAssignment
 
@@ -20,21 +21,35 @@ TOPIC_TO_BE_AGREED = "Topic to be agreed"
 SUPERVISOR_ROLES = (Role.SUPERVISOR, Role.COORDINATOR, Role.HOD)
 
 
-def can_supervise_in(user, department_id, *, require_active=True):
-    """The supervisor rule: academic staff (supervisor, coordinator or HOD) of the project's department.
+def can_supervise_in(user, department_id, *, require_active=True, faculty_wide=False):
+    """The supervisor rule: academic staff (supervisor, coordinator or HOD) of the project's department,
+    or of its faculty when a coordinator allocates (`faculty_wide`, D-29).
 
     The CSV importer passes require_active=False, because a historic project may name someone who
     has since left; assigning a running project always needs an active account.
     """
-    return (
-        user.role in SUPERVISOR_ROLES
-        and user.department_id == department_id
-        and (user.is_active or not require_active)
-    )
+    if user.role not in SUPERVISOR_ROLES or not (user.is_active or not require_active):
+        return False
+    if user.department_id == department_id:
+        return True
+    return faculty_wide and Department.objects.filter(
+        pk=department_id, faculty__departments__pk=user.department_id
+    ).exists()
+
+
+def allocation_departments(user):
+    """The departments `user` allocates in (D-29): a coordinator works across their whole faculty,
+    whatever their own teaching field; anyone else given the allocation permission (a supervisor or
+    HOD), their own department."""
+    if not user.department_id:
+        return Department.objects.none()
+    if user.role == Role.COORDINATOR:
+        return Department.objects.filter(faculty_id=user.department.faculty_id)
+    return Department.objects.filter(pk=user.department_id)
 
 
 @transaction.atomic
-def allocate_student(student, supervisor, assigned_by, change_reason=""):
+def allocate_student(student, supervisor, assigned_by, change_reason="", *, faculty_wide=False):
     """The coordinator allocates a supervisor to a student who has no project yet.
 
     Creates the student's project record (stage Proposed, title "Topic to be agreed") and assigns
@@ -51,18 +66,20 @@ def allocate_student(student, supervisor, assigned_by, change_reason=""):
         note="Project record created by the coordinator when allocating a supervisor.",
     )
     log_event(actor=assigned_by, action="project.created", summary=f"Project record created for {student} at allocation", obj=project)
-    assign_project_supervisor(project.pk, supervisor, assigned_by, change_reason)
+    assign_project_supervisor(project.pk, supervisor, assigned_by, change_reason, faculty_wide=faculty_wide)
     return project
 
 
 @transaction.atomic
-def assign_project_supervisor(project_id, supervisor, assigned_by, change_reason=""):
+def assign_project_supervisor(project_id, supervisor, assigned_by, change_reason="", *, faculty_wide=False):
     """Point `project_id` at `supervisor`, recording the change. Returns (project, assignment, changed)."""
     project = Project.objects.select_for_update().get(pk=project_id)
     if project.archived:
         raise ValidationError("Archived projects cannot be reassigned.")
-    if not can_supervise_in(supervisor, project.department_id):
-        raise ValidationError("Choose an active academic staff member from the project's department.")
+    if not can_supervise_in(supervisor, project.department_id, faculty_wide=faculty_wide):
+        raise ValidationError(
+            f"Choose an active academic staff member from the project's {'faculty' if faculty_wide else 'department'}."
+        )
 
     now = timezone.now()
     current_assignment = (

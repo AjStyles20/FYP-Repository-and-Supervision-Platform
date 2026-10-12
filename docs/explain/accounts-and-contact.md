@@ -26,7 +26,7 @@ Paths are relative to `projecthub_slice1/`.
 
 ## Flow
 
-1. **Adding a student:** the coordinator (own department) or the administrator enters the student's details under **Add student** (`add_student_account`). The full ID, for example `bu/23b/it/7892`, is upper-cased to `BU/23B/IT/7892`, checked against `STUDENT_ID_REGEX`, and refused if another student has it. The account is active at once; the student signs in with a temporary password and chooses their own. Students cannot create accounts themselves (D-28).
+1. **Adding a student:** the coordinator (any programme of their faculty) or the administrator enters the student's details under **Add student** (`add_student_account`). The full ID, for example `bu/23b/it/7892`, is upper-cased to `BU/23B/IT/7892`, checked against `STUDENT_ID_REGEX`, and refused if another student has it. The account is active at once; the student signs in with a temporary password and chooses their own. Students cannot create accounts themselves (D-28).
 2. **Signing in:** the sign-in box accepts the Baze email or the full student ID, in any case. The short number `7892` alone is refused, because another year or department can have the same number. A plain username still works underneath, for the demo accounts and the administrator created on the server.
 3. **My details:** anyone signed in opens **My details**, sees their Baze email (fixed) and edits their personal email, phone number, and who can see each one.
 4. **Showing details:** on a project page, `contact_for` returns only the details the viewer may see: everything to the owner, "staff only" details to supervisors, coordinators, HODs and administrators, "all signed-in Baze users" details to anyone signed in. Hidden details are never sent to the page.

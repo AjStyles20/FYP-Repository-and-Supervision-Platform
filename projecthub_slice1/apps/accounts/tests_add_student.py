@@ -20,8 +20,10 @@ class AddStudentAccountTests(TestCase):
         cls.cyber = Department.objects.create(faculty=faculty, name="Cyber Security")
         cls.cs_programme = Programme.objects.create(department=cls.cs, name="Computer Science", degree_type="BSc")
         cls.cyber_programme = Programme.objects.create(department=cls.cyber, name="Cyber Security", degree_type="BSc")
+        law = Department.objects.create(faculty=Faculty.objects.create(name="Faculty of Law"), name="Private Law")
+        cls.law_programme = Programme.objects.create(department=law, name="Law", degree_type="LLB")
         cls.admin = User.objects.create(username="admin.user", role=Role.ADMIN)
-        cls.coordinator = User.objects.create(username="coord", role=Role.COORDINATOR, department=cls.cs, can_assign_supervisors=True)
+        cls.coordinator = User.objects.create(username="coord", role=Role.COORDINATOR, department=cls.cyber, can_assign_supervisors=True)
         cls.supervisor = User.objects.create(username="sup", role=Role.SUPERVISOR, department=cls.cs)
         cls.hod = User.objects.create(username="hod", role=Role.HOD, department=cls.cs)
 
@@ -62,12 +64,12 @@ class AddStudentAccountTests(TestCase):
         self.client.post(reverse("login"), {"username": "BU/23A/CS/5001", "password": temporary})
         self.assertRedirects(self.client.get(reverse("dashboard")), reverse("password_change"))
 
-    def test_a_coordinator_adds_students_of_their_own_department_only(self):
-        self.client.force_login(self.coordinator)
-        choices = list(self.client.get(reverse("add_student_account")).context["form"].fields["programme"].queryset)
-        self.assertEqual(choices, [self.cs_programme])
+    def test_a_coordinator_adds_students_across_their_faculty_only(self):
+        self.client.force_login(self.coordinator)  # a Cyber Security lecturer coordinating the faculty
+        choices = set(self.client.get(reverse("add_student_account")).context["form"].fields["programme"].queryset)
+        self.assertEqual(choices, {self.cs_programme, self.cyber_programme})
 
-        refused = self.add(self.coordinator, programme=self.cyber_programme.pk)
+        refused = self.add(self.coordinator, programme=self.law_programme.pk)
         self.assertContains(refused, "Select a valid choice")
         self.add(self.coordinator)
         student = User.objects.get(email="tolu.ade@bazeuniversity.edu.ng")

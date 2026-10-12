@@ -29,7 +29,7 @@
   <div class="results-heading">
     <div>
       <h2>Students waiting for a supervisor</h2>
-      <p class="muted">Approved current students of your department with no project yet. Choosing a supervisor creates their project record ("Topic to be agreed"); their proposal sets the real title later. Supervisors are listed least busy first.</p>
+      <p class="muted">Approved current students with no project yet. Choosing a supervisor creates their project record ("Topic to be agreed"); their proposal sets the real title later. Supervisors are listed least busy first.</p>
     </div>
     <span class="result-count">{{ student_rows|length }} student{{ student_rows|length|pluralize }}</span>
   </div>
@@ -59,7 +59,7 @@
   {% empty %}
     <div class="card empty-state">
       <h3>No students are waiting for a supervisor</h3>
-      <p class="muted">Approved current students of your department appear here until they have a supervisor.</p>
+      <p class="muted">Approved current students appear here until they have a supervisor.</p>
     </div>
   {% endfor %}
 </section>
@@ -68,7 +68,7 @@
   <div class="results-heading">
     <div>
       <h2>Active projects</h2>
-      <p class="muted">Project records are scoped to your department.</p>
+      <p class="muted">{% if user.role == 'coordinator' %}Projects across your faculty.{% else %}Projects of your department.{% endif %}</p>
     </div>
     <span class="result-count">{{ rows|length }} project{{ rows|length|pluralize }}</span>
   </div>

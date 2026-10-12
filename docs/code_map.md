@@ -43,6 +43,7 @@
 | Which action each role sees on the workflow page | `apps/projects/views.py` | `def project_workflow` |
 | Assigning or changing a project's supervisor | `apps/projects/services/assignment.py` | `def assign_project_supervisor` |
 | Allocating a supervisor to a student who has no project yet | `apps/projects/services/assignment.py` | `def allocate_student` |
+| Who allocates where (a coordinator: their faculty; others: their department) | `apps/projects/services/assignment.py` | `def allocation_departments` |
 | Which students wait for a supervisor, and the least-busy-first order | `apps/projects/views.py` | `waiting_students` |
 | The "(N active)" labels and the reason required to change a supervisor | `apps/projects/forms.py` | `class SupervisorAssignmentForm` |
 | The HOD's convocation list and its CSV columns | `apps/projects/views.py` | `CONVOCATION_COLUMNS` |

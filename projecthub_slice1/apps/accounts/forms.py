@@ -214,8 +214,8 @@ class AddStudentForm(forms.Form):
 
     Same checks as registration (Baze email, Baze student ID format, both unique). The account is
     approved and active at once, because the person creating it is the check; the student signs in
-    with a temporary password and must choose their own. A coordinator may only choose programmes
-    of their own department.
+    with a temporary password and must choose their own. A coordinator may choose any programme of
+    their faculty (D-29).
     """
 
     STUDENT_STATUS_CHOICES = (
@@ -232,9 +232,11 @@ class AddStudentForm(forms.Form):
 
     def __init__(self, *args, creator, **kwargs):
         super().__init__(*args, **kwargs)
-        programmes = Programme.objects.select_related("department")
+        programmes = Programme.objects.select_related("department").order_by("department__name", "name", "degree_type")
         if creator.role != Role.ADMIN:
-            programmes = programmes.filter(department_id=creator.department_id) if creator.department_id else programmes.none()
+            # A coordinator adds students across their whole faculty (D-29).
+            from apps.projects.services.assignment import allocation_departments
+            programmes = programmes.filter(department__in=allocation_departments(creator))
         self.fields["programme"].queryset = programmes
 
     def clean_email(self):

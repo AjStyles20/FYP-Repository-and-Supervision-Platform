@@ -31,7 +31,7 @@ There are no transitions other than these (VERIFIED: `TRANSITION_ROLES` has five
 
 | Use case | Roles (view guard) | View |
 |---|---|---|
-| Add a student account | admin; coordinator (own department) | `accounts/views.py` `add_student_account` |
+| Add a student account | admin; coordinator (any programme of their faculty) | `accounts/views.py` `add_student_account` |
 | Register (off unless `STUDENT_SELF_REGISTRATION` is on) | visitor | `accounts/views.py` `register_student` |
 | Sign in | anyone | `ProjectLoginView` + `ProjectAuthenticationForm` |
 | Approve or reject a registration, audit log | admin | `review_student_registration`, `audit_log` (`role_required(ADMIN)`) |
@@ -44,7 +44,7 @@ There are no transitions other than these (VERIFIED: `TRANSITION_ROLES` has five
 | Log the approval form, record the defence | coordinator of the department | `project_workflow` (coordinator branches) |
 | Sign off and archive | HOD of the department | `project_workflow` (HOD branch) |
 | Status history and approval decisions | own student, assigned supervisor, coordinator or HOD of the department, admin | `project_workflow` access checks, `templates/projects/workflow.html` |
-| Assign a supervisor | any staff role with `can_assign_supervisors`, own department | `supervisor_assignments` |
+| Assign a supervisor | coordinator: their faculty; other staff with `can_assign_supervisors`: their department | `supervisor_assignments` |
 | Add or remove an unassigned student | role supervisor only | `supervision` (`can_manage_roster`) |
 | Schedule and edit meetings | the assigned supervisor of any supervising role | `project_meetings`, `edit_meeting` (`_meeting_editor`) |
 | Read meeting records | own student, assigned supervisor, coordinator or HOD of the department (R-33). **Not** admin | `_project_access` |

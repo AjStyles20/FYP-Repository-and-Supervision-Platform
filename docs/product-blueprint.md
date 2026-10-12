@@ -26,7 +26,7 @@ The system is not a public internet repository. Project discovery is available t
 ### Public entry (unauthenticated)
 
 - **Sign in:** Baze email, or a student's full student ID (like `BU/23B/IT/7892`).
-- **Student accounts:** added by the FYP coordinator (own department) or the administrator, with Baze email, student ID, programme/award and status; the student sets their own password at first sign-in (D-28). Public self-registration is off.
+- **Student accounts:** added by the FYP coordinator (any programme of their faculty) or the administrator, with Baze email, student ID, programme/award and status; the student sets their own password at first sign-in (D-28). Public self-registration is off.
 - Staff and administrator accounts are created or provisioned by an administrator, never selected through public registration.
 
 ### Authenticated application
