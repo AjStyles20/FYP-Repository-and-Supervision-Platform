@@ -252,6 +252,15 @@ class Command(BaseCommand):
             self._health_story()
         self._replace_external_demo_links()
         self._demo_media()
+        # Building the story submits proposals, which alerts supervisors; the ones they already decided
+        # are old news, so only the proposals still waiting stay unread.
+        from apps.projects.models import ProjectApprovalForm
+        from apps.supervision.models import Notification, NotificationKind
+        decided = ProjectApprovalForm.objects.filter(project__is_demo=True, supervisor_signed_on__isnull=False)
+        Notification.objects.filter(
+            kind=NotificationKind.PROPOSAL_SUBMITTED, recipient__is_demo=True, read_at__isnull=True,
+            object_id__in=[str(pk) for pk in decided.values_list("pk", flat=True)],
+        ).update(read_at=timezone.now())
 
         self.stdout.write(self.style.SUCCESS(f"Demo data ready ({built} new projects)."))
         self.stdout.write(f"Log in as any demo.* user. Password: {opts['password']}")

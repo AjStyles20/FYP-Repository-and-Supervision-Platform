@@ -18,7 +18,12 @@
       {% csrf_token %}
       {% for field in form %}<div class="form-row">{{ field.label_tag }}{{ field }}{% if field.help_text %}<small class="muted">{{ field.help_text }}</small>{% endif %}{% if field.errors %}<small class="error">{{ field.errors|join:", " }}</small>{% endif %}</div>{% endfor %}
       {% if form.non_field_errors %}<p class="error">{{ form.non_field_errors|join:", " }}</p>{% endif %}
-      <button class="button" type="submit">Save workflow step</button>
+      {% if is_proposal_form %}
+        <p class="muted">Save a draft as often as you like; your supervisor sees the proposal only after you submit it. You can still edit it until they decide.</p>
+        <div class="actions"><button class="button" type="submit" name="action" value="submit">Submit to supervisor</button><button type="submit" name="action" value="draft" formnovalidate>Save draft</button></div>
+      {% else %}
+        <button class="button" type="submit">Save workflow step</button>
+      {% endif %}
     </form>
   {% else %}
     <p>No action is available for your account at this stage.</p>

@@ -18,6 +18,7 @@ class NotificationKind(models.TextChoices):
     MEETING_REQUESTED = "meeting_requested", "Meeting requested"
     MEETING_REQUEST_DECIDED = "meeting_request_decided", "Meeting request answered"
     DEADLINE_SOON = "deadline_soon", "Deadline coming up"
+    PROPOSAL_SUBMITTED = "proposal_submitted", "Proposal submitted"
 
 
 class Notification(models.Model):

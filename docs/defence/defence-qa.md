@@ -292,3 +292,9 @@ Guards: `apps/audit/models.py`, `apps/projects/models/project.py`, `apps/project
 **Say:** "Yes, as a spreadsheet. The coordinator downloads the faculty's running projects, the HOD the department's, and the administrator everything: student, ID, programme, supervisor, stage and milestone progress, plus the health band for those allowed to see it. A cell can't turn into a spreadsheet formula, and each download is in the audit log."
 
 **How it works:** `export_projects` in `apps/projects/views.py`, with the same `_csv_safe` guard as the convocation list. Tests: `apps/projects/tests_export.py`. Decision D-34. The full feature comparison with other FYP systems is in `docs/feature-comparison.md`.
+
+### 32. Isn't the proposal form a lot for students, and can they change it later?
+
+**Say:** "Each student sees only what their own supervisor asks for: everyone gives a title, problem, objectives and methodology; a literature review and research gap appear only for supervisors who require them, and demonstration evidence only for supervisors who want a working project. They can save a draft as often as they like, where the supervisor can't see it, and submit when ready, which alerts the supervisor. The form always reopens with what they saved, and they can keep editing until the supervisor decides. Once it's accepted it's locked, because the accepted topic is the official record."
+
+**How it works:** `ProjectProposalForm` (`apps/projects/forms.py`) drops fields the supervisor's method doesn't need; `save_proposal_draft` and `submit_proposal` in `apps/projects/services/approval.py`; a proposal without a student date is a draft, and `record_supervisor_decision` refuses to decide on it. Tests: `apps/projects/tests_proposal.py`. Decision D-36.

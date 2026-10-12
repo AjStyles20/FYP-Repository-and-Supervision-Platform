@@ -271,7 +271,7 @@ def _supervisor_portal_context(user):
         "department": user.department,
         "projects": projects[:8],
         "active_count": projects.count(),
-        "proposal_count": projects.filter(stage=ProjectStage.PROPOSED).count(),
+        "proposal_count": projects.filter(stage=ProjectStage.PROPOSED, approval_form__student_signed_on__isnull=False).count(),
         "approved_count": projects.filter(stage__in=(ProjectStage.APPROVED, ProjectStage.IN_PROGRESS, ProjectStage.SUBMITTED, ProjectStage.DEFENDED)).count(),
         "defended_count": projects.filter(stage=ProjectStage.DEFENDED).count(),
         "upcoming_meetings": upcoming_meetings,

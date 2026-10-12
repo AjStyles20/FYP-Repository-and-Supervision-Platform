@@ -38,6 +38,8 @@
 | What happens when a stage changes (event, dates, audit) | `apps/projects/services/lifecycle.py` | `def record_transition` |
 | HOD sign-off, archiving and graduation | `apps/projects/services/lifecycle.py` | `def sign_off_completion` |
 | What a student's proposal must contain | `apps/projects/services/approval.py` | `def submit_proposal` |
+| Saving a proposal as a draft (not yet with the supervisor) | `apps/projects/services/approval.py` | `def save_proposal_draft` |
+| Which proposal fields a student sees (by the supervisor's method) | `apps/projects/forms.py` | `class ProjectProposalForm` |
 | The supervisor's accept or decline step | `apps/projects/services/approval.py` | `def record_supervisor_decision` |
 | The coordinator logging the signed approval form | `apps/projects/services/approval.py` | `def log_approved_form` |
 | Which action each role sees on the workflow page | `apps/projects/views.py` | `def project_workflow` |

@@ -30,6 +30,7 @@
 - Similar-topic checker: archived projects whose topics score above `SIMILARITY_THRESHOLD` are listed (`docs/explain/similarity.md`)
 
 ### Project workflow and supervision
+- The proposal shows only the fields the supervisor's method needs, can be saved as a draft, opens with what was saved, and stays editable until the supervisor decides (D-36)
 - Student project creation and a role-checked proposal-to-HOD-archive workflow, with per-supervisor approval criteria, decision snapshots and status history
 - Students upload proposal and final report files; the project cannot be submitted until a final report is present
 - Screenshots (up to 6) and demo videos (up to 2, upload or YouTube/Drive/Vimeo link) on running and archived projects, content-checked and permission-served; they move to the archive at sign-off (D-30)
@@ -60,7 +61,7 @@
 - Live counters and the lists beside them follow the viewer: a demo account counts demo and real rows, a real account real rows only
 
 ## Verification status
-- `manage.py test apps`: **306 tests pass on SQLite (`DB_ENGINE=sqlite`) and on MySQL 8.4** (2026-10-12).
+- `manage.py test apps`: **311 tests pass on SQLite (`DB_ENGINE=sqlite`) and on MySQL 8.4** (2026-10-12).
 - `apps/accounts/tests_docs.py` checks that every row of `docs/code_map.md` names a real file and name.
 - Runtime in use: Python 3.14.0, Django 5.2.18, MySQL 8.4.
 

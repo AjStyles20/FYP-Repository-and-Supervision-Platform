@@ -12,6 +12,8 @@ project's history shows who did what and when.
 
 from django.core.exceptions import ValidationError
 from django.db import transaction
+from django.urls import reverse
+from django.utils import timezone
 
 from apps.audit.services import log_event
 from apps.accounts.models import Role
@@ -28,10 +30,37 @@ APPROVING_DECISIONS = (SupervisorDecision.ACCEPTED, SupervisorDecision.ACCEPTED_
 
 
 @transaction.atomic
+def save_proposal_draft(project, *, proposed_title, problem_statement="", objectives="", methodology="",
+                        tools_and_technologies="", literature_review="", research_gap="",
+                        working_project_demonstration=""):
+    """Keep unfinished work. A draft is not with the supervisor (no student date), so they cannot
+    decide on it; a supervisor's earlier comments stay visible while the student revises."""
+    if hasattr(project, "approval_form") and project.approval_form.is_logged:
+        raise ValidationError("This topic has already been approved and logged; start a new record to change it.")
+    if project.stage != ProjectStage.PROPOSED:
+        raise ValidationError("A proposal can only be edited while the project is at the proposal stage.")
+    form, _ = ProjectApprovalForm.objects.update_or_create(project=project, defaults={
+        "proposed_title": proposed_title, "problem_statement": problem_statement, "objectives": objectives,
+        "methodology": methodology, "tools_and_technologies": tools_and_technologies,
+        "literature_review": literature_review, "research_gap": research_gap,
+        "working_project_demonstration": working_project_demonstration,
+        "student_name_on_form": project.student.get_full_name() or project.student.username,
+        "student_signed_on": None,
+    })
+    if project.title != proposed_title:
+        project.title = proposed_title
+        project.save(update_fields=["title", "updated_at"])
+    return form
+
+
 def submit_proposal(project, *, proposed_title, problem_statement, objectives, methodology,
                     tools_and_technologies, literature_review="", research_gap="",
                     working_project_demonstration="", student_name_on_form="", signed_on=None):
-    """Step 1. Record the student's proposal and keep the project title in step with it."""
+    """Step 1. Record the student's proposal and keep the project title in step with it.
+
+    Submitting dates the form (today unless given), which puts it with the supervisor, who is alerted."""
+    signed_on = signed_on or timezone.localdate()
+    student_name_on_form = student_name_on_form or project.student.get_full_name() or project.student.username
     if hasattr(project, "approval_form") and project.approval_form.is_logged:
         raise ValidationError("This topic has already been approved and logged; start a new record to change it.")
     if project.stage != ProjectStage.PROPOSED:
@@ -69,6 +98,13 @@ def submit_proposal(project, *, proposed_title, problem_statement, objectives, m
         project.title = proposed_title
         project.save(update_fields=["title", "updated_at"])
     log_event(actor=project.student, action="project.proposed", summary=f"Proposal submitted for {project.title}", obj=project)
+    if project.supervisor_id:
+        from apps.supervision.models import NotificationKind
+        from apps.supervision.services import notify
+        notify(project.supervisor, NotificationKind.PROPOSAL_SUBMITTED, form,
+               title=f"Proposal to review: {project.title}",
+               body=f"{project.student.get_full_name() or project.student.username} submitted their proposal for your decision.",
+               url=reverse("project_workflow", args=[project.pk]))
     return form
 
 
@@ -80,6 +116,8 @@ def record_supervisor_decision(project, *, supervisor, decision, comments, name_
     if project.stage != ProjectStage.PROPOSED:
         raise ValidationError("The supervisor decision has already been recorded.")
     form = _open_form(project)
+    if not form.student_signed_on:
+        raise ValidationError("The student has not submitted the proposal yet; it is still a draft.")
     if form.is_supervisor_signed:
         raise ValidationError("The student must update and resubmit the proposal before another decision.")
     profile = getattr(supervisor, "supervisor_profile", None)

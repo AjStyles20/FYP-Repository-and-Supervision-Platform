@@ -78,16 +78,35 @@ class SupervisorProjectEditForm(forms.ModelForm):
 
 
 class ProjectProposalForm(forms.Form):
+    """The student's proposal. Only the fields their supervisor's approval method needs are shown,
+    and a draft needs only the title; submitting needs every shown field except the tools."""
+
     proposed_title = forms.CharField(max_length=255, label="Project title")
-    problem_statement = forms.CharField(widget=forms.Textarea)
-    objectives = forms.CharField(widget=forms.Textarea)
-    methodology = forms.CharField(widget=forms.Textarea)
-    tools_and_technologies = forms.CharField(max_length=255, required=False)
-    literature_review = forms.CharField(required=False, widget=forms.Textarea)
-    research_gap = forms.CharField(required=False, widget=forms.Textarea)
-    working_project_demonstration = forms.CharField(required=False, widget=forms.Textarea, label="Working project or demonstration evidence")
-    student_name_on_form = forms.CharField(max_length=150, required=False)
-    signed_on = forms.DateField(required=False, initial=timezone.localdate, widget=forms.DateInput(attrs={"type": "date"}))
+    problem_statement = forms.CharField(widget=forms.Textarea(attrs={"rows": 4}), label="Problem statement",
+                                        help_text="The problem your project solves, and for whom.")
+    objectives = forms.CharField(widget=forms.Textarea(attrs={"rows": 4}), label="Objectives",
+                                 help_text="What the project will achieve, as a short list.")
+    methodology = forms.CharField(widget=forms.Textarea(attrs={"rows": 4}), label="Methodology",
+                                  help_text="How you will do it: research method, design and development approach.")
+    tools_and_technologies = forms.CharField(max_length=255, required=False, label="Tools and technologies (optional)",
+                                             help_text="For example Python, Django, MySQL.")
+    literature_review = forms.CharField(widget=forms.Textarea(attrs={"rows": 6}), label="Literature review",
+                                        help_text="Your supervisor asks for this before deciding.")
+    research_gap = forms.CharField(widget=forms.Textarea(attrs={"rows": 3}), label="Research gap",
+                                   help_text="What existing work does not cover, which your project will.")
+    working_project_demonstration = forms.CharField(widget=forms.Textarea(attrs={"rows": 4}),
+                                                    label="Working project or demonstration evidence",
+                                                    help_text="Your supervisor asks for this before deciding, e.g. a prototype link.")
+
+    def __init__(self, *args, method="topic_only", draft=False, **kwargs):
+        super().__init__(*args, **kwargs)
+        if method != "literature_review":
+            del self.fields["literature_review"], self.fields["research_gap"]
+        if method != "working_project":
+            del self.fields["working_project_demonstration"]
+        if draft:
+            for name, field in self.fields.items():
+                field.required = name == "proposed_title"
 
 
 class ProjectStartForm(forms.Form):

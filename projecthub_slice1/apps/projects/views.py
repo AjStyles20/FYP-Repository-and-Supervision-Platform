@@ -20,7 +20,7 @@ from .forms import (
     DeadlineForm, MilestoneForm, ProjectMediaForm, SupervisorAssignmentForm, SupervisorDecisionForm, SupervisorProjectEditForm, UnassignedSuperviseeForm,
 )
 from .models import (
-    ArchivedProject, Project, ProjectCompletion, ProjectDeadline, ProjectDocument, ProjectMedia, ProjectMilestone, ProjectStage,
+    ArchivedProject, Project, ProjectApprovalForm, ProjectCompletion, ProjectDeadline, ProjectDocument, ProjectMedia, ProjectMilestone, ProjectStage,
     ProjectStatusEvent,
 )
 from .imports import import_archived_projects
@@ -29,7 +29,7 @@ from .services.similarity import similar_archived_projects, similarity_threshold
 from .services.assignment import allocation_departments
 from .services.milestones import apply_faculty_deadlines, create_deadline, remove_deadline, update_deadline
 from .services import (
-    allocate_student, assign_project_supervisor, unassign_project_supervisor, log_approved_form, record_supervisor_decision,
+    save_proposal_draft, allocate_student, assign_project_supervisor, unassign_project_supervisor, log_approved_form, record_supervisor_decision,
     record_transition, sign_off_completion, submit_proposal, available_years,
     current_projects as repository_current_projects,
     faculties_with_structure, local_year, past_projects as repository_past_projects, read_filters,
@@ -464,20 +464,21 @@ def project_workflow(request, project_id):
     form = None
     try:
         if user.role == Role.STUDENT and stage == ProjectStage.PROPOSED:
-            form = ProjectProposalForm(request.POST or None)
+            # The fields follow what the supervisor will check now; the form opens with what was saved.
+            profile = getattr(project.supervisor, "supervisor_profile", None) if project.supervisor_id else None
+            required_method = profile.approval_method if profile else "topic_only"
+            saved = ProjectApprovalForm.objects.filter(project=project).first()
+            initial = {name: getattr(saved, name) for name in ProjectProposalForm.base_fields} if saved else {"proposed_title": project.title}
+            is_draft = action == "draft"
+            form = ProjectProposalForm(request.POST or None, initial=initial, method=required_method, draft=is_draft)
             if request.method == "POST" and form.is_valid():
-                submit_proposal(
-                    project,
-                    proposed_title=form.cleaned_data["proposed_title"],
-                    problem_statement=form.cleaned_data["problem_statement"],
-                    objectives=form.cleaned_data["objectives"],
-                    methodology=form.cleaned_data["methodology"],
-                    tools_and_technologies=form.cleaned_data["tools_and_technologies"],
-                    student_name_on_form=user.get_full_name() or user.username,
-                    signed_on=form.cleaned_data["signed_on"],
-                )
-                messages.success(request, "Proposal saved for your supervisor to review.")
-                _warn_about_similar_topics(request, project)
+                if is_draft:
+                    save_proposal_draft(project, **form.cleaned_data)
+                    messages.success(request, "Draft saved. Your supervisor sees it only after you submit it.")
+                else:
+                    submit_proposal(project, **form.cleaned_data)
+                    messages.success(request, "Proposal submitted. Your supervisor has been alerted. You can still edit it until they decide.")
+                    _warn_about_similar_topics(request, project)
                 return redirect("project_workflow", project_id=project.pk)
         elif user.role in (Role.SUPERVISOR, Role.COORDINATOR, Role.HOD) and project.supervisor_id == user.pk and stage == ProjectStage.PROPOSED:
             form = SupervisorDecisionForm(request.POST or None)
@@ -531,6 +532,7 @@ def project_workflow(request, project_id):
     return render(request, "projects/workflow.html", {
         "project": project,
         "form": form,
+        "is_proposal_form": isinstance(form, ProjectProposalForm),
         "approval_method": approval_method,
         "approval_criteria": approval_criteria,
         "health": health_score(project) if can_see_health(user, project) else None,
