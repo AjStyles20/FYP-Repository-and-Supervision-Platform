@@ -41,12 +41,6 @@ class ProjectLoginView(LoginView):
     authentication_form = ProjectAuthenticationForm
     template_name = "registration/login.html"
 
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        # Only advertise the demo account where it exists (the demo database, not the real one).
-        context["show_demo_credentials"] = settings.DEBUG and User.objects.filter(username="demo.amina", is_demo=True).exists()
-        return context
-
 
 def register_student(request):
     if request.user.is_authenticated:

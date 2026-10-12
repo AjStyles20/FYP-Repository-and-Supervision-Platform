@@ -1331,20 +1331,16 @@ class StudentIdFormatTests(TestCase):
         self.assertEqual(self._register("ab1234").status_code, 302)
 
 
+@override_settings(MEDIA_ROOT=TEST_MEDIA)
 class DemoCredentialHintTests(TestCase):
-    """Item 5: the login page names the demo account only when DEBUG is True (and the account exists)."""
-
-    @classmethod
-    def setUpTestData(cls):
-        User.objects.create(username="demo.amina", role=Role.STUDENT, is_demo=True)
-
-    @override_settings(DEBUG=False)
-    def test_hidden_when_debug_is_off_even_with_demo_data(self):
-        self.assertNotContains(self.client.get(reverse("login")), "demo.amina")
+    """The sign-in page never shows a demo account or password, even on a development demo."""
 
     @override_settings(DEBUG=True)
-    def test_shown_on_a_debug_demo(self):
-        self.assertContains(self.client.get(reverse("login")), "demo.amina / ChangeMe123!")
+    def test_no_demo_credentials_on_the_sign_in_page(self):
+        run("seed_demo")
+        page = self.client.get(reverse("login"))
+        self.assertNotContains(page, "ChangeMe123!")
+        self.assertNotContains(page, "demo.amina")
 
 
 class PasswordToggleTests(TestCase):
