@@ -8,7 +8,7 @@ This guide describes the account flow currently implemented in Django and the ac
 2. Current and past final-year students can submit an account registration with a Baze email address ending in `@bazeuniversity.edu.ng`, student ID, programme, and password.
 3. Student registrations remain inactive until an administrator verifies the submitted details and approves the account.
 4. Staff and administrator accounts are provisioned separately; public registration cannot assign those roles.
-5. An administrator reviews pending student registrations from **Admin tools**. Approval activates the account; rejection keeps it inactive.
+5. An administrator reviews pending student registrations from **Admin tools**. Approval activates the account; rejection keeps it inactive. The administrator also fixes account mistakes: correcting a student's or staff member's name, Baze email, student ID or programme, and resetting forgotten passwords.
 6. Everyone keeps their own contact details under **My details**: a personal email and a phone number, each shown only to the audience they choose (only me (the default), staff only, or all signed-in Baze users). The Baze email cannot be changed there.
 7. Every password field has an eye button to show or hide what was typed.
 8. The local `seed_demo` command creates clearly marked development accounts (a "Sample" tag, `is_demo`). They are test fixtures and must not be treated as university users.

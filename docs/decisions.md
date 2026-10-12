@@ -34,6 +34,7 @@ Update this file whenever a decision is made or an open question is answered. Ne
 | D-23 | **CSV import of past projects is all or nothing:** if any row is wrong, nothing is saved and every wrong row is listed. Supervisors and previous supervisors must be academic staff of the project's department (no active check for historic records). Rows about demo students are imported as demo data | User decided 2026-10-10 |
 | D-24 | The author is the system administrator for development and the demonstration | User stated 2026-10-11 |
 | D-25 | An administrator can **correct a staff member's Baze email**, including their own, on the staff account page. It must be a Baze address no other account uses; the sign-in moves to the new address, the change is audited (old and new address) and a notice is sent to the new address | User decided 2026-10-12, after the demo admin email could not be changed |
+| D-26 | **Fixing account mistakes is the administrator's job.** For students as for staff, an administrator can find the account, correct the name, Baze email (sign-in), student ID and programme, reset a forgotten password and deactivate or reactivate it; every change is audited. Two limits protect the workflow: reactivation never bypasses registration approval, and the programme cannot change once the student has a project. Personal email and phone stay with their owner (My details); graduation stays with the HOD (D-15) | User decided 2026-10-12 |
 
 ## B. Proposed (not yet confirmed)
 

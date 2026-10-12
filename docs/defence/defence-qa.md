@@ -242,3 +242,11 @@ Guards: `apps/audit/models.py`, `apps/projects/models/project.py`, `apps/project
 **How it works:** `import_archived_projects` in `apps/projects/imports.py` runs in one transaction with a savepoint per row, so even a database error becomes a row error rather than a crash. `can_supervise_in` in `apps/projects/services/assignment.py` is the shared supervisor rule. Tests: `apps/projects/tests_import.py`. Decision D-23.
 
 **Show it:** as the administrator, Admin tools → Import past projects from CSV, with `docs/sample_import.csv` after `seed_demo`.
+
+### 25. A student or staff member entered the wrong details and can't change them. What does the administrator do?
+
+**Say:** "They fix it; that's what the administrator is for. From System administration the admin opens the person, staff from the staff list and students by searching their name, email or student ID, and corrects the name, the Baze email, the student ID or the programme, or resets a forgotten password. The sign-in moves with a corrected email, the person gets a notice at the new address, and every change goes into the audit log. People still change their own personal email and phone themselves under My details."
+
+**How it works:** `manage_staff_account` and `manage_student_account` in `apps/accounts/views.py`, with `StaffEditForm` and `StudentEditForm` in `apps/accounts/forms.py`; the checks are shared (`corrected_baze_email`, `checked_student_id`). Two limits protect the workflow: reactivating an account never bypasses registration approval, and a student's programme can't change once they have a project, because the project belongs to that programme's department. Tests: `apps/accounts/tests_student_admin.py` and `ManageStaffAccountTests`. Decisions D-25 and D-26.
+
+**Show it:** as the administrator, System administration → Student accounts → search "Amina" → correct a detail → open the Audit log.

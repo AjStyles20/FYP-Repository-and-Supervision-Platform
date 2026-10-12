@@ -22,7 +22,7 @@
         <tbody>
           {% for student in pending_students %}
             <tr>
-              <td data-label="Student">{{ student.get_full_name|default:student.username }}</td>
+              <td data-label="Student"><a href="{% url 'manage_student_account' student.pk %}">{{ student.get_full_name|default:student.username }}</a></td>
               <td data-label="Baze email">{{ student.email }}</td>
               <td data-label="Student ID">{{ student.student_profile.student_number }}</td>
               <td data-label="Programme">{{ student.student_profile.programme }}</td>
@@ -42,6 +42,37 @@
     </div>
   {% else %}
     <p class="muted">There are no student accounts awaiting approval.</p>
+  {% endif %}
+</section>
+<section class="card" id="students">
+  <h2>Student accounts</h2>
+  <p class="muted">Find a student to correct their details (name, Baze email, student ID, programme), reset a forgotten password, or deactivate or reactivate their account.</p>
+  <form method="get" action="{% url 'admin_tools' %}#students" class="stack-form" role="search">
+    <label for="student-search">Name, Baze email or student ID</label>
+    <input type="search" id="student-search" name="q" value="{{ student_query }}" placeholder="e.g. Amina, amina@bazeuniversity.edu.ng or BU/22A/CS/4012">
+    <button type="submit">Find student</button>
+  </form>
+  {% if student_query %}
+    {% if found_students %}
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Student</th><th>Baze email</th><th>Student ID</th><th>Programme</th><th>Status</th></tr></thead>
+          <tbody>
+            {% for student in found_students %}
+              <tr>
+                <td data-label="Student"><a href="{% url 'manage_student_account' student.pk %}">{{ student.get_full_name|default:student.username }}</a>{% if student.is_demo %} <span class="tag tag-quiet">Sample</span>{% endif %}</td>
+                <td data-label="Baze email">{{ student.email|default:"—" }}</td>
+                <td data-label="Student ID">{{ student.student_profile.student_number|default:"—" }}</td>
+                <td data-label="Programme">{{ student.student_profile.programme|default:"—" }}</td>
+                <td data-label="Status">{% if student.student_profile.registration_status == "pending" %}Waiting for approval{% elif student.student_profile.registration_status == "rejected" %}Not approved{% elif student.is_active %}Active{% else %}Inactive{% endif %}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <p class="muted">No student matches “{{ student_query }}”.</p>
+    {% endif %}
   {% endif %}
 </section>
 <section class="card">

@@ -167,6 +167,107 @@ def generate_temporary_password():
     return secrets.token_urlsafe(TEMPORARY_PASSWORD_BYTES)
 
 
+def corrected_baze_email(value, account):
+    """An administrator's correction of `account`'s Baze email: a Baze address no other account uses."""
+    email = (value or "").strip().lower()
+    if not email:
+        if account.email:
+            raise ValidationError("Enter their Baze email address; it is how they sign in.")
+        return ""
+    if not email.endswith(BAZE_EMAIL_DOMAIN):
+        raise ValidationError(f"Use a Baze email address ending in {BAZE_EMAIL_DOMAIN}.")
+    others = User.objects.exclude(pk=account.pk)
+    if others.filter(email__iexact=email).exists() or others.filter(username__iexact=email).exists():
+        raise ValidationError("Another account already uses this email address.")
+    return email
+
+
+def move_sign_in_email(account, email, changes):
+    """Apply a corrected Baze email and record it in `changes`. The sign-in moves to the new address.
+
+    Accounts created in the app use their email as the username, so the two move together; other
+    usernames (demo.*, createsuperuser) are left alone and the email still works at sign-in.
+    """
+    old_email = account.email or ""
+    if email == old_email.lower():
+        return
+    changes["email"] = {"from": old_email, "to": email}
+    if account.username.lower() == old_email.lower():
+        account.username = email
+    account.email = email
+    account.save(update_fields=["email", "username"])
+
+
+def checked_student_id(value, profile=None):
+    """A student ID in the Baze format (upper-cased), not used by another student."""
+    student_number = (value or "").strip().upper()
+    if not re.fullmatch(settings.STUDENT_ID_REGEX, student_number):
+        raise ValidationError(f"Enter the full student ID as it appears on the Baze ID card: {settings.STUDENT_ID_HELP}.")
+    others = StudentProfile.objects.exclude(pk=profile.pk) if profile else StudentProfile.objects.all()
+    if others.filter(student_number__iexact=student_number).exists():
+        raise ValidationError("Another student already has this student ID.")
+    return student_number
+
+
+class StudentEditForm(forms.Form):
+    """Admin-only: correct a student's name, Baze email (sign-in), student ID and programme.
+
+    The programme cannot change once the student has a project, because the project belongs to the
+    programme's department; graduation is recorded by the HOD at sign-off, not here (D-15).
+    """
+
+    first_name = forms.CharField(max_length=150, label="First name")
+    last_name = forms.CharField(max_length=150, label="Last name")
+    email = forms.EmailField(
+        label="Baze email (sign-in)",
+        help_text="Correct it here if it is wrong. From now on they sign in with the new address, and a notice is sent to it.",
+    )
+    student_number = forms.CharField(max_length=30, label="Student ID", help_text="The full ID, like BU/23B/IT/7892.")
+    programme = forms.ModelChoiceField(queryset=Programme.objects.none(), label="Programme")
+
+    def __init__(self, *args, student, **kwargs):
+        self.student, self.profile = student, student.student_profile
+        kwargs.setdefault("initial", {
+            "first_name": student.first_name, "last_name": student.last_name, "email": student.email,
+            "student_number": self.profile.student_number, "programme": self.profile.programme_id,
+        })
+        super().__init__(*args, **kwargs)
+        self.fields["programme"].queryset = Programme.objects.select_related("department")
+
+    def clean_email(self):
+        return corrected_baze_email(self.cleaned_data["email"], self.student)
+
+    def clean_student_number(self):
+        return checked_student_id(self.cleaned_data["student_number"], self.profile)
+
+    def clean_programme(self):
+        programme = self.cleaned_data["programme"]
+        if programme.pk != self.profile.programme_id and self.student.student_projects.exists():
+            raise ValidationError("This student already has a project, so their programme cannot be changed here.")
+        return programme
+
+    @transaction.atomic
+    def save(self):
+        """Apply the corrections. Returns {field: {"from": old, "to": new}} for the audit log."""
+        student, profile, data = self.student, self.profile, self.cleaned_data
+        changes = {}
+        for name in ("first_name", "last_name"):
+            if getattr(student, name) != data[name]:
+                changes[name] = {"from": getattr(student, name), "to": data[name]}
+                setattr(student, name, data[name])
+        if profile.programme_id != data["programme"].pk:
+            changes["programme"] = {"from": str(profile.programme), "to": str(data["programme"])}
+            profile.programme = data["programme"]
+            student.department = data["programme"].department
+        if profile.student_number != data["student_number"]:
+            changes["student_number"] = {"from": profile.student_number, "to": data["student_number"]}
+            profile.student_number = data["student_number"]
+        student.save(update_fields=["first_name", "last_name", "department"])
+        profile.save(update_fields=["student_number", "programme"])
+        move_sign_in_email(student, data["email"], changes)
+        return changes
+
+
 def active_admin_count(exclude=None):
     admins = User.objects.filter(role=Role.ADMIN, is_active=True)
     if exclude is not None:
@@ -274,17 +375,7 @@ class StaffEditForm(forms.Form):
         self.fields["department"].queryset = Department.objects.select_related("faculty")
 
     def clean_email(self):
-        email = self.cleaned_data["email"].strip().lower()
-        if not email:
-            if self.staff.email:
-                raise ValidationError("Enter their Baze email address; it is how they sign in.")
-            return ""
-        if not email.endswith(BAZE_EMAIL_DOMAIN):
-            raise ValidationError(f"Use a Baze email address ending in {BAZE_EMAIL_DOMAIN}.")
-        others = User.objects.exclude(pk=self.staff.pk)
-        if others.filter(email__iexact=email).exists() or others.filter(username__iexact=email).exists():
-            raise ValidationError("Another account already uses this email address.")
-        return email
+        return corrected_baze_email(self.cleaned_data["email"], self.staff)
 
     def clean(self):
         cleaned = super().clean()
@@ -315,15 +406,7 @@ class StaffEditForm(forms.Form):
             name: {"from": str(before[name] or ""), "to": str(data[name] or "")}
             for name in self.FIELDS if before[name] != data[name]
         }
-        if data["email"] != (staff.email or "").lower():
-            old_email = staff.email or ""
-            changes["email"] = {"from": old_email, "to": data["email"]}
-            # Accounts created in the app use their email as the username; keep the two together so
-            # the new address is the sign-in. Other usernames (demo.*, createsuperuser) are left alone.
-            if staff.username.lower() == old_email.lower():
-                staff.username = data["email"]
-            staff.email = data["email"]
-            staff.save(update_fields=["email", "username"])
+        move_sign_in_email(staff, data["email"], changes)
         if staff.role != Role.ADMIN:
             profile, _ = SupervisorProfile.objects.get_or_create(user=staff)
             if profile.title != data["title"]:

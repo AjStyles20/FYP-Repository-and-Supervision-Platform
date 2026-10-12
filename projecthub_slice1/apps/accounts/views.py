@@ -25,7 +25,7 @@ from apps.supervision.models import NotificationKind
 from apps.supervision.services import notify
 
 from .forms import (
-    ContactDetailsForm, ProjectAuthenticationForm, StaffAccountForm, StaffEditForm, StudentRegistrationForm, active_admin_count,
+    ContactDetailsForm, ProjectAuthenticationForm, StudentEditForm, StaffAccountForm, StaffEditForm, StudentRegistrationForm, active_admin_count,
     generate_temporary_password,
 )
 from .models import STAFF_ROLES, Role, StudentProfile, SupervisorProfile, User
@@ -372,7 +372,83 @@ def admin_tools(request):
         User.objects.filter(role__in=(Role.SUPERVISOR, Role.COORDINATOR, Role.HOD, Role.ADMIN))
         .select_related("department").order_by("role", "last_name", "first_name", "username")
     )
-    return render(request, "admin_tools.html", {"pending_students": pending_students, "staff_accounts": staff_accounts})
+    query = request.GET.get("q", "").strip()
+    found_students = (
+        for_viewer(User.objects.filter(role=Role.STUDENT), request.user)
+        .filter(Q(first_name__icontains=query) | Q(last_name__icontains=query) | Q(email__icontains=query)
+                | Q(username__icontains=query) | Q(student_profile__student_number__icontains=query))
+        .select_related("student_profile__programme").order_by("last_name", "first_name")[:25]
+    ) if query else []
+    return render(request, "admin_tools.html", {
+        "pending_students": pending_students, "staff_accounts": staff_accounts,
+        "student_query": query, "found_students": found_students,
+    })
+
+
+@role_required(Role.ADMIN)
+def manage_student_account(request, user_id):
+    """Correct a student's details, reset their password, or deactivate or reactivate the account."""
+    student = get_object_or_404(
+        for_viewer(User.objects.filter(role=Role.STUDENT, student_profile__isnull=False), request.user)
+        .select_related("student_profile__programme__department"),
+        pk=user_id,
+    )
+    profile = student.student_profile
+    approved = profile.registration_status == StudentProfile.RegistrationStatus.APPROVED
+    action = request.POST.get("action", "") if request.method == "POST" else ""
+    form = StudentEditForm(request.POST if action == "save" else None, student=student)
+    name = student.get_full_name() or student.username
+
+    if action == "save" and form.is_valid():
+        changes = form.save()
+        if changes:
+            log_event(actor=request.user, action="account.student_updated", summary=f"Updated student account {student.username}", obj=student, details=changes)
+            messages.success(request, f"Saved the changes to {name}.")
+            if "email" in changes:
+                messages.info(request, f"They now sign in with {student.email}.")
+                if not _email_sign_in_change(request, student):
+                    messages.warning(request, f"The change is saved, but the notice to {student.email} could not be sent. Please tell them directly.")
+        else:
+            messages.info(request, "Nothing changed.")
+        return redirect("manage_student_account", user_id=student.pk)
+
+    if action == "reset_password":
+        password = generate_temporary_password()
+        student.set_password(password)
+        student.must_change_password = True
+        student.save(update_fields=["password", "must_change_password"])
+        log_event(actor=request.user, action="account.password_reset", summary=f"Reset the password for {student.username}", obj=student)
+        response = render(request, "accounts/staff_created.html", {
+            "staff": student, "temporary_password": password, "is_reset": True,
+            "back_url": reverse("manage_student_account", args=[student.pk]),
+        })
+        response["Cache-Control"] = "no-store"
+        return response
+
+    if action == "deactivate" and student.is_active:
+        student.is_active = False
+        student.save(update_fields=["is_active"])
+        log_event(actor=request.user, action="account.student_deactivated", summary=f"Deactivated student account {student.username}", obj=student)
+        messages.success(request, f"{name} can no longer sign in. Their records are kept.")
+        return redirect("manage_student_account", user_id=student.pk)
+
+    if action == "reactivate" and not student.is_active:
+        if not approved:
+            # Pending and rejected registrations are decided on the review list, not switched on here.
+            messages.error(request, "This registration has not been approved. Approve it from the registrations list instead.")
+        else:
+            student.is_active = True
+            student.save(update_fields=["is_active"])
+            log_event(actor=request.user, action="account.student_reactivated", summary=f"Reactivated student account {student.username}", obj=student)
+            messages.success(request, f"{name} can sign in again.")
+        return redirect("manage_student_account", user_id=student.pk)
+
+    if request.method == "POST" and action != "save":
+        return HttpResponseBadRequest("Unknown action.")
+    return render(request, "accounts/student_manage.html", {
+        "student": student, "profile": profile, "form": form, "approved": approved,
+        "has_project": student.student_projects.exists(),
+    })
 
 
 @role_required(Role.ADMIN)

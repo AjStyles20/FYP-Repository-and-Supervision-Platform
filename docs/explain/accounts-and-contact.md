@@ -22,6 +22,7 @@ Paths are relative to `projecthub_slice1/`.
 | `apps/accounts/templatetags/contact.py`, `templates/projects/project_detail.html` | `{% contact_for person as rows %}` shows the student's and the supervisor's shared details on a project page |
 | `templates/portals/student_current.html` | Reminds a current student without a personal email to add one before graduating |
 | `static/js/password-toggle.js`, `static/css/app.css` | The eye button on every password field |
+| `apps/accounts/views.py` (`manage_staff_account`, `manage_student_account`), `templates/admin_tools.html`, `templates/accounts/student_manage.html` | The administrator corrects account details and resets passwords; students are found with the search under **Student accounts** |
 
 ## Flow
 
@@ -30,6 +31,7 @@ Paths are relative to `projecthub_slice1/`.
 3. **My details:** anyone signed in opens **My details**, sees their Baze email (fixed) and edits their personal email, phone number, and who can see each one.
 4. **Showing details:** on a project page, `contact_for` returns only the details the viewer may see: everything to the owner, "staff only" details to supervisors, coordinators, HODs and administrators, "all signed-in Baze users" details to anyone signed in. Hidden details are never sent to the page.
 5. **Passwords:** the eye button switches a password field between hidden and visible text, and the field goes back to hidden when the form is sent.
+6. **Mistakes:** if someone entered wrong details or forgot their password, the administrator finds them in System administration and corrects the name, Baze email, student ID or programme, or resets the password. A corrected email moves the sign-in and sends a notice to the new address; every change is audited.
 
 ## Rules
 
@@ -37,6 +39,7 @@ Paths are relative to `projecthub_slice1/`.
 - **Contact details are opt-in.** New details start as "Only me". Nothing is ever shown to people who are not signed in (D-09).
 - **The full student ID, not the short number.** It is unique; the last digits alone are not.
 - **One setting for the ID format.** If Baze's format differs, change `STUDENT_ID_REGEX` and `STUDENT_ID_HELP` in `.env` together.
+- **The administrator fixes mistakes** (D-26), but never reactivates an unapproved registration, and never changes the programme of a student who already has a project.
 - **Not verified:** the personal email and phone format are checked, but no confirmation code is sent (`docs/known_limits.md`).
 
 ## Self-test

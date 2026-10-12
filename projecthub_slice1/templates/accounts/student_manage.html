@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block title %}{{ student.get_full_name|default:student.username }} · Student account · Baze Project Hub{% endblock %}
+{% block back %}<p class="breadcrumb back-link"><a href="{% url 'admin_tools' %}#students"><span aria-hidden="true">←</span> Admin tools</a></p>{% endblock %}
+{% block content %}
+<section class="page-heading">
+  <p class="eyebrow">Student account</p>
+  <h1>{{ student.get_full_name|default:student.username }}</h1>
+  <div class="tag-row">
+    <span class="tag">{{ profile.get_student_status_display }}</span>
+    {% if profile.registration_status == "pending" %}<span class="tag">Waiting for approval</span>{% elif profile.registration_status == "rejected" %}<span class="tag">Not approved</span>{% elif not student.is_active %}<span class="tag">Inactive</span>{% elif student.must_change_password %}<span class="tag">Must choose a new password</span>{% else %}<span class="tag tag-live">Active</span>{% endif %}
+    {% if student.is_demo %}<span class="tag tag-quiet">Sample</span>{% endif %}
+  </div>
+  <p class="muted">Sign-in: {{ student.email|default:student.username }} or {{ profile.student_number }}{% if student.last_login %} · Last signed in {{ student.last_login|date:"j M Y, H:i" }}{% else %} · Never signed in{% endif %}</p>
+</section>
+
+<div class="grid-2">
+  <section class="card">
+    <h2>Correct their details</h2>
+    <form method="post" class="stack-form">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="save">
+      {{ form.non_field_errors }}
+      {% for field in form %}
+        <div class="form-row">
+          {{ field.label_tag }}{{ field }}
+          {% if field.help_text %}<small class="muted">{{ field.help_text }}</small>{% endif %}
+          {% for error in field.errors %}<p class="error">{{ error }}</p>{% endfor %}
+        </div>
+      {% endfor %}
+      {% if has_project %}<p class="form-note">They already have a project, so their programme cannot be changed here.</p>{% endif %}
+      <button type="submit" class="primary">Save changes</button>
+    </form>
+    <p class="muted">Their personal email and phone number are theirs to change under My details. Graduation is recorded by the HOD at sign-off.</p>
+  </section>
+
+  <div class="stack">
+    <section class="card">
+      <h2>Password</h2>
+      <p class="muted">For a student who has forgotten their password. Creates a new temporary password, shown once; they must choose their own at their next sign-in, and the old password stops working straight away.</p>
+      <form method="post">{% csrf_token %}<input type="hidden" name="action" value="reset_password"><button type="submit">Reset password</button></form>
+    </section>
+    <section class="card">
+      <h2>Sign-in access</h2>
+      {% if not approved %}
+        <p class="muted">This registration is {% if profile.registration_status == "pending" %}waiting for approval{% else %}not approved{% endif %}. Decide it from the registrations list on Admin tools.</p>
+      {% elif student.is_active %}
+        <p class="muted">Deactivating stops them signing in. Nothing is deleted: their project, meetings and history stay.</p>
+        <form method="post">{% csrf_token %}<input type="hidden" name="action" value="deactivate"><button type="submit">Deactivate account</button></form>
+      {% else %}
+        <p class="muted">This account cannot sign in.</p>
+        <form method="post">{% csrf_token %}<input type="hidden" name="action" value="reactivate"><button type="submit" class="primary">Reactivate account</button></form>
+      {% endif %}
+    </section>
+  </div>
+</div>
+{% endblock %}

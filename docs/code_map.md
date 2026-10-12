@@ -12,6 +12,10 @@
 | Editing, deactivating or resetting a staff account | `apps/accounts/views.py` | `def manage_staff_account` |
 | Correcting a staff member's Baze email (checks, and moving the sign-in) | `apps/accounts/forms.py` | `class StaffEditForm` |
 | The notice sent to the new address after an email correction | `apps/accounts/views.py` | `def _email_sign_in_change` |
+| Finding a student in Admin tools | `apps/accounts/views.py` | `found_students` |
+| Correcting a student's account, resetting their password, (de)activating it | `apps/accounts/views.py` | `def manage_student_account` |
+| What may be corrected on a student, and the programme rule | `apps/accounts/forms.py` | `class StudentEditForm` |
+| The shared checks for a corrected Baze email and a student ID | `apps/accounts/forms.py` | `def corrected_baze_email` |
 | How long and how random a temporary password is | `apps/accounts/forms.py` | `def generate_temporary_password` |
 | The forced password change at first sign-in | `apps/accounts/middleware.py` | `class ForcePasswordChangeMiddleware` |
 | The HOD appointing the FYP coordinator and allocators | `apps/accounts/views.py` | `def department_staff` |
