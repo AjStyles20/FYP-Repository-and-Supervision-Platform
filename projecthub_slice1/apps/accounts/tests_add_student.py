@@ -43,7 +43,7 @@ class AddStudentAccountTests(TestCase):
         self.assertFalse(User.objects.filter(role=Role.STUDENT).exists())
         login = self.client.get(reverse("login"))
         self.assertNotContains(login, f'href="{reverse("register_student")}"')
-        self.assertContains(login, "created by your department's FYP coordinator")
+        self.assertContains(login, "Students: see your FYP coordinator. Staff: contact the system administrator.")
 
     def test_an_administrator_adds_a_student_who_must_choose_a_password(self):
         response = self.add(self.admin, programme=self.cyber_programme.pk)
