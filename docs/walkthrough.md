@@ -26,7 +26,7 @@ The intended project progression is:
 | Submitted | Record the defence outcome | Coordinator |
 | Defended | Sign off and archive | HOD |
 
-Students can start a project record and submit the digital proposal. The assigned supervisor records a decision, a coordinator logs accepted forms, the supervisor records work-start, the student records submission, the coordinator records defence, and the department HOD signs completion off and archives it. Each transition is restricted by role and department and appends a status event.
+The coordinator gives each student of the department a supervisor on **Student allocation**, before or after the student starts their project record; supervisors are listed least busy first, and a change of supervisor needs a reason. Students can start a project record and submit the digital proposal. The assigned supervisor records a decision, a coordinator logs accepted forms, the supervisor records work-start, the student records submission, the coordinator records defence, and the department HOD signs completion off and archives it. Each transition is restricted by role and department and appends a status event.
 
 The student's **My project** page links to the workflow and meeting history. Assigned supervisors schedule and edit meeting records; students can confirm or dispute them. Edits retain a version row. Supervisors can publish project or department notices, with first-seen and acknowledgement times recorded per user. Administrators can review the audit log and import past project summaries from CSV; the import is all or nothing, and every wrong row is listed with its line number.
 

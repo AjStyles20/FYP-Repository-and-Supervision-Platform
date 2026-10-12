@@ -56,7 +56,7 @@ For local testing, sign in as `demo.amina` with password `ChangeMe123!`. The Ami
 
 Sample files for past projects can be added through Django Admin under **Project documents**. Select one project parent, choose the visibility, and attach an allowed PDF/Office/ZIP file (maximum 25 MB). Student downloads are restricted to files marked for all signed-in Baze users; staff-only files remain staff-only. Never expose the `media` directory through an unauthenticated static-file server.
 
-Staff given the assignment permission can open **Student allocation** to assign or reassign supervisors for active projects in their department. An administrator grants this permission to the appropriate coordinator, supervisor or HOD. Assignment changes keep an audit history.
+Staff given the assignment permission can open **Student allocation** to give students of their department a supervisor and to change supervisors. Students who have no project yet are listed under **Students waiting for a supervisor**: choosing a supervisor creates their project record ("Topic to be agreed"), and their proposal sets the real title later. Supervisors are listed least busy first, with their current number of students, so the load stays even. A coordinator or HOD can choose themself. Changing an existing supervisor needs a reason (for example "Student asked: wants a supervisor in AI"); the coordinator decides, and every change keeps an audited history. An administrator grants this permission to the appropriate coordinator, supervisor or HOD.
 
 To try that staff workflow locally, sign in as `demo.coordinator` with password `ChangeMe123!`; this demo coordinator has assignment permission and is scoped to the sample Computer Science department.
 

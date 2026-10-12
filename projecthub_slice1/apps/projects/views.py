@@ -20,7 +20,7 @@ from .imports import import_archived_projects
 from .services.health import HEALTH_PREFETCH, can_see_health, health_score
 from .services.similarity import similar_archived_projects, similarity_threshold
 from .services import (
-    assign_project_supervisor, unassign_project_supervisor, log_approved_form, record_supervisor_decision,
+    allocate_student, assign_project_supervisor, unassign_project_supervisor, log_approved_form, record_supervisor_decision,
     record_transition, sign_off_completion, submit_proposal, available_years,
     current_projects as repository_current_projects,
     faculties_with_structure, local_year, past_projects as repository_past_projects, read_filters,
@@ -576,15 +576,43 @@ def supervisor_assignments(request):
     else:
         projects = projects.filter(department_id=request.user.department_id)
 
+    # Staff of the department with their current load; the least busy are listed first.
+    workload_filter = Q(supervised_projects__archived=False)
+    workload_filter &= Q(supervised_projects__department_id=request.user.department_id)
     staff = User.objects.filter(
         is_active=True,
         role__in=(Role.SUPERVISOR, Role.COORDINATOR, Role.HOD),
-    ).order_by("last_name", "first_name", "username")
-    staff = staff.filter(department_id=request.user.department_id)
+        department_id=request.user.department_id,
+    ).annotate(
+        active_project_count=Count("supervised_projects", filter=workload_filter, distinct=True)
+    ).order_by("active_project_count", "last_name", "first_name", "username")
+
+    # Approved current students of the department who have no running project yet.
+    waiting_students = User.objects.filter(
+        role=Role.STUDENT, is_active=True,
+        student_profile__registration_status=StudentProfile.RegistrationStatus.APPROVED,
+        student_profile__student_status=StudentProfile.Status.CURRENT,
+        student_profile__programme__department_id=request.user.department_id,
+    ).exclude(student_projects__archived=False).select_related("student_profile__programme").order_by(
+        "last_name", "first_name", "username"
+    ) if request.user.department_id else User.objects.none()
 
     bound_form = None
     bound_project_id = None
-    if request.method == "POST":
+    bound_student_id = None
+    if request.method == "POST" and "student_id" in request.POST:
+        raw_student_id = request.POST.get("student_id", "")
+        if not raw_student_id.isdigit():
+            raise Http404
+        student = get_object_or_404(waiting_students, pk=raw_student_id)
+        form = SupervisorAssignmentForm(request.POST, supervisor_queryset=staff)
+        if form.is_valid():
+            allocate_student(student, form.cleaned_data["supervisor"], request.user, form.cleaned_data["reason"])
+            messages.success(request, f"{student.get_full_name() or student.username} is now supervised by "
+                                      f"{form.cleaned_data['supervisor'].get_full_name() or form.cleaned_data['supervisor'].username}.")
+            return redirect("supervisor_assignments")
+        bound_form, bound_student_id = form, student.pk
+    elif request.method == "POST":
         raw_project_id = request.POST.get("project_id", "")
         if not raw_project_id.isdigit():
             raise Http404
@@ -592,6 +620,7 @@ def supervisor_assignments(request):
         form = SupervisorAssignmentForm(
             request.POST,
             supervisor_queryset=staff.filter(department_id=project.department_id),
+            current_supervisor=project.supervisor,
         )
         if form.is_valid():
             _, _, changed = assign_project_supervisor(
@@ -614,23 +643,17 @@ def supervisor_assignments(request):
         form = (
             bound_form
             if project.pk == bound_project_id
-            else SupervisorAssignmentForm(supervisor_queryset=project_staff)
+            else SupervisorAssignmentForm(supervisor_queryset=project_staff, current_supervisor=project.supervisor)
         )
         rows.append({"project": project, "form": form})
-
-    workload_filter = Q(supervised_projects__archived=False)
-    workload_filter &= Q(supervised_projects__department_id=request.user.department_id)
-    workloads = staff.annotate(
-        active_project_count=Count(
-            "supervised_projects",
-            filter=workload_filter,
-            distinct=True,
-        )
-    )
+    student_rows = [
+        {"student": student, "form": bound_form if student.pk == bound_student_id else SupervisorAssignmentForm(supervisor_queryset=staff)}
+        for student in waiting_students
+    ]
     return render(
         request,
         "projects/supervisor_assignments.html",
-        {"rows": rows, "workloads": workloads},
+        {"rows": rows, "student_rows": student_rows, "workloads": staff},
     )
 
 

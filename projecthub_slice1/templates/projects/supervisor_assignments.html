@@ -4,7 +4,7 @@
 <section class="page-heading">
   <p class="eyebrow">DEPARTMENT WORKSPACE</p>
   <h1>Student allocation</h1>
-  <p class="muted">Assign supervisors to active project records. Each change is recorded with its author, time and reason.</p>
+  <p class="muted">Give each student in your department a supervisor, keeping the numbers even, and change a supervisor when needed. Each change is recorded with its author, time and reason.</p>
 </section>
 
 <section class="card assignment-workloads">
@@ -22,6 +22,45 @@
   {% else %}
     <p class="muted">No active academic staff are available in this department.</p>
   {% endif %}
+</section>
+
+<section class="assignment-list" id="waiting-students">
+  <div class="results-heading">
+    <div>
+      <h2>Students waiting for a supervisor</h2>
+      <p class="muted">Approved current students of your department with no project yet. Choosing a supervisor creates their project record ("Topic to be agreed"); their proposal sets the real title later. Supervisors are listed least busy first.</p>
+    </div>
+    <span class="result-count">{{ student_rows|length }} student{{ student_rows|length|pluralize }}</span>
+  </div>
+  {% for row in student_rows %}
+    <article class="card assignment-project">
+      <div class="assignment-project-heading">
+        <div>
+          <p class="eyebrow">{{ row.student.student_profile.programme }}</p>
+          <h3>{{ row.student.get_full_name|default:row.student.username }}</h3>
+          <p class="muted">{{ row.student.student_profile.student_number }} · {{ row.student.email|default:row.student.username }}</p>
+        </div>
+        <span class="tag">No supervisor yet</span>
+      </div>
+      <form method="post" class="assignment-form">
+        {% csrf_token %}
+        <input type="hidden" name="student_id" value="{{ row.student.pk }}">
+        {% for field in row.form %}
+          <div class="field">
+            {{ field.label_tag }}
+            {{ field }}
+            {% for error in field.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+          </div>
+        {% endfor %}
+        <button class="primary" type="submit">Assign supervisor</button>
+      </form>
+    </article>
+  {% empty %}
+    <div class="card empty-state">
+      <h3>No students are waiting for a supervisor</h3>
+      <p class="muted">Approved current students of your department appear here until they have a supervisor.</p>
+    </div>
+  {% endfor %}
 </section>
 
 <section class="assignment-list">
@@ -81,8 +120,8 @@
     </article>
   {% empty %}
     <div class="card empty-state">
-      <h3>No active projects are available for assignment</h3>
-      <p class="muted">Project records will appear here after they are created for students in your department.</p>
+      <h3>No active projects yet</h3>
+      <p class="muted">A project appears here once a student has a supervisor or has started their project record. Change a supervisor from here.</p>
     </div>
   {% endfor %}
 </section>

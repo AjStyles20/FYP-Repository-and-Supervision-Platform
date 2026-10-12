@@ -11,7 +11,11 @@ from django.utils import timezone
 from apps.audit.services import log_event
 from apps.accounts.models import Role
 
-from ..models import Project, ProjectSupervisorAssignment
+from ..models import Project, ProjectStage, ProjectStatusEvent, ProjectSupervisorAssignment
+
+# Title of a project record the coordinator creates when allocating a supervisor before the student
+# has chosen a topic; the student's proposal replaces it (submit_proposal keeps the title in step).
+TOPIC_TO_BE_AGREED = "Topic to be agreed"
 
 SUPERVISOR_ROLES = (Role.SUPERVISOR, Role.COORDINATOR, Role.HOD)
 
@@ -27,6 +31,28 @@ def can_supervise_in(user, department_id, *, require_active=True):
         and user.department_id == department_id
         and (user.is_active or not require_active)
     )
+
+
+@transaction.atomic
+def allocate_student(student, supervisor, assigned_by, change_reason=""):
+    """The coordinator allocates a supervisor to a student who has no project yet.
+
+    Creates the student's project record (stage Proposed, title "Topic to be agreed") and assigns
+    the supervisor through assign_project_supervisor, so the history and audit are the same as for
+    any other assignment. Returns the project.
+    """
+    profile = student.student_profile
+    project = Project.objects.create(
+        student=student, title=TOPIC_TO_BE_AGREED, programme=profile.programme,
+        department=profile.programme.department, is_demo=student.is_demo,
+    )
+    ProjectStatusEvent.objects.create(
+        project=project, from_stage="", to_stage=ProjectStage.PROPOSED, actor=assigned_by,
+        note="Project record created by the coordinator when allocating a supervisor.",
+    )
+    log_event(actor=assigned_by, action="project.created", summary=f"Project record created for {student} at allocation", obj=project)
+    assign_project_supervisor(project.pk, supervisor, assigned_by, change_reason)
+    return project
 
 
 @transaction.atomic

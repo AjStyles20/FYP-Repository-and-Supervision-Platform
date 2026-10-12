@@ -5,8 +5,17 @@ from apps.accounts.models import User
 from .models import Project, ProjectDocument, ProjectStage, SupervisorDecision
 
 
+class SupervisorChoiceField(forms.ModelChoiceField):
+    """Shows each supervisor's current load, e.g. "Dr Julius Makinde (3 active)", to keep numbers even."""
+
+    def label_from_instance(self, obj):
+        name = obj.get_full_name() or obj.username
+        count = getattr(obj, "active_project_count", None)
+        return name if count is None else f"{name} ({count} active)"
+
+
 class SupervisorAssignmentForm(forms.Form):
-    supervisor = forms.ModelChoiceField(
+    supervisor = SupervisorChoiceField(
         queryset=User.objects.none(),
         label="Assign supervisor",
         empty_label="Choose a supervisor",
@@ -15,12 +24,22 @@ class SupervisorAssignmentForm(forms.Form):
         required=False,
         max_length=1000,
         label="Reason for assignment or change",
+        help_text="Required when changing a supervisor, e.g. \"Student asked: wants a supervisor in AI\".",
         widget=forms.Textarea(attrs={"rows": 2}),
     )
 
-    def __init__(self, *args, supervisor_queryset, **kwargs):
+    def __init__(self, *args, supervisor_queryset, current_supervisor=None, **kwargs):
         super().__init__(*args, **kwargs)
+        self.current_supervisor = current_supervisor
         self.fields["supervisor"].queryset = supervisor_queryset
+
+    def clean(self):
+        cleaned = super().clean()
+        supervisor = cleaned.get("supervisor")
+        changing = self.current_supervisor is not None and supervisor is not None and supervisor != self.current_supervisor
+        if changing and not cleaned.get("reason", "").strip():
+            self.add_error("reason", "Say why the supervisor is changing; it is kept in the history.")
+        return cleaned
 
 
 class UnassignedSuperviseeForm(forms.Form):

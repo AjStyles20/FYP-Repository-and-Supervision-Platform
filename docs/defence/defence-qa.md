@@ -258,3 +258,11 @@ Guards: `apps/audit/models.py`, `apps/projects/models/project.py`, `apps/project
 **How it works:** `manage_staff_account` in `apps/accounts/views.py` refuses to deactivate your own account or the last active administrator (`active_admin_count` in `apps/accounts/forms.py`); `StaffEditForm` refuses the same for a role change. Both accounts were made with `createsuperuser`, so both also have full access to the Django admin for maintaining the system (Q4, Q16).
 
 **Show it:** System administration → staff list: the two administrators; open your own account and note there is no "Deactivate" button for yourself; the Audit log shows each action under the account that made it.
+
+### 27. How does a student get a supervisor, and how do they change one?
+
+**Say:** "The same way the department does it now. The student meets the coordinator, and the coordinator opens Student allocation, where students of the department who don't have a supervisor yet are waiting. Supervisors are listed least busy first with how many students each has, so the numbers stay even, and the coordinator can pick themself. Choosing a supervisor creates the student's project record with 'Topic to be agreed'; the student's proposal sets the real title later. If a student wants a different supervisor, they ask the coordinator, who decides; a change can't be saved without a reason, and every assignment keeps who made it, when and why."
+
+**How it works:** `supervisor_assignments` in `apps/projects/views.py` lists the waiting students and the active projects of the coordinator's department; `allocate_student` and `assign_project_supervisor` in `apps/projects/services/assignment.py`; the reason rule and the "(N active)" labels are in `SupervisorAssignmentForm` (`apps/projects/forms.py`). Tests: `apps/projects/tests_allocation.py`. Decision D-27.
+
+**Show it:** as `demo.coordinator`, Student allocation: the workload panel, a supervisor dropdown ordered by load, and the history on a reassigned project.
