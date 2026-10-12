@@ -76,7 +76,8 @@ class MeetingRequestForm(forms.ModelForm):
     class Meta:
         model = MeetingRequest
         fields = ("availability", "requested_date", "message")
-        widgets = {"requested_date": forms.DateInput(attrs={"type": "date"}), "message": forms.Textarea}
+        labels = {"availability": "Window", "requested_date": "Date", "message": "What you want to discuss (optional)"}
+        widgets = {"requested_date": forms.DateInput(attrs={"type": "date"}), "message": forms.Textarea(attrs={"rows": 3})}
 
     def __init__(self, *args, availability_queryset=None, **kwargs):
         super().__init__(*args, **kwargs)

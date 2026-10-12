@@ -70,6 +70,8 @@
 | The email copy of each alert | `apps/supervision/services.py` | `def _email_alert` |
 | The kinds of notification | `apps/supervision/models/notification.py` | `class NotificationKind` |
 | The Alerts page (list, mark as read) | `apps/supervision/views.py` | `def notifications` |
+| A student's meeting request (window, date, clash check) | `apps/supervision/views.py` | `def _request_meeting` |
+| The supervisor accepting or declining a meeting request | `apps/supervision/views.py` | `def _decide_meeting_request` |
 | The unread count in the menu | `apps/supervision/context_processors.py` | `def notifications` |
 | What `/api/summary/` returns to each role | `apps/accounts/views.py` | `def api_summary` |
 | Which rows a counter and its list include (a demo viewer counts demo and real rows; a real viewer, real rows only) | `apps/accounts/views.py` | `def for_viewer` |

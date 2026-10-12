@@ -6,7 +6,7 @@ from unittest import mock
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.core.management import CommandError, call_command
 from django.test import TestCase, override_settings
-from django.urls import NoReverseMatch, reverse
+from django.urls import reverse
 from django.utils import timezone
 
 from apps.academics.models import Department, Faculty, Programme
@@ -14,7 +14,7 @@ from apps.accounts.models import Role, StudentProfile, SupervisorProfile, User
 from apps.projects.models import Project, ProjectMilestone, ProjectStage, ProjectStatusEvent, ProjectSupervisorAssignment
 
 from .models import (
-    Announcement, AnnouncementAcknowledgement, MeetingRequest, Notification, NotificationKind, SharedResource,
+    Announcement, AnnouncementAcknowledgement, Notification, NotificationKind, SharedResource,
     SupervisionMeeting, SupervisorAvailability,
 )
 from .services import notify
@@ -99,20 +99,6 @@ class SupervisorStudentWorkflowTests(TestCase):
         portal = self.client.get(reverse("student_portal"))
         self.assertContains(portal, "Supervisor availability updated")
         self.assertContains(portal, "1 new update")
-
-    def test_meeting_requests_have_no_entry_point(self):
-        # Booking from availability is not built (docs/known_limits.md). The model is kept for
-        # later, but there is no URL, link or form that reaches it.
-        with self.assertRaises(NoReverseMatch):
-            reverse("request_meeting", args=[self.project.pk])
-        self.client.force_login(self.student)
-        response = self.client.post(f"/supervision/projects/{self.project.pk}/request-meeting/", {"message": "Hi"})
-
-        self.assertEqual(response.status_code, 404)
-        self.assertEqual(MeetingRequest.objects.count(), 0)
-        for page in ("student_portal", "my_project", "announcements", "guidelines"):
-            with self.subTest(page=page):
-                self.assertNotContains(self.client.get(reverse(page)), "request-meeting")
 
     def test_supervisor_schedules_meeting_and_student_gets_notice(self):
         when = timezone.localtime(timezone.now() + timedelta(days=2)).strftime("%Y-%m-%dT%H:%M")

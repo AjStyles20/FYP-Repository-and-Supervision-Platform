@@ -37,7 +37,7 @@
 - Department-scoped supervisor assignment and reassignment for individually authorised staff, with a history recording who changed it, when, and why; supervisor workload counts in the assignment workspace
 - Staff supervision history shows each staff member's current supervisees, prior assignments and archived supervisees; student-only My Project is hidden and denied to staff
 - Supervisor meeting scheduling and records, held/missed counts, student confirmation/dispute, and versioned edits
-- Weekly supervisor availability windows (students are notified; the supervisor schedules each meeting)
+- Weekly supervisor availability windows; students request a meeting in a window and the supervisor accepts (it becomes a scheduled meeting) or declines with a reason; both are alerted (D-32)
 - Department/project notices with first-seen and acknowledgement timestamps (the author is not asked to acknowledge their own notice); shared supervisor resources with permission-checked downloads
 - Project health score with reasons, shown only to the roles allowed to see it (`docs/explain/health-score.md`)
 
@@ -89,7 +89,6 @@ For the demo, run `.\run_demo.ps1` from the repository root instead. It uses its
 - Outside the admin (shell or code), deleting a student cascades to their projects and every workflow record on them (`Project.student` is `CASCADE`). It is blocked with `ProtectedError` only when the student is the actor of an audit event (`AuditEvent.actor` is `PROTECT`) or has an archived project (`ArchivedProject.student` is `PROTECT`).
 
 ### Known limits (from `docs/known_limits.md`)
-- Students cannot request a meeting from a supervisor's availability. `MeetingRequest` and `MeetingRequestForm` exist, but nothing reaches them (R-21, partial).
 - No "corrections required" loop after a defence; stages only move forward (R-11).
 - No email verification at registration; an administrator approves each registration by hand.
 - Staff have no page that lists a running project's files; only the student's "My project" page lists them.

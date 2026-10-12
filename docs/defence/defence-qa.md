@@ -274,3 +274,9 @@ Guards: `apps/audit/models.py`, `apps/projects/models/project.py`, `apps/project
 **How it works:** `ProjectMedia` (`apps/projects/models/media.py`) hangs off a running or an archived project, like documents. Uploads are checked by extension, size and their first bytes, so a script renamed `photo.png` is refused; links must be https from YouTube, Google Drive or Vimeo. Files are served by `project_media_file` after the same access check as project files, with `nosniff`. `sign_off_completion` moves media with the documents; `purge_demo` deletes demo media files. Tests: `apps/projects/tests_media.py`. Decision D-30.
 
 **Show it:** as `demo.amina`, My project → Add screenshot or video; then the archived project "Exam Seating Allocation Tool", which has a demo screenshot.
+
+### 29. Can a student book a meeting with their supervisor?
+
+**Say:** "Yes. The supervisor publishes weekly availability windows, say Tuesday 10 to 12 in Room B12. The student picks a window and a date on that day, adds what they want to discuss, and sends a request. The supervisor accepts, which schedules the meeting, or declines with a reason the student can read. A time that already has a meeting can't be requested, and both sides get an alert and an email."
+
+**How it works:** `_request_meeting` and `_decide_meeting_request` in `apps/supervision/views.py`, on the project's Supervision meetings page; `MeetingRequest` (`apps/supervision/models/meeting.py`) checks the date falls on the window's day; the clash check is `_has_schedule_conflict`. Tests: `apps/supervision/tests_booking.py`. Decision D-32.

@@ -4,6 +4,42 @@
 {% block content %}
 <section class="page-heading"><p class="eyebrow">Supervision meetings</p><h1>{{ project.title }}</h1></section>
 <section class="bento" aria-label="Attendance"><div class="bento-cell"><span class="bento-label">Held</span><strong class="bento-value">{{ counts.held }}</strong></div><div class="bento-cell"><span class="bento-label">Missed</span><strong class="bento-value">{{ counts.missed }}</strong></div></section>
+{% if pending_requests %}
+<section class="card" id="meeting-requests">
+  <h2>Meeting requests</h2>
+  {% for item in pending_requests %}
+    <article class="resource-preview">
+      <p><strong>{{ item.availability.get_weekday_display }} {{ item.requested_date|date:"j M Y" }}, {{ item.availability.start_time|time:"H:i" }}–{{ item.availability.end_time|time:"H:i" }}</strong> · {{ item.availability.venue|default:item.availability.get_mode_display }}</p>
+      {% if item.message %}<p>{{ item.message }}</p>{% endif %}
+      <form method="post" class="stack-form">{% csrf_token %}<input type="hidden" name="action" value="decide_request"><input type="hidden" name="request_id" value="{{ item.pk }}">
+        <div class="form-row"><label for="note-{{ item.pk }}">Reason (needed to decline)</label><input type="text" id="note-{{ item.pk }}" name="note" maxlength="1000"></div>
+        <div class="actions"><button type="submit" name="decision" value="accept" class="primary">Accept</button><button type="submit" name="decision" value="decline">Decline</button></div>
+      </form>
+    </article>
+  {% endfor %}
+</section>
+{% endif %}
+{% if can_request %}
+<section class="card" id="request-meeting">
+  <h2>Request a meeting</h2>
+  <p class="muted">Choose one of your supervisor's weekly windows and a date on that day. Your supervisor accepts or declines.</p>
+  <form method="post" class="stack-form">{% csrf_token %}<input type="hidden" name="action" value="request_meeting">
+    {% for error in request_form.non_field_errors %}<p class="error">{{ error }}</p>{% endfor %}
+    {% for field in request_form %}<div class="form-row">{{ field.label_tag }}{{ field }}{% for error in field.errors %}<p class="error">{{ error }}</p>{% endfor %}</div>{% endfor %}
+    <button type="submit" class="primary">Send request</button>
+  </form>
+</section>
+{% endif %}
+{% if is_owner and meeting_requests %}
+<section class="card">
+  <h2>Your meeting requests</h2>
+  <ul class="plain-list">
+    {% for item in meeting_requests %}
+      <li>{{ item.requested_date|date:"j M Y" }}, {{ item.availability.start_time|time:"H:i" }} · <strong>{{ item.get_status_display }}</strong>{% if item.decision_note %} · {{ item.decision_note }}{% endif %}</li>
+    {% endfor %}
+  </ul>
+</section>
+{% endif %}
 {% if can_schedule %}<section class="card"><h2>Schedule or record a meeting</h2><form method="post" class="stack-form">{% csrf_token %}{% for field in form %}<div class="form-row">{{ field.label_tag }}{{ field }}{{ field.errors }}</div>{% endfor %}<button class="button">Save meeting</button></form></section>{% endif %}
 <section><div class="results-heading"><h2>Meeting history</h2></div>{% for meeting in meetings %}<article class="card"><h3>{{ meeting.scheduled_for|date:"j M Y, H:i" }} · {{ meeting.get_status_display }}</h3><p>{{ meeting.venue }} · {{ meeting.get_mode_display }}</p><a class="btn btn-sm" href="{% url 'meeting_detail' meeting.pk %}">View record</a></article>{% empty %}<p>No meetings are recorded yet.</p>{% endfor %}</section>
 {% endblock %}

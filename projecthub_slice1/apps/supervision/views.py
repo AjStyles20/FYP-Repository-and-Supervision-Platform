@@ -1,12 +1,13 @@
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.core.exceptions import PermissionDenied
+from django.core.exceptions import PermissionDenied, ValidationError
 from django.db import transaction
 from django.db.models import Q
 from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 from django.utils import timezone
 from pathlib import Path
-from datetime import timedelta
+from datetime import date, datetime, timedelta
 from django.http import FileResponse, Http404
 
 from apps.audit.services import log_event
@@ -14,12 +15,16 @@ from apps.accounts.models import Role, StudentProfile, SupervisorProfile
 from apps.accounts.permissions import role_required
 from apps.projects.models import Project
 
-from .forms import ApprovalPolicyForm, AvailabilityForm, AnnouncementForm, MeetingForm, SharedResourceForm, StudentMeetingResponseForm
+from .forms import (
+    ApprovalPolicyForm, AvailabilityForm, AnnouncementForm, MeetingForm, MeetingRequestForm, SharedResourceForm,
+    StudentMeetingResponseForm,
+)
 from .models import (
-    Announcement, AnnouncementAcknowledgement, MeetingRecordEdit, Notification, SharedResource,
+    Announcement, AnnouncementAcknowledgement, MeetingRecordEdit, MeetingRequest, Notification, NotificationKind,
+    SharedResource,
     SupervisorAvailability, SupervisionMeeting, student_resource_scope,
 )
-from .services import notify_supervisees
+from .services import notify, notify_supervisees
 
 MEETING_EDIT_FIELDS = (
     "scheduled_for", "duration_minutes", "venue", "mode", "status", "agenda", "discussion",
@@ -83,14 +88,105 @@ def _save_meeting_record(meeting, form, actor):
     return updated
 
 
+def _slot_duration(slot):
+    """The longest standard meeting length that fits in an availability window (at least 30 minutes)."""
+    minutes = (datetime.combine(date.min, slot.end_time) - datetime.combine(date.min, slot.start_time)).seconds // 60
+    fitting = [value for value, _ in SupervisionMeeting.DURATION_CHOICES if value <= minutes]
+    return max(fitting) if fitting else 30
+
+
+def _request_meeting(request, project, form):
+    """The student asks for a meeting in one of their supervisor's availability windows (D-32)."""
+    if not form.is_valid():
+        return False
+    meeting_request = form.save(commit=False)
+    meeting_request.project, meeting_request.student = project, request.user
+    slot, day = meeting_request.availability, meeting_request.requested_date
+    try:
+        meeting_request.full_clean()
+    except ValidationError as error:
+        for field, errors in error.message_dict.items():
+            form.add_error(field if field in form.fields else None, errors)
+        return False
+    start = timezone.make_aware(datetime.combine(day, slot.start_time))
+    if MeetingRequest.objects.filter(project=project, availability=slot, requested_date=day,
+                                     status=MeetingRequest.Status.PENDING).exists():
+        form.add_error(None, "You have already asked for this time; wait for your supervisor's answer.")
+        return False
+    if _has_schedule_conflict(supervisor=project.supervisor, scheduled_for=start, duration_minutes=_slot_duration(slot)):
+        form.add_error(None, "Your supervisor already has a meeting at that time. Choose another date or window.")
+        return False
+    meeting_request.save()
+    notify(project.supervisor, NotificationKind.MEETING_REQUESTED, meeting_request,
+           title=f"Meeting request from {request.user.get_full_name() or request.user.username}",
+           body=f"{slot.get_weekday_display()} {day:%d %B %Y} at {slot.start_time:%H:%M}. {meeting_request.message}".strip(),
+           url=reverse("project_meetings", args=[project.pk]))
+    log_event(actor=request.user, action="meeting.requested", summary=f"Meeting requested for {project.title}", obj=meeting_request)
+    messages.success(request, "Request sent. You will get an alert when your supervisor answers.")
+    return True
+
+
+@transaction.atomic
+def _decide_meeting_request(request, project):
+    """The supervisor accepts a request (it becomes a scheduled meeting) or declines it with a reason."""
+    meeting_request = get_object_or_404(
+        MeetingRequest.objects.select_for_update().select_related("availability"),
+        pk=request.POST.get("request_id"), project=project, status=MeetingRequest.Status.PENDING,
+    )
+    decision, note = request.POST.get("decision"), request.POST.get("note", "").strip()[:1000]
+    slot = meeting_request.availability
+    if decision == "decline":
+        if not note:
+            messages.error(request, "Give the student a reason when declining.")
+            return
+        meeting_request.status = MeetingRequest.Status.DECLINED
+        outcome = f"declined: {note}"
+    elif decision == "accept":
+        start = timezone.make_aware(datetime.combine(meeting_request.requested_date, slot.start_time))
+        duration = _slot_duration(slot)
+        if _has_schedule_conflict(supervisor=request.user, scheduled_for=start, duration_minutes=duration):
+            messages.error(request, "You already have a meeting at that time. Decline the request with a new time suggestion.")
+            return
+        meeting = SupervisionMeeting.objects.create(
+            project=project, scheduled_for=start, duration_minutes=duration, venue=slot.venue, mode=slot.mode,
+            agenda=meeting_request.message, scheduled_by=request.user, recorded_by=request.user,
+        )
+        MeetingRecordEdit.objects.create(meeting=meeting, edited_by=request.user, changes={"created": {"to": "Meeting scheduled from the student's request"}})
+        meeting_request.status, meeting_request.meeting = MeetingRequest.Status.APPROVED, meeting
+        outcome = f"accepted: {start:%A %d %B %Y at %H:%M}, {slot.venue or slot.get_mode_display()}"
+    else:
+        raise PermissionDenied
+    meeting_request.decision_note, meeting_request.reviewed_by, meeting_request.reviewed_at = note, request.user, timezone.now()
+    meeting_request.save()
+    notify(project.student, NotificationKind.MEETING_REQUEST_DECIDED, meeting_request,
+           title=f"Your meeting request was {meeting_request.get_status_display().lower()}",
+           body=f"Your supervisor {outcome}.", url=reverse("project_meetings", args=[project.pk]))
+    log_event(actor=request.user, action=f"meeting.request_{decision}ed", summary=f"Meeting request {decision}ed for {project.title}", obj=meeting_request)
+    messages.success(request, "Request accepted; the meeting is scheduled." if decision == "accept" else "Request declined; your student was told why.")
+
+
 @login_required
 def project_meetings(request, project_id):
     project = get_object_or_404(Project.objects.select_related("student", "supervisor", "department"), pk=project_id)
     if not _project_access(request.user, project):
         raise PermissionDenied
     can_schedule = request.user.role in (Role.SUPERVISOR, Role.COORDINATOR, Role.HOD) and project.supervisor_id == request.user.pk
-    form = MeetingForm(request.POST or None)
-    if request.method == "POST":
+    is_owner = request.user.role == Role.STUDENT and project.student_id == request.user.pk
+    slots = SupervisorAvailability.objects.filter(supervisor=project.supervisor, is_active=True) if project.supervisor_id else SupervisorAvailability.objects.none()
+    action = request.POST.get("action", "schedule") if request.method == "POST" else ""
+    request_form = MeetingRequestForm(request.POST if action == "request_meeting" else None, availability_queryset=slots)
+    if action == "request_meeting":
+        if not is_owner or project.archived or not project.supervisor_id:
+            raise PermissionDenied
+        if _request_meeting(request, project, request_form):
+            return redirect("project_meetings", project_id=project.pk)
+    elif action == "decide_request":
+        if not can_schedule:
+            raise PermissionDenied
+        _decide_meeting_request(request, project)
+        return redirect("project_meetings", project_id=project.pk)
+    form = MeetingForm(request.POST if action == "schedule" else None)
+    if action == "schedule":
         if not can_schedule:
             raise PermissionDenied
         if form.is_valid():
@@ -122,7 +218,13 @@ def project_meetings(request, project_id):
         "held": project.meetings.filter(status="held").count(),
         "missed": project.meetings.filter(status="missed").count(),
     }
-    return render(request, "supervision/meetings.html", {"project": project, "meetings": meetings, "form": form, "can_schedule": can_schedule, "counts": counts})
+    meeting_requests = project.meeting_requests.select_related("availability").order_by("-created_at")
+    return render(request, "supervision/meetings.html", {
+        "project": project, "meetings": meetings, "form": form, "can_schedule": can_schedule, "counts": counts,
+        "can_request": is_owner and not project.archived and slots.exists(), "request_form": request_form,
+        "is_owner": is_owner, "meeting_requests": meeting_requests,
+        "pending_requests": [item for item in meeting_requests if item.status == MeetingRequest.Status.PENDING] if can_schedule else [],
+    })
 
 
 @login_required
@@ -347,7 +449,7 @@ def availability(request):
                 author=request.user,
                 projects=assigned_projects,
                 title="Supervisor availability updated",
-                body=f"Your supervisor shared recurring availability: {slot.get_weekday_display()} {slot.start_time:%H:%M}–{slot.end_time:%H:%M}, {slot.venue or slot.get_mode_display()}. This is an availability window; your supervisor will schedule any specific meeting.",
+                body=f"Your supervisor shared recurring availability: {slot.get_weekday_display()} {slot.start_time:%H:%M}–{slot.end_time:%H:%M}, {slot.venue or slot.get_mode_display()}. You can request a meeting in this window from your Supervision meetings page.",
             )
             log_event(actor=request.user, action="supervisor.availability_updated", summary="Supervisor availability slot added", obj=slot)
             messages.success(request, "Availability saved. Your current students were notified.")

@@ -81,6 +81,7 @@ class MeetingRequest(models.Model):
     status = models.CharField(max_length=12, choices=Status.choices, default=Status.PENDING)
     reviewed_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name="reviewed_meeting_requests")
     reviewed_at = models.DateTimeField(null=True, blank=True)
+    decision_note = models.TextField(blank=True, help_text="The supervisor's reason when declining.")
     meeting = models.OneToOneField("SupervisionMeeting", on_delete=models.SET_NULL, null=True, blank=True, related_name="request")
     created_at = models.DateTimeField(auto_now_add=True)
 

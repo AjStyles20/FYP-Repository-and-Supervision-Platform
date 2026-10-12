@@ -15,6 +15,9 @@ class NotificationKind(models.TextChoices):
     PENDING_REGISTRATION = "pending_registration", "Registration waiting"
     UNACKNOWLEDGED_NOTICE = "unacknowledged_notice", "Notice not acknowledged"
     ACCOUNT_APPROVED = "account_approved", "Account approved"
+    MEETING_REQUESTED = "meeting_requested", "Meeting requested"
+    MEETING_REQUEST_DECIDED = "meeting_request_decided", "Meeting request answered"
+    DEADLINE_SOON = "deadline_soon", "Deadline coming up"
 
 
 class Notification(models.Model):
