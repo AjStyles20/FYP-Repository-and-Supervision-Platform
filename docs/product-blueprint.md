@@ -13,7 +13,7 @@ The system is not a public internet repository. Project discovery is available t
 
 ## Product principles
 
-1. **Discoverability with privacy:** project topics and approved project summaries can be found across Baze by signed-in users. Student IDs remain staff-only. Contact details are displayed only with the student's explicit consent.
+1. **Discoverability with privacy:** project topics and approved project summaries can be found across Baze by signed-in users. Student IDs remain staff-only. Contact details (personal email, phone) are opt-in per detail: each person chooses who sees each one (D-21).
 2. **One academic hierarchy:** Faculty → Department → Programme → Qualification/award (for example BSc, BA, MSc or MA) → Project.
 3. **Pilot narrowly, expand by configuration:** launch with the author's faculty and department; add other faculties, departments, programmes and awards as academic data, not new application branches.
 4. **Keep evidence scoped:** project metadata can be discoverable across Baze, but individual meeting discussions and corrective-action notes are shared only with the student, assigned supervisor and authorized academic staff.
@@ -107,7 +107,7 @@ Project card/list row:
   Short abstract and selected tags
 ```
 
-On Past students, the detail page adds the documented gap, final/previous supervisor, completion and verified graduation details, consented contact, and files the department has approved for Baze-wide access. On Current students, show only the project description, stage and supervisor details approved for repository discovery.
+On Past students, the detail page adds the documented gap, final/previous supervisor, completion and verified graduation details, the contact details the student chose to share, and files the department has approved for Baze-wide access. On Current students, show only the project description, stage and supervisor details approved for repository discovery.
 
 ### Role workspace sketch
 
@@ -123,7 +123,7 @@ Each role lands on a focused work queue, not the same generic dashboard: student
 
 - Searchable Current/Past views with faculty/department/programme/year filters.
 - Project detail pages with correct role-aware field visibility.
-- Staff-only student ID search; consent-based contact display.
+- Staff-only student ID search; contact details shown only as their owner chose.
 - Project document metadata and permission-checked downloads with per-file Baze-user/staff visibility.
 - Pilot academic data only for the author's faculty/department; structure stays reusable.
 

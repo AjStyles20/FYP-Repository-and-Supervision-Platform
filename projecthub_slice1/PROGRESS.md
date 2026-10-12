@@ -8,11 +8,11 @@
 - Django 5.2 project, settings read from environment or `.env`
 - MySQL connection (utf8mb4); SQLite for the tests, the demo and a quick tryout
 - Custom user model with roles: student, supervisor, coordinator, HOD, admin
-- Student and supervisor profiles (student number, programme, consent flag, student status)
+- Student and supervisor profiles (student number, programme, student status)
 - Student registration with Baze email and a full student ID in the Baze format (`BU/23B/IT/7892`: year, batch A-C, department code, number; `STUDENT_ID_REGEX`), pending administrator review, and approve/reject actions
 - Decision email to the student on approval or rejection (with the reason, if given), and an "Account approved" alert waiting at first sign-in
 - Registration status page behind a signed, expiring link that updates itself every 30 seconds (`docs/explain/registration-status.md`)
-- Sign-in with Baze email or full student ID (a plain username still works for demo accounts and the server-created admin); superusers receive the application administrator role
+- Sign-in with Baze email or full student ID (a plain username still works for demo accounts and the server-created admin); superusers receive the application administrator role; an eye button shows or hides any password field
 - Administrator-created staff accounts with a one-time temporary password and a forced password change at first sign-in
 - **My details** (`/account/contact/`) for every account: personal email and phone, each with its own visibility (only me, staff only, all signed-in users); shown on project pages for the student and the supervisor; current students without a personal email are reminded to add one
 - The HOD appoints the FYP coordinator and the staff allowed to assign supervisors (D-19)
@@ -97,7 +97,7 @@ For the demo, run `.\run_demo.ps1` from the repository root instead. It uses its
 ### Open questions for the supervisor (from `docs/decisions.md` section C)
 - Q-01: what "make it unique" means, with examples.
 - Q-02: whether the project approval form is signed, and whether the title must be fixed first.
-- Q-04: whether student names, IDs and contact details appear in the repository, and whether consent is needed.
+- Q-04: whether student names, IDs and contact details appear in the repository, and whether consent is needed. Built meanwhile as the author's interim answer (D-21): IDs staff-only, each contact detail opt-in.
 - Q-05: whether Baze already has a repository or supervision tool.
 - Q-06: whether MySQL/Workbench is required for all projects, and other written defence requirements.
 - Q-07: the department's exact approval chain (who signs, in which order). Confirm before hard-coding approval policy.

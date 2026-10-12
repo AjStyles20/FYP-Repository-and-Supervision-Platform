@@ -43,7 +43,7 @@ Server-rendered HTML templates, plain CSS, minimal JavaScript. No separate API i
 |---|:-:|:-:|:-:|:-:|:-:|
 | Browse repository (past/current) | ✔ | ✔ | ✔ | ✔ | ✔ |
 | See student ID | ✘ | ✔ | ✔ | ✔ | ✔ |
-| See student contact | only with consent | only with consent | only with consent | only with consent | ✔ |
+| See a person's contact details | if the owner chose "all signed-in users" | if the owner chose staff or all | if the owner chose staff or all | if the owner chose staff or all | if the owner chose staff or all |
 | Propose project | ✔ (own) | ✘ | ✘ | ✘ | ✘ |
 | Accept idea / mark work started | ✘ | ✔ (own students) | ✘ | ✘ | ✘ |
 | Record approval / defence outcome | ✘ | ✘ | ✔ | ✘ | ✘ |
@@ -102,7 +102,7 @@ Mark this section as a **hypothesis until the supervisor answers Q-01**.
 - Staff roles can also search by student ID. Supervisor search lists that supervisor's past and current students.
 - Current projects are searchable too (D-09) so duplicate topics are visible early.
 - Visibility is set per project and per file (`private`, `staff`, `baze_users`).
-- The repository shows contact details only where `contact_consent = 1`.
+- Project pages show the student's and the supervisor's contact details only as each owner chose (`User.contact_for`, D-21).
 
 ### Optional: topic-similarity module
 
@@ -155,7 +155,7 @@ Dates depend on the author's deadline. Fit the stages to the calendar once the f
 - **Supervisor change:** old assignment preserved; only one current supervisor (database constraint).
 - **Audit:** the application account cannot update or delete audit rows.
 - **Search:** a fixed set of queries with expected results.
-- **Privacy:** a student cannot see student IDs or unconsented contact details; unauthenticated users see nothing.
+- **Privacy:** a student cannot see student IDs or contact details their owner has not shared; unauthenticated users see nothing.
 - **Usability:** short task-based test with a few students and one or two lecturers; record task success and time.
 - **Evaluation (if the similarity module is built):** precision at 3 and recall against the labelled pairs.
 

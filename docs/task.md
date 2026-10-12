@@ -59,7 +59,9 @@ Requirement IDs (R-xx, N-xx) refer to `requirements.md`. Question IDs (Q-xx) ref
 - [x] Project, document and status-history models
 - [x] Past / Current tabs; Faculty → Department → Programme filters (R-01, R-02)
 - [x] Project detail page with the past-project fields (R-03)
-- [x] Staff-only student ID; consent-based contact (R-04, R-05)
+- [x] Staff-only student ID; contact details opt-in per detail, edited by their owner under My details (R-04, R-05, D-21)
+- [x] Baze student ID format and sign-in with Baze email or full student ID (D-20)
+- [x] Show/hide (eye) button on password fields
 - [x] Search by topic, supervisor, student name and staff-only student ID (R-06)
 - [x] File upload and permission-checked download (R-07)
 - [x] CSV import with a rejected-rows report; purge demo (R-10)

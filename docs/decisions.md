@@ -1,6 +1,6 @@
 # Decision Log
 
-**Version 0.1 · 2026-10-03**
+**Version 0.2 · 2026-10-12** (D-20 to D-24 added; interim answer to Q-04)
 Update this file whenever a decision is made or an open question is answered. Never delete an old decision; mark it superseded.
 
 ---
@@ -28,6 +28,11 @@ Update this file whenever a decision is made or an open question is answered. Ne
 | D-17 | "My project" is a student-only workspace; staff supervision history lists only that staff member's current and past supervisees, linked to project summaries | User clarified 2026-10-05 |
 | D-18 | Supervisor-allocation authority is granted independently from job title and scoped to the staff member's department; an eligible supervisor or HOD may also receive it | User clarified 2026-10-05; administered as an explicit staff permission |
 | D-19 | The HOD does HOD work: signs off final projects when the student brings the physical final documents and keeps the convocation list. The HOD appoints the FYP coordinator and the lecturers who assign supervisors, from lecturers in their department. Only the coordinator logs approved topics and records defences; the HOD does not do the coordinator's steps. A coordinator is never the HOD | User clarified 2026-10-09; HOD queue shows final sign-off only; convocation list printable and downloadable |
+| D-20 | **Student ID** is the full Baze number, `BU/<year><batch>/<department code>/<number>`, e.g. `BU/23B/IT/7892` (year 23, batch B of A, B or C, department IT, number 7892). Stored in capitals. Everyone signs in with their Baze email; students may also use the full ID. The short number alone (`7892`) is not accepted, because it can repeat across years and departments. No separate usernames are issued | User clarified 2026-10-11; the format is `STUDENT_ID_REGEX` in `.env` if Baze's rules differ |
+| D-21 | **Contact details** belong to each person (students, alumni and staff): a personal email and a phone number, both editable by their owner at any time; only the Baze email is fixed. Each detail has its own visibility: only me (the default), staff only, or all signed-in Baze users. Nothing is shown to people who are not signed in | User clarified 2026-10-11; a personal email keeps alumni reachable after their Baze email closes. Interim answer to Q-04 |
+| D-22 | **Demo data** is marked only by `is_demo` (shown as a "Sample" tag), never by "(demo)" in names. A demo account's counters and lists count demo and real rows; a real account's count real rows only | User decided 2026-10-10 |
+| D-23 | **CSV import of past projects is all or nothing:** if any row is wrong, nothing is saved and every wrong row is listed. Supervisors and previous supervisors must be academic staff of the project's department (no active check for historic records). Rows about demo students are imported as demo data | User decided 2026-10-10 |
+| D-24 | The author is the system administrator for development and the demonstration | User stated 2026-10-11 |
 
 ## B. Proposed (not yet confirmed)
 
@@ -36,7 +41,7 @@ Update this file whenever a decision is made or an open question is answered. Ne
 | P-01 | **Django** as the Python framework | Accepted as D-16; built-in login, roles, admin and migrations, and support for MySQL |
 | P-02 | Models in Django are the source of truth; Workbench used to reverse-engineer the ER diagram | Prevents schema drift |
 | P-03 | Working "unique feature" hypothesis: a **tamper-evident supervision record** (two-party confirmation, versioned edits, notices with acknowledgement, append-only audit) | Matches the supervisor's evidence stories in the transcript |
-| P-04 | Contact details and student IDs hidden by default (IDs staff-only, contact with consent only) | Privacy |
+| P-04 | Contact details and student IDs hidden by default (IDs staff-only, contact with consent only) | Privacy. Implemented as D-21 (opt-in per detail) |
 | P-05 | Optional AI module: topic-similarity detection with a measured evaluation | Gives a measurable model result if time allows |
 | P-06 | Project completion does not move a student to "graduated"; HOD sign-off only archives the project | Matches the separation of project and student status |
 
@@ -49,7 +54,7 @@ Ask these in one short meeting. Record answers here.
 | Q-01 | What did you mean by features that "make it unique"? Any examples? | Defines the contribution section | |
 | Q-02 | Is the project approval form signed, and does the title need to be fixed first? | Admin risk | |
 | Q-03 | "Public": visible to anyone on the internet, or only logged-in Baze users? | Privacy and security design | **Answered 2026-10-05:** signed-in Baze Project Hub users only |
-| Q-04 | Should student names, IDs and contact details appear in the repository? Is student consent needed? | Privacy | |
+| Q-04 | Should student names, IDs and contact details appear in the repository? Is student consent needed? | Privacy | **Interim answer by the author 2026-10-11 (D-21):** student IDs staff-only; each contact detail opt-in, with its owner choosing who sees it. Confirm with the supervisor |
 | Q-05 | Does Baze already have any project repository or supervision tool (Google Classroom, Moodle, forms)? | Gap statement | |
 | Q-06 | Is MySQL/Workbench a requirement for all projects, and are there other written defence requirements? | Stack | |
 | Q-07 | What is the exact approval chain in the department today (who signs, in which order)? | Workflow accuracy | |

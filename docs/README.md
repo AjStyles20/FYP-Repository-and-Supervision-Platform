@@ -34,6 +34,7 @@ New here? Read [`overview.md`](overview.md) first, then [`code_map.md`](code_map
 | [`explain/health-score.md`](explain/health-score.md) | Project health score |
 | [`explain/similarity.md`](explain/similarity.md) | Similar-topic checker |
 | [`explain/admin-integrity.md`](explain/admin-integrity.md) | Why the Django admin cannot bypass the workflow, and the admin hub |
+| [`explain/accounts-and-contact.md`](explain/accounts-and-contact.md) | Student ID format, signing in, My details (contact visibility) and the password eye button |
 
 ## Diagrams and screenshots
 

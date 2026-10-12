@@ -31,7 +31,7 @@
 | R-02 | Organise by Faculty → Department → Programme; filters at each level | U | MUST |
 | R-03 | Past project record shows: title, description, submission date, faculty/department/programme, student name, verified graduation year when available, final supervisor, earlier supervisor (if the student changed), documented gap, downloadable documents | U | MUST |
 | R-04 | Student ID is visible to staff roles only | U/P | MUST |
-| R-05 | Student contact details are shown to authenticated Baze users only where the student has given consent | U/P | MUST |
+| R-05 | Contact details (personal email, phone) are each person's own and editable by them; each is shown only to the audience its owner chose (only me (the default), staff only, or all signed-in Baze users). Revised 2026-10-11 (D-21) | U/P | MUST |
 | R-06 | Search by project topic, student name or ID (ID for staff), and supervisor name; searching a supervisor lists all their students and projects | U | MUST |
 | R-07 | Downloadable files for past projects (even partial work), with per-file visibility and permission-checked access | U | SHOULD |
 | R-08 | A new proposal can link to a past project's documented gap ("continue this gap") | P | COULD |

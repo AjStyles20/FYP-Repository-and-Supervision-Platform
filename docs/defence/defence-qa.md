@@ -146,9 +146,9 @@ Likely examiner questions, with a short answer to say aloud, how it works, where
 
 ### 14. Who can see what in the repository?
 
-**Say:** "Only signed-in Baze users can browse projects; the public internet cannot. Student IDs are visible to staff only, a student's contact details appear only if they consented, and private supervision records such as meeting discussions are limited to the student, their supervisor and authorised department staff."
+**Say:** "Only signed-in Baze users can browse projects; the public internet cannot. Student IDs are visible to staff only. Contact details are opt-in: each person chooses, for their personal email and for their phone number separately, whether only they, staff, or all signed-in users can see it. Private supervision records such as meeting discussions are limited to the student, their supervisor and authorised department staff."
 
-**Details:** decisions D-09, D-14 in `docs/decisions.md`.
+**Details:** decisions D-09, D-14 and D-21 in `docs/decisions.md`; Q21 below.
 
 ---
 
@@ -202,3 +202,43 @@ Guards: `apps/audit/models.py`, `apps/projects/models/project.py`, `apps/project
 - **Deleting a student:** `Project.student` is `CASCADE`, so the projects and their status events, approvals, completion, assignments, meetings, milestones and documents go too. Only `PROTECT` stops it, with `ProtectedError`: when the student is the actor of an audit event (`AuditEvent.actor`) or has an archived project (`ArchivedProject.student`). The Django admin refuses the delete once the student has a project, because it would remove records the admin may not delete; a student without a project can still be deleted there.
 - **MySQL time zone tables:** the admin's meeting list uses `date_hierarchy = "scheduled_for"`. With `USE_TZ` on and `TIME_ZONE = "Africa/Lagos"`, MySQL converts times with `CONVERT_TZ`, which needs the server's time zone tables; without them the page fails with *"Database returned an invalid datetime value"*. The application's own pages avoid this on purpose (`available_years` in `apps/projects/services/repository.py`). The fix is to load the time zone tables on the server or drop `date_hierarchy`.
 - Listed with the other limits in `docs/known_limits.md`.
+
+---
+
+## Sign-in, contact details and demo data
+
+### 20. What do students use to sign in, and what is the student ID?
+
+**Say:** "Their Baze email, or their full student ID, for example `BU/23B/IT/7892`: Baze University, the year 23 and batch B, the department code IT, and the number. We don't issue usernames, because a university doesn't. The short number `7892` on its own is refused, because another year or department can have the same last digits, so it could open the wrong account."
+
+**How it works:** `ProjectAuthenticationForm` in `apps/accounts/forms.py` looks the account up by Baze email, then by student ID (any case). At registration `clean_student_number` upper-cases the ID and checks it against `STUDENT_ID_REGEX` (`config/settings.py`; can be changed in `.env` if Baze's rules differ). Explainer: `docs/explain/accounts-and-contact.md`. Decision D-20.
+
+**Show it:** sign in as `demo.adaeze` with `bu/22a/cs/4041` in small letters; then try `4041` alone and see the general error.
+
+### 21. Who can see a person's phone number or personal email?
+
+**Say:** "Only who the owner chooses. Everyone, students, alumni and staff, has a My details page with a personal email and a phone number, and for each one they pick 'Only me', 'Staff only' or 'All signed-in Baze users'. The default is 'Only me', and nothing is ever shown to someone who isn't signed in. The Baze email is fixed; everything else the owner can change at any time. A personal email matters most for alumni, because their Baze email may close after they graduate."
+
+**How it works:** fields and `ContactVisibility` on `User` (`apps/accounts/models.py`); `User.contact_for(viewer)` returns only what the viewer may see, so hidden details never reach the page; `ContactDetailsForm` refuses a Baze address as the personal email and checks the phone format. Tests: `apps/accounts/tests_contact.py`. Decision D-21, the interim answer to Q-04 until the supervisor confirms.
+
+**Be ready for:** "Are the numbers verified?" — no; the format is checked, but no code is sent. It is listed in `docs/known_limits.md`.
+
+### 22. Isn't a "show password" button a security risk?
+
+**Say:** "It only changes how the field is displayed on the person's own screen; the password is still sent and stored the same way, hashed. It helps people type long passwords correctly, which matters because we ask for strong ones. The field goes back to hidden when the form is sent, and the button is labelled for screen readers."
+
+**How it works:** `static/js/password-toggle.js` adds the eye button to every password field. Tests: `PasswordToggleTests` in `apps/accounts/tests.py`.
+
+### 23. How do you keep demo data apart from real data?
+
+**Say:** "Every demo row carries an `is_demo` flag, shown on screen as a 'Sample' tag rather than written into names. `purge_demo` removes all of it, including its files, in one step. Demo accounts are kept out of the audit log. On a database that holds both, a real administrator's or coordinator's counters count only real rows, while a demo account sees the demo story and the real rows, so a demonstration never inflates the real numbers."
+
+**How it works:** `for_viewer` in `apps/accounts/views.py` applies the counter rule to the counters and the lists beside them; `seed_demo` and `purge_demo` in `apps/accounts/management/commands/`. Decision D-22. Limit: the review pages (Approval register and others) still list demo projects for real staff on a mixed database (`docs/known_limits.md`).
+
+### 24. What happens if a CSV import of past projects has a mistake in it?
+
+**Say:** "Nothing is saved. The importer checks every row, lists each wrong row with its line number and a plain reason, and only saves the file when every row is right, so a half-imported file can't happen. A supervisor or previous supervisor named in a row must be academic staff of that project's department, the same rule as assigning a supervisor."
+
+**How it works:** `import_archived_projects` in `apps/projects/imports.py` runs in one transaction with a savepoint per row, so even a database error becomes a row error rather than a crash. `can_supervise_in` in `apps/projects/services/assignment.py` is the shared supervisor rule. Tests: `apps/projects/tests_import.py`. Decision D-23.
+
+**Show it:** as the administrator, Admin tools → Import past projects from CSV, with `docs/sample_import.csv` after `seed_demo`.
