@@ -66,6 +66,8 @@ def allocate_student(student, supervisor, assigned_by, change_reason="", *, facu
         note="Project record created by the coordinator when allocating a supervisor.",
     )
     log_event(actor=assigned_by, action="project.created", summary=f"Project record created for {student} at allocation", obj=project)
+    from .milestones import apply_faculty_deadlines
+    apply_faculty_deadlines(project)
     assign_project_supervisor(project.pk, supervisor, assigned_by, change_reason, faculty_wide=faculty_wide)
     return project
 

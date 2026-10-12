@@ -59,6 +59,11 @@
 | The health score formula and its reasons | `apps/projects/services/health.py` | `def health_score` |
 | Health weights, bands and expected days per stage | `config/settings.py` | `HEALTH_WEIGHTS` |
 | Who may see a project's health score | `apps/projects/services/health.py` | `def can_see_health` |
+| Faculty deadlines and the milestones they create | `apps/projects/services/milestones.py` | `def create_deadline` |
+| New projects getting the faculty's deadlines | `apps/projects/services/milestones.py` | `def apply_faculty_deadlines` |
+| The coordinator's Deadlines page | `apps/projects/views.py` | `def faculty_deadlines` |
+| A project's Milestones page and who may edit it | `apps/projects/views.py` | `def project_milestones` |
+| The reminder before a due date | `apps/supervision/automation.py` | `def flag_deadlines_soon` |
 
 ## Alerts, notifications and live counters
 

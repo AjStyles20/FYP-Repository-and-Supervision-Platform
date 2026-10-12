@@ -35,6 +35,7 @@
       <a class="card-link" href="{% url 'current_project_detail' project.pk %}">View project summary</a>
       <a class="card-link" href="{% url 'project_workflow' project.pk %}">Open project workflow</a>
       <a class="card-link" href="{% url 'project_meetings' project.pk %}">Meetings and records</a>
+      <a class="card-link" href="{% url 'project_milestones' project.pk %}">Milestones</a>
       {% if can_manage_roster %}
         <details class="management-details" {% if row.edit_form.errors %}open{% endif %}><summary>Edit project topic and summary</summary>
           <form method="post" class="stack-form">{% csrf_token %}<input type="hidden" name="action" value="edit_project"><input type="hidden" name="project_id" value="{{ project.pk }}">

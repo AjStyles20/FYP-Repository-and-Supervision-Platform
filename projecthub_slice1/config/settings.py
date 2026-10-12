@@ -194,6 +194,7 @@ HEALTH_EXPECTED_DAYS = {  # keyed by ProjectStage value; completed projects get 
 # own: a scheduler or a --loop process must be running (docs/explain/automation.md).
 AUTOMATION_PENDING_REGISTRATION_HOURS = 48
 AUTOMATION_NOTICE_ACK_HOURS = 48
+AUTOMATION_DEADLINE_DAYS = 3  # remind a student this many days before a milestone is due
 NOTIFICATION_DEDUP_HOURS = 24  # same recipient + kind + object: at most one notification in this window
 # Every in-app alert is also emailed to the person's Baze email (not to demo accounts). SITE_URL makes
 # the link in the email absolute; set it to the real address of the site at launch.

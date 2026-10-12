@@ -5,6 +5,7 @@ do what, what happens to the files) lives in one place.
 """
 
 from .approval import log_approved_form, record_supervisor_decision, submit_proposal
+from .milestones import apply_faculty_deadlines, create_deadline, remove_deadline, update_deadline
 from .assignment import allocate_student, assign_project_supervisor, previous_supervisors_for, supervision_history_for, unassign_project_supervisor
 from .counters import staff_with_counters, supervisor_summary
 from .lifecycle import record_transition, sign_off_completion

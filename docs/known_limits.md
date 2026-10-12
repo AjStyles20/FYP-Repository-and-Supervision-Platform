@@ -10,7 +10,6 @@ These are things the platform does **not** do yet. Each entry says what is missi
 | No email verification when a student account is added | The coordinator or administrator adds each student in person, after checking their details; no code is sent to the Baze email (self-registration, which also had no verification, is off) |
 | Personal emails and phone numbers are not verified | Each person types their own under My details. The format is checked (a personal email cannot be a Baze address; a phone number must look like one), but no code is sent to confirm it |
 | Staff have no page that lists a running project's files | Files can be downloaded by the student and by staff of the project's department, but only the student's "My project" page lists them |
-| Milestones can't be created or edited in the app | Milestones are read-only in the app and editable in the Django admin |
 | `SupervisionLogEntry` (running log) has no screens | Meeting records and notices cover progress tracking |
 | No pagination on the repository | All matching projects are listed on one page |
 | Uploaded videos may not allow skipping ahead | Django serves uploaded videos without range requests, so a browser plays them from the start; some browsers cannot jump to a later point. Production should serve media through the web server (or use a video link) |

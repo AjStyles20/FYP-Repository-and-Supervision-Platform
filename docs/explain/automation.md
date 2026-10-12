@@ -17,6 +17,7 @@ Code: `projecthub_slice1/apps/supervision/automation.py` (the checks), `apps/sup
 | `at_risk_project` | Active projects whose [health score](health-score.md) is in the At risk band (above 60) | The project's supervisor and every active coordinator in its department | Project workflow |
 | `pending_registration` | Real (non-demo) student registrations still pending more than 48 hours after sign-up (only arise when self-registration is switched on) | Every active admin | Admin tools |
 | `unacknowledged_notice` | Notices that require acknowledgement, posted more than 48 hours ago | Each approved, not-graduated student in the notice's audience who has not acknowledged it | Notices page |
+| `deadline_soon` | Milestones not done, due within `AUTOMATION_DEADLINE_DAYS` (3) days | The project's student | Milestones page |
 
 Every alert is also emailed once to the recipient's Baze email when `EMAIL_ALERTS` is on (the default), with a link built from `SITE_URL`; demo accounts get no email (D-31).
 

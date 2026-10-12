@@ -13,7 +13,7 @@ from .project import (
     ProjectStatusEvent,
 )
 from .assignment import ProjectSupervisorAssignment
-from .milestone import ProjectMilestone
+from .milestone import ProjectDeadline, ProjectMilestone
 from .archive import ArchivedProject
 from .document import (
     ALLOWED_DOCUMENT_EXTENSIONS,
@@ -42,6 +42,7 @@ __all__ = [
     "ProjectApprovalDecision",
     "ProjectApprovalForm",
     "ProjectCompletion",
+    "ProjectDeadline",
     "ProjectDocument",
     "ProjectMedia",
     "ProjectMilestone",

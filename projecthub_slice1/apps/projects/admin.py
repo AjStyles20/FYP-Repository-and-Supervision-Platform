@@ -15,6 +15,7 @@ from .models import (
     ProjectApprovalDecision,
     ProjectApprovalForm,
     ProjectCompletion,
+    ProjectDeadline,
     ProjectDocument,
     ProjectMedia,
     ProjectMilestone,
@@ -62,6 +63,12 @@ class ProjectDocumentAdmin(admin.ModelAdmin):
     list_display = ("title", "document_type", "visibility", "project", "archived_project", "is_demo", "uploaded_at")
     list_filter = ("visibility", "document_type", "is_demo")
     search_fields = ("title", "project__title", "archived_project__title")
+
+
+@admin.register(ProjectDeadline)
+class ProjectDeadlineAdmin(admin.ModelAdmin):
+    list_display = ("name", "faculty", "due_date", "created_by")
+    list_filter = ("faculty",)
 
 
 @admin.register(ProjectMedia)

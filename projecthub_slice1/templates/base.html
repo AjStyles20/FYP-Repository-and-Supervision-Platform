@@ -40,6 +40,7 @@
         {% if user.can_assign_supervisors %}<a href="{% url 'supervisor_assignments' %}">Student allocation</a>{% endif %}
         <a href="{% url 'approvals' %}">Approval register</a>
         <a href="{% url 'add_student_account' %}">Add student</a>
+        <a href="{% url 'faculty_deadlines' %}">Deadlines</a>
         <a href="{% url 'supervision' %}">Supervised students</a>
         <a href="{% url 'announcements' %}">Notices</a>
         <a href="{% url 'academic_structure' %}">Academic structure</a>

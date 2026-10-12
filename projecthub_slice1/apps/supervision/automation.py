@@ -7,6 +7,7 @@ the checks again, by hand, from a scheduler or in --loop, creates nothing new un
   at_risk_project        health score above the at-risk band -> the supervisor and department coordinators
   pending_registration   student registration pending > 48 h  -> every active admin
   unacknowledged_notice  notice needing acknowledgement, > 48 h old -> each student in its audience who has not
+  deadline_soon          milestone not done, due within 3 days       -> the project's student
 """
 
 import logging
@@ -17,7 +18,7 @@ from django.urls import reverse
 from django.utils import timezone
 
 from apps.accounts.models import Role, StudentProfile, User
-from apps.projects.models import Project, ProjectStage
+from apps.projects.models import Project, ProjectMilestone, ProjectStage
 from apps.projects.services.health import AT_RISK, HEALTH_PREFETCH, health_score
 
 from .models import Announcement, AnnouncementAcknowledgement, NotificationKind
@@ -27,6 +28,7 @@ logger = logging.getLogger("projecthub.automation")
 
 DEFAULT_PENDING_REGISTRATION_HOURS = 48
 DEFAULT_NOTICE_ACK_HOURS = 48
+DEFAULT_DEADLINE_DAYS = 3
 
 
 class Tally:
@@ -129,10 +131,30 @@ def flag_unacknowledged_notices(now):
     return tally
 
 
+def flag_deadlines_soon(now):
+    tally = Tally()
+    today = timezone.localdate(now)
+    soon = today + timedelta(days=getattr(settings, "AUTOMATION_DEADLINE_DAYS", DEFAULT_DEADLINE_DAYS))
+    milestones = ProjectMilestone.objects.filter(
+        done=False, due_date__gte=today, due_date__lte=soon, project__archived=False, project__student__is_active=True,
+    ).select_related("project__student")
+    for milestone in milestones:
+        tally.flagged += 1
+        days = (milestone.due_date - today).days
+        tally.send(
+            milestone.project.student, NotificationKind.DEADLINE_SOON, milestone, now,
+            title=f"{milestone.name} is due {'today' if days == 0 else 'tomorrow' if days == 1 else f'in {days} days'}",
+            body=f"Due {milestone.due_date:%A %d %B %Y}. Your supervisor marks it done once it is handed in.",
+            url=reverse("project_milestones", args=[milestone.project_id]),
+        )
+    return tally
+
+
 CHECKS = (
     (NotificationKind.AT_RISK_PROJECT, flag_at_risk_projects),
     (NotificationKind.PENDING_REGISTRATION, flag_pending_registrations),
     (NotificationKind.UNACKNOWLEDGED_NOTICE, flag_unacknowledged_notices),
+    (NotificationKind.DEADLINE_SOON, flag_deadlines_soon),
 )
 
 

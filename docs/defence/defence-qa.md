@@ -280,3 +280,9 @@ Guards: `apps/audit/models.py`, `apps/projects/models/project.py`, `apps/project
 **Say:** "Yes. The supervisor publishes weekly availability windows, say Tuesday 10 to 12 in Room B12. The student picks a window and a date on that day, adds what they want to discuss, and sends a request. The supervisor accepts, which schedules the meeting, or declines with a reason the student can read. A time that already has a meeting can't be requested, and both sides get an alert and an email."
 
 **How it works:** `_request_meeting` and `_decide_meeting_request` in `apps/supervision/views.py`, on the project's Supervision meetings page; `MeetingRequest` (`apps/supervision/models/meeting.py`) checks the date falls on the window's day; the clash check is `_has_schedule_conflict`. Tests: `apps/supervision/tests_booking.py`. Decision D-32.
+
+### 30. How are deadlines like "Chapter 1" handled?
+
+**Say:** "The coordinator sets them once for the whole faculty, and every running project gets them as milestones, including projects started later. The supervisor can add extra milestones for one student and marks each one done when it's handed in. Three days before a due date the student gets a reminder, by alert and email, and anything overdue raises the project's health score, so the coordinator sees who is falling behind."
+
+**How it works:** `ProjectDeadline` and `ProjectMilestone` (`apps/projects/models/milestone.py`); `create_deadline`, `update_deadline`, `remove_deadline` and `apply_faculty_deadlines` in `apps/projects/services/milestones.py`; the pages `faculty_deadlines` and `project_milestones` in `apps/projects/views.py`; the reminder is `flag_deadlines_soon` in `apps/supervision/automation.py`. Tests: `apps/projects/tests_milestones.py`. Decision D-33.

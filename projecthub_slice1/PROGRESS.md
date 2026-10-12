@@ -39,6 +39,7 @@
 - Supervisor meeting scheduling and records, held/missed counts, student confirmation/dispute, and versioned edits
 - Weekly supervisor availability windows; students request a meeting in a window and the supervisor accepts (it becomes a scheduled meeting) or declines with a reason; both are alerted (D-32)
 - Department/project notices with first-seen and acknowledgement timestamps (the author is not asked to acknowledge their own notice); shared supervisor resources with permission-checked downloads
+- Faculty deadlines set by the coordinator become milestones on every running project; supervisors add per-student milestones and mark them done; students are reminded three days before (D-33)
 - Project health score with reasons, shown only to the roles allowed to see it (`docs/explain/health-score.md`)
 
 ### Alerts, automation and live counters

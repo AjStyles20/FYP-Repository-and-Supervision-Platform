@@ -7,21 +7,27 @@ from django.db.models import Count, Q
 from django.http import FileResponse, Http404, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
+from django.utils import timezone
 from django.views.decorators.http import require_POST
 
 from apps.audit.services import log_event
 from apps.accounts.models import Role, STAFF_ROLES, StudentProfile, User
+from django.contrib.auth.decorators import login_required
 from apps.accounts.permissions import role_required
 
 from .forms import (
     CompletionForm, CoordinatorApprovalForm, ProjectCsvImportForm, ProjectDocumentForm, ProjectProposalForm, ProjectStartForm, StageActionForm,
-    ProjectMediaForm, SupervisorAssignmentForm, SupervisorDecisionForm, SupervisorProjectEditForm, UnassignedSuperviseeForm,
+    DeadlineForm, MilestoneForm, ProjectMediaForm, SupervisorAssignmentForm, SupervisorDecisionForm, SupervisorProjectEditForm, UnassignedSuperviseeForm,
 )
-from .models import ArchivedProject, Project, ProjectCompletion, ProjectDocument, ProjectMedia, ProjectStage, ProjectStatusEvent
+from .models import (
+    ArchivedProject, Project, ProjectCompletion, ProjectDeadline, ProjectDocument, ProjectMedia, ProjectMilestone, ProjectStage,
+    ProjectStatusEvent,
+)
 from .imports import import_archived_projects
 from .services.health import HEALTH_PREFETCH, can_see_health, health_score
 from .services.similarity import similar_archived_projects, similarity_threshold
 from .services.assignment import allocation_departments
+from .services.milestones import apply_faculty_deadlines, create_deadline, remove_deadline, update_deadline
 from .services import (
     allocate_student, assign_project_supervisor, unassign_project_supervisor, log_approved_form, record_supervisor_decision,
     record_transition, sign_off_completion, submit_proposal, available_years,
@@ -273,6 +279,87 @@ def remove_project_media(request, media_id):
     return redirect("my_project" if is_owner else "current_project_detail", **({} if is_owner else {"project_id": item.project_id}))
 
 
+@role_required(Role.COORDINATOR)
+def faculty_deadlines(request):
+    """The coordinator's common deadlines for every running project of their faculty (D-33)."""
+    if not request.user.department_id:
+        raise PermissionDenied
+    faculty = request.user.department.faculty
+    deadlines = ProjectDeadline.objects.filter(faculty=faculty)
+    action = request.POST.get("action", "") if request.method == "POST" else ""
+    form = DeadlineForm(request.POST if action == "add" else None)
+    if action == "add" and form.is_valid():
+        deadline = create_deadline(faculty, form.cleaned_data["name"], form.cleaned_data["due_date"], request.user)
+        log_event(actor=request.user, action="deadline.created", summary=f"Deadline set: {deadline}", obj=deadline)
+        messages.success(request, f"{deadline.name} added to every running project of {faculty.name}.")
+        return redirect("faculty_deadlines")
+    if action in ("update", "remove"):
+        deadline = get_object_or_404(deadlines, pk=request.POST.get("deadline_id"))
+        if action == "remove":
+            log_event(actor=request.user, action="deadline.removed", summary=f"Deadline removed: {deadline}", obj=deadline)
+            remove_deadline(deadline)
+            messages.success(request, "Deadline removed. Milestones already done are kept.")
+            return redirect("faculty_deadlines")
+        edit_form = DeadlineForm(request.POST)
+        if edit_form.is_valid():
+            update_deadline(deadline, edit_form.cleaned_data["name"], edit_form.cleaned_data["due_date"])
+            log_event(actor=request.user, action="deadline.updated", summary=f"Deadline changed: {deadline}", obj=deadline)
+            messages.success(request, "Deadline updated on every project.")
+        else:
+            messages.error(request, "Give the deadline a name and a date.")
+        return redirect("faculty_deadlines")
+    return render(request, "projects/deadlines.html", {"faculty": faculty, "deadlines": deadlines, "form": form})
+
+
+def _milestone_access(user, project):
+    """(can_view, can_edit): the student and staff of the project's department read; its supervisor edits."""
+    if project.supervisor_id == user.pk:
+        return True, True
+    if user.role == Role.STUDENT:
+        return project.student_id == user.pk, False
+    if user.role == Role.ADMIN:
+        return True, False
+    if user.role == Role.COORDINATOR and user.department_id:
+        return project.department.faculty_id == user.department.faculty_id, False
+    return user.role == Role.HOD and user.department_id == project.department_id, False
+
+
+@login_required
+def project_milestones(request, project_id):
+    """Milestones and deadlines of one project: the faculty's deadlines plus the supervisor's own (D-33)."""
+    project = get_object_or_404(Project.objects.select_related("student", "supervisor", "department"), pk=project_id, archived=False)
+    can_view, can_edit = _milestone_access(request.user, project)
+    if not can_view:
+        raise PermissionDenied
+    action = request.POST.get("action", "") if request.method == "POST" else ""
+    if action and not can_edit:
+        raise PermissionDenied
+    form = MilestoneForm(request.POST if action == "add" else None)
+    if action == "add" and form.is_valid():
+        milestone = ProjectMilestone.objects.create(project=project, name=form.cleaned_data["name"],
+                                                    due_date=form.cleaned_data["due_date"], position=project.milestones.count())
+        log_event(actor=request.user, action="milestone.added", summary=f"Milestone added for {project.title}: {milestone.name}", obj=project)
+        return redirect("project_milestones", project_id=project.pk)
+    if action in ("toggle_done", "remove"):
+        milestone = get_object_or_404(project.milestones, pk=request.POST.get("milestone_id"))
+        if action == "remove":
+            if milestone.deadline_id:
+                raise PermissionDenied  # a faculty deadline is removed by the coordinator, not per project
+            milestone.delete()
+            log_event(actor=request.user, action="milestone.removed", summary=f"Milestone removed for {project.title}: {milestone.name}", obj=project)
+        else:
+            milestone.done = not milestone.done
+            milestone.done_at = timezone.now() if milestone.done else None
+            milestone.save(update_fields=["done", "done_at"])
+            log_event(actor=request.user, action="milestone.done" if milestone.done else "milestone.reopened",
+                      summary=f"Milestone {'done' if milestone.done else 'reopened'} for {project.title}: {milestone.name}", obj=project)
+        return redirect("project_milestones", project_id=project.pk)
+    return render(request, "projects/milestones.html", {
+        "project": project, "milestones": project.milestones.select_related("deadline"), "form": form,
+        "can_edit": can_edit, "today": timezone.localdate(),
+    })
+
+
 def _can_open_current_project_files(user, document):
     """Files of a project that is still running (archived files follow the repository rules).
 
@@ -340,6 +427,7 @@ def start_project(request):
             actor=request.user, note="Student created the initial project record.",
         )
         log_event(actor=request.user, action="project.created", summary=f"Project record created: {project.title}", obj=project)
+        apply_faculty_deadlines(project)
         messages.success(request, "Project record created. Complete the proposal form to send it for review.")
         _warn_about_similar_topics(request, project)
         return redirect("project_workflow", project_id=project.pk)

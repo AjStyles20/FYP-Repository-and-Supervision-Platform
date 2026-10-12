@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block title %}Milestones · {{ project.title }}{% endblock %}
+{% block back %}<p class="breadcrumb back-link"><a href="{% if user.role == 'student' %}{% url 'my_project' %}{% else %}{% url 'supervision' %}{% endif %}"><span aria-hidden="true">←</span> {% if user.role == 'student' %}My project{% else %}Supervised students{% endif %}</a></p>{% endblock %}
+{% block content %}
+<section class="page-heading">
+  <p class="eyebrow">Milestones and deadlines</p>
+  <h1>{{ project.title }}</h1>
+  <p class="muted">{{ project.student.get_full_name|default:project.student.username }}{% if project.supervisor %} · Supervised by {{ project.supervisor.get_full_name|default:project.supervisor.username }}{% endif %}</p>
+</section>
+
+<section class="card">
+  {% if milestones %}
+    <ul class="plain-list">
+      {% for milestone in milestones %}
+        <li>
+          <strong>{{ milestone.name }}</strong>
+          {% if milestone.due_date %} · due {{ milestone.due_date|date:"j M Y" }}{% endif %}
+          {% if milestone.deadline %} <span class="tag tag-quiet">Faculty deadline</span>{% endif %}
+          {% if milestone.done %} <span class="tag tag-live">Done</span>{% elif milestone.due_date and milestone.due_date < today %} <span class="tag">Overdue</span>{% endif %}
+          {% if can_edit %}
+            <form method="post" class="inline-form">{% csrf_token %}<input type="hidden" name="milestone_id" value="{{ milestone.pk }}">
+              <button type="submit" name="action" value="toggle_done" class="btn-sm">{% if milestone.done %}Reopen{% else %}Mark done{% endif %}</button>
+              {% if not milestone.deadline %}<button type="submit" name="action" value="remove" class="btn-sm">Remove</button>{% endif %}
+            </form>
+          {% endif %}
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p class="muted">No milestones yet.</p>
+  {% endif %}
+  {% if not can_edit %}<p class="muted">Your supervisor marks each milestone done once it is handed in. You get a reminder three days before a due date.</p>{% endif %}
+</section>
+
+{% if can_edit %}
+<section class="card">
+  <h2>Add a milestone for this student</h2>
+  <form method="post" class="stack-form">{% csrf_token %}<input type="hidden" name="action" value="add">
+    {% for field in form %}<div class="form-row">{{ field.label_tag }}{{ field }}{% if field.help_text %}<small class="muted">{{ field.help_text }}</small>{% endif %}{% for error in field.errors %}<p class="error">{{ error }}</p>{% endfor %}</div>{% endfor %}
+    <button type="submit" class="primary">Add milestone</button>
+  </form>
+</section>
+{% endif %}
+{% endblock %}

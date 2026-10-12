@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}Deadlines · Baze Project Hub{% endblock %}
+{% block content %}
+<section class="page-heading">
+  <p class="eyebrow">{{ faculty.name }}</p>
+  <h1>Deadlines</h1>
+  <p class="muted">Common deadlines for every running project in the faculty, such as chapter hand-ins. Each one appears on every student's milestones, and on projects started later too. Students get a reminder three days before.</p>
+</section>
+
+<section class="card">
+  <h2>Faculty deadlines</h2>
+  {% if deadlines %}
+    <ul class="plain-list">
+      {% for deadline in deadlines %}
+        <li>
+          <form method="post" class="actions">{% csrf_token %}<input type="hidden" name="deadline_id" value="{{ deadline.pk }}">
+            <label class="visually-hidden" for="name-{{ deadline.pk }}">Deadline</label>
+            <input type="text" id="name-{{ deadline.pk }}" name="name" value="{{ deadline.name }}" maxlength="120" required>
+            <label class="visually-hidden" for="date-{{ deadline.pk }}">Due date</label>
+            <input type="date" id="date-{{ deadline.pk }}" name="due_date" value="{{ deadline.due_date|date:'Y-m-d' }}" required>
+            <button type="submit" name="action" value="update" class="btn-sm">Save</button>
+            <button type="submit" name="action" value="remove" class="btn-sm">Remove</button>
+          </form>
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p class="muted">No deadlines yet.</p>
+  {% endif %}
+</section>
+
+<section class="card">
+  <h2>Add a deadline</h2>
+  <form method="post" class="stack-form">{% csrf_token %}<input type="hidden" name="action" value="add">
+    {% for field in form %}<div class="form-row">{{ field.label_tag }}{{ field }}{% if field.help_text %}<small class="muted">{{ field.help_text }}</small>{% endif %}{% for error in field.errors %}<p class="error">{{ error }}</p>{% endfor %}</div>{% endfor %}
+    <button type="submit" class="primary">Add deadline</button>
+  </form>
+</section>
+{% endblock %}

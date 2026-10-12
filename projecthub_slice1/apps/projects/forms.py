@@ -210,3 +210,13 @@ class ProjectMediaForm(forms.Form):
         if existing >= limit:
             raise forms.ValidationError(f"This project already has the most {'screenshots' if kind == 'image' else 'videos'} allowed ({limit}). Remove one first.")
         return cleaned
+
+
+class DeadlineForm(forms.Form):
+    name = forms.CharField(max_length=120, label="Deadline", help_text="For example \"Chapter 1: Introduction\".")
+    due_date = forms.DateField(label="Due date", widget=forms.DateInput(attrs={"type": "date"}))
+
+
+class MilestoneForm(forms.Form):
+    name = forms.CharField(max_length=120, label="Milestone", help_text="For example \"Working prototype\".")
+    due_date = forms.DateField(required=False, label="Due date", widget=forms.DateInput(attrs={"type": "date"}))

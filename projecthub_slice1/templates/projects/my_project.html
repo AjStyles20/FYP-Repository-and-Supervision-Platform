@@ -15,6 +15,7 @@
     <div class="actions">
       <a class="button" href="{% url 'project_workflow' project.pk %}">Project actions and approval form</a>
       <a class="btn" href="{% url 'project_meetings' project.pk %}">Supervision meetings</a>
+      <a class="btn" href="{% url 'project_milestones' project.pk %}">Milestones and deadlines</a>
       <a class="btn" href="{% url 'upload_project_document' project.pk %}">Upload project document</a>
       <a class="btn" href="{% url 'add_project_media' project.pk %}">Add screenshot or video</a>
     </div>
