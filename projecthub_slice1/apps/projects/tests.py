@@ -1369,3 +1369,23 @@ class ProjectHealthScoreTests(TestCase):
 
         self.client.force_login(self.other_coordinator)
         self.assertNotContains(self.client.get(reverse("dashboard")), "On track · 0/100")
+
+
+class ProjectStartKeywordsTests(TestCase):
+    """Keywords are optional, and the start form says what they are for."""
+
+    def test_keywords_are_optional_and_explained(self):
+        faculty = Faculty.objects.create(name="Keyword Faculty")
+        department = Department.objects.create(faculty=faculty, name="Computer Science")
+        programme = Programme.objects.create(department=department, name="Computer Science", degree_type="BSc")
+        student = User.objects.create(username="kw.student", role=Role.STUDENT)
+        StudentProfile.objects.create(user=student, student_number="BU/23A/CS/7001", programme=programme)
+        self.client.force_login(student)
+
+        page = self.client.get(reverse("start_project"))
+        self.assertContains(page, "Keywords (optional)")
+        self.assertContains(page, "They help people find the project in a search.")
+        self.assertContains(page, 'placeholder="e.g. fintech, fraud detection, mobile money"')
+
+        self.client.post(reverse("start_project"), {"title": "Library Seat Booking", "description": "", "keywords": ""})
+        self.assertEqual(Project.objects.get(student=student).keywords, "")

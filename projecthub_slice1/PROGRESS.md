@@ -55,7 +55,7 @@
 - Live counters and the lists beside them follow the viewer: a demo account counts demo and real rows, a real account real rows only
 
 ## Verification status
-- `manage.py test apps`: **276 tests pass on SQLite (`DB_ENGINE=sqlite`) and on MySQL 8.4** (2026-10-12).
+- `manage.py test apps`: **277 tests pass on SQLite (`DB_ENGINE=sqlite`) and on MySQL 8.4** (2026-10-12).
 - `apps/accounts/tests_docs.py` checks that every row of `docs/code_map.md` names a real file and name.
 - Runtime in use: Python 3.14.0, Django 5.2.18, MySQL 8.4.
 

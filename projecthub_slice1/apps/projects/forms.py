@@ -55,11 +55,22 @@ class UnassignedSuperviseeForm(forms.Form):
         self.fields["project"].queryset = project_queryset or Project.objects.none()
 
 
+# Keywords are optional tags that only help search; the label and example say so in a few words.
+KEYWORDS_LABEL = "Keywords (optional)"
+KEYWORDS_HELP = "A few words about the topic, separated by commas. They help people find the project in a search."
+KEYWORDS_PLACEHOLDER = "e.g. fintech, fraud detection, mobile money"
+
+
 class SupervisorProjectEditForm(forms.ModelForm):
     class Meta:
         model = Project
         fields = ("title", "description", "keywords")
-        widgets = {"description": forms.Textarea(attrs={"rows": 3})}
+        labels = {"keywords": KEYWORDS_LABEL}
+        help_texts = {"keywords": KEYWORDS_HELP}
+        widgets = {
+            "description": forms.Textarea(attrs={"rows": 3}),
+            "keywords": forms.TextInput(attrs={"placeholder": KEYWORDS_PLACEHOLDER}),
+        }
 
 
 class ProjectProposalForm(forms.Form):
@@ -78,7 +89,10 @@ class ProjectProposalForm(forms.Form):
 class ProjectStartForm(forms.Form):
     title = forms.CharField(max_length=255, label="Working project title")
     description = forms.CharField(required=False, widget=forms.Textarea)
-    keywords = forms.CharField(max_length=255, required=False, help_text="Comma-separated topic keywords")
+    keywords = forms.CharField(
+        max_length=255, required=False, label=KEYWORDS_LABEL, help_text=KEYWORDS_HELP,
+        widget=forms.TextInput(attrs={"placeholder": KEYWORDS_PLACEHOLDER}),
+    )
 
 
 class SupervisorDecisionForm(forms.Form):
