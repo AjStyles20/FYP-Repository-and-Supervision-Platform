@@ -24,13 +24,30 @@ class AnnouncementForm(forms.ModelForm):
     class Meta:
         model = Announcement
         fields = ("project", "title", "body", "is_pinned", "requires_acknowledgement")
+        labels = {
+            "project": "For one student's project (leave empty for the whole department)",
+            "body": "Message",
+            "is_pinned": "Pin it to the top of the notices",
+            "requires_acknowledgement": "Students must confirm they have read it",
+        }
         widgets = {"body": forms.Textarea}
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["project"].empty_label = "Whole department"
+        for name in ("is_pinned", "requires_acknowledgement"):
+            self.fields[name].label_suffix = ""  # a tick box reads as a sentence, without a colon
 
 
 class AvailabilityForm(forms.ModelForm):
     class Meta:
         model = SupervisorAvailability
         fields = ("weekday", "start_time", "end_time", "venue", "mode", "is_active")
+        labels = {"weekday": "Day", "venue": "Venue or meeting link", "is_active": "Open for meeting requests"}
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["is_active"].label_suffix = ""
         widgets = {"start_time": forms.TimeInput(attrs={"type": "time"}), "end_time": forms.TimeInput(attrs={"type": "time"})}
 
 
@@ -52,6 +69,8 @@ class SharedResourceForm(forms.ModelForm):
     class Meta:
         model = SharedResource
         fields = ("title", "description", "url", "file")
+        labels = {"url": "Link", "file": "Or upload a file"}
+        help_texts = {"url": "A web address, for material that already lives online."}
         widgets = {"description": forms.Textarea(attrs={"rows": 3})}
 
     def __init__(self, *args, supervisor, **kwargs):

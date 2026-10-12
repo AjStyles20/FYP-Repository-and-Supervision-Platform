@@ -89,7 +89,7 @@ input:focus, select:focus, textarea:focus { background: #ffffff; }
   background: linear-gradient(135deg, #c8001f, #9a0000);
 }
 .btn:not(.btn-primary):not(.btn-quiet),
-button:not(.primary):not(.btn-primary):not(.btn-quiet):not(.password-toggle):not(.nav-toggle) {
+button:not(.primary):not(.btn-primary):not(.button):not(.btn-quiet):not(.password-toggle):not(.nav-toggle) {
   background: var(--glass-strong);
   border: 1px solid rgba(120, 100, 110, 0.28);
 }

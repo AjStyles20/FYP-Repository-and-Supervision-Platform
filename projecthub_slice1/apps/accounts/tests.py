@@ -1371,6 +1371,14 @@ class ThemeTests(TestCase):
         with override_settings(UI_THEME="classic"):
             self.assertNotContains(self.client.get(reverse("login")), "css/theme-glass.css")
 
+    def test_glass_never_turns_a_crimson_button_white(self):
+        # Primary (.btn-primary, button.primary) and older (.button) buttons keep white text on crimson,
+        # so the glass rule for plain buttons must leave all three alone.
+        css = (settings.BASE_DIR / "static" / "css" / "theme-glass.css").read_text(encoding="utf-8")
+        plain_rule = css.split("button:not(.primary)", 1)[1].split("{", 1)[0]
+        for kept in (":not(.btn-primary)", ":not(.button)", ":not(.btn-quiet)"):
+            self.assertIn(kept, plain_rule)
+
     def test_the_sign_in_hint_no_longer_offers_a_staff_username(self):
         page = self.client.get(reverse("login"))
         self.assertContains(page, "Use your Baze email. Students can also use their full student ID.")
