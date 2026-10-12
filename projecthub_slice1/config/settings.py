@@ -195,6 +195,10 @@ HEALTH_EXPECTED_DAYS = {  # keyed by ProjectStage value; completed projects get 
 AUTOMATION_PENDING_REGISTRATION_HOURS = 48
 AUTOMATION_NOTICE_ACK_HOURS = 48
 NOTIFICATION_DEDUP_HOURS = 24  # same recipient + kind + object: at most one notification in this window
+# Every in-app alert is also emailed to the person's Baze email (not to demo accounts). SITE_URL makes
+# the link in the email absolute; set it to the real address of the site at launch.
+EMAIL_ALERTS = env("EMAIL_ALERTS", "True").lower() == "true"
+SITE_URL = env("SITE_URL", "http://127.0.0.1:8000").rstrip("/")
 
 # Each automation run logs a one-line summary to standard output; schedulers redirect it to a file.
 LOGGING = {

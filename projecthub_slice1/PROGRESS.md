@@ -42,6 +42,7 @@
 - Project health score with reasons, shown only to the roles allowed to see it (`docs/explain/health-score.md`)
 
 ### Alerts, automation and live counters
+- Every alert also emailed once to the Baze email (D-31)
 - In-app alerts with an unread count in the menu, mark one or all as read, and no duplicate of the same alert within 24 hours
 - `run_automation` (once, from a scheduler, or with `--loop`): flags at-risk projects, registrations waiting too long and unacknowledged notices (`docs/explain/automation.md`)
 - Live counters from `/api/summary/`, polled every 30 seconds while the tab is visible (`docs/explain/live-counters.md`)

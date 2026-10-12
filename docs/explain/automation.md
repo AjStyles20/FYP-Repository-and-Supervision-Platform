@@ -18,6 +18,8 @@ Code: `projecthub_slice1/apps/supervision/automation.py` (the checks), `apps/sup
 | `pending_registration` | Real (non-demo) student registrations still pending more than 48 hours after sign-up (only arise when self-registration is switched on) | Every active admin | Admin tools |
 | `unacknowledged_notice` | Notices that require acknowledgement, posted more than 48 hours ago | Each approved, not-graduated student in the notice's audience who has not acknowledged it | Notices page |
 
+Every alert is also emailed once to the recipient's Baze email when `EMAIL_ALERTS` is on (the default), with a link built from `SITE_URL`; demo accounts get no email (D-31).
+
 The audience follows the same rules as the notices page: a project notice reaches that project's student, a department notice reaches the department's students, and a notice with no department reaches everyone. The notice's author is never part of its audience: they are not reminded, and the notices page does not ask them to acknowledge their own notice either.
 
 Alerts appear on the **Alerts** page (`/supervision/alerts/`), with an unread count next to "Alerts" in the menu. They are called Alerts in the interface because the student menu already uses "Notifications" for supervisor notices.

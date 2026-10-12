@@ -67,6 +67,7 @@
 | Which projects the automation flags as at risk | `apps/supervision/automation.py` | `def flag_at_risk_projects` |
 | The `run_automation` command and its `--loop` | `apps/supervision/management/commands/run_automation.py` | `class Command` |
 | The "no duplicate within 24 hours" rule | `apps/supervision/services.py` | `def notify` |
+| The email copy of each alert | `apps/supervision/services.py` | `def _email_alert` |
 | The kinds of notification | `apps/supervision/models/notification.py` | `class NotificationKind` |
 | The Alerts page (list, mark as read) | `apps/supervision/views.py` | `def notifications` |
 | The unread count in the menu | `apps/supervision/context_processors.py` | `def notifications` |
