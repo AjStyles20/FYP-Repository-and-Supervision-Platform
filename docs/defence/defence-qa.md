@@ -298,3 +298,21 @@ Guards: `apps/audit/models.py`, `apps/projects/models/project.py`, `apps/project
 **Say:** "Each student sees only what their own supervisor asks for: everyone gives a title, problem, objectives and methodology; a literature review and research gap appear only for supervisors who require them, and demonstration evidence only for supervisors who want a working project. They can save a draft as often as they like, where the supervisor can't see it, and submit when ready, which alerts the supervisor. The form always reopens with what they saved, and they can keep editing until the supervisor decides. Once it's accepted it's locked, because the accepted topic is the official record."
 
 **How it works:** `ProjectProposalForm` (`apps/projects/forms.py`) drops fields the supervisor's method doesn't need; `save_proposal_draft` and `submit_proposal` in `apps/projects/services/approval.py`; a proposal without a student date is a draft, and `record_supervisor_decision` refuses to decide on it. Tests: `apps/projects/tests_proposal.py`. Decision D-36.
+
+### 33. Can someone other than the student upload the final report?
+
+**Say:** "Yes, the department's coordinator, once the project is in progress, submitted or defended. Students sometimes bring the final copy to the office, so the coordinator can put it on the system for them. The file is recorded under the coordinator's name and the upload is in the audit log. Nothing else changes: the HOD still signs off, and that moves every file into the archive. Staff who may open the files see them listed on the workflow page, with who uploaded each one."
+
+**How it works:** `upload_project_document` and `_coordinator_can_upload` in `apps/projects/views.py`; the file list reuses `_can_open_current_project_files`, so nobody gains access. Tests: `apps/projects/tests_coordinator_upload.py`. Decision D-37.
+
+### 34. A year has three semesters with different timing. How does the system cope?
+
+**Say:** "Semesters are entered by hand, because the timing changes and some have no fixed dates. The coordinator creates 26A, 26B or 26C when needed, can note the dates, and picks each project's semester. Defence dates were already recorded per student, so a 26A defence in early January or in the semester's last month both work. Deadlines can be tied to a semester, so 26A's Chapter 3 date never lands on a 26B student. When a 26C project is signed off in January, the archive still says 26C, and searches and the convocation list can use the semester or the year."
+
+**How it works:** `Semester` in `apps/academics/models.py`; `deadlines_for` and `set_project_semester` in `apps/projects/services/semesters.py`; the Semesters page `semesters` in `apps/academics/views.py`. Tests: `apps/projects/tests_semesters.py`. Decision D-38.
+
+### 35. What can someone see without logging in?
+
+**Say:** "Only the welcome page: what the hub is, how a project moves through it, totals such as the number of archived projects, and the faculties. Those are counts; no name, title or file. Every project page, the repository and every download still need a Baze login."
+
+**How it works:** `home` and `_welcome_figures` in `apps/accounts/views.py`; real rows only, unless the database holds only sample data. Tests: `HomePageTests` in `apps/accounts/tests.py`. Decision D-39.

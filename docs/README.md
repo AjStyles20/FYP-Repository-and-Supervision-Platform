@@ -42,7 +42,7 @@ New here? Read [`overview.md`](overview.md) first, then [`code_map.md`](code_map
 | File | Contents |
 |---|---|
 | [`diagrams/README.md`](diagrams/README.md) | Mermaid sources (ER, project states, HOD sign-off, architecture, use cases) and how each was checked |
-| [`screenshots/`](screenshots/) | Admin portal, project guide, repository and workflow pages at 1280 px and 360 px |
+| [`screenshots/`](screenshots/) | Admin portal, project guide, repository and workflow pages at 1280 px and 360 px (current look, 2026-10-13) |
 
 ## Demo, defence and reviews
 

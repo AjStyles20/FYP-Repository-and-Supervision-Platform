@@ -157,3 +157,22 @@
 | Adding, serving and removing media | `apps/projects/views.py` | `def project_media_file` |
 | The gallery shown on project pages | `templates/projects/_media_gallery.html` | `media-gallery` |
 | Moving media to the archive at sign-off | `apps/projects/services/lifecycle.py` | `project.media.update` |
+
+## Welcome page, files and semesters
+
+| To change… | Open | Look for |
+|---|---|---|
+| The welcome page's totals and faculty tiles | `apps/accounts/views.py` | `def _welcome_figures` |
+| The welcome page itself, and its picture | `templates/home.html` | `home-hero-art` |
+| The visitors' header (Home, How it works, Log in) | `templates/base.html` | `top-public` |
+| Which logo file the header uses | `apps/accounts/context_processors.py` | `def logo_url` |
+| The page shown when a stored file is missing | `apps/projects/files.py` | `def open_stored_file` |
+| When the coordinator may upload the final document | `apps/projects/views.py` | `def _coordinator_can_upload` |
+| Who sees a running project's files (and the workflow file list) | `apps/projects/views.py` | `def _can_open_current_project_files` |
+| Earlier supervisors listed once | `apps/projects/services/assignment.py` | `def previous_supervisors_for` |
+| The year grid on search | `static/js/year-picker.js` | `select[data-year-picker]` |
+| What a semester code may look like (26A) | `apps/academics/models.py` | `class Semester` |
+| The Semesters page | `apps/academics/views.py` | `def semesters` |
+| Who may choose a project's semester | `apps/projects/views.py` | `def _can_set_semester` |
+| Which faculty deadlines reach a project | `apps/projects/services/semesters.py` | `def deadlines_for` |
+| Moving a project to another semester | `apps/projects/services/semesters.py` | `def set_project_semester` |

@@ -18,7 +18,7 @@ From `projecthub_slice1/`, in PowerShell:
 ```
 
 1. Nothing to prepare for step 7: `panel.admin` adds the test student live.
-2. Open `http://127.0.0.1:8000/` in a normal window.
+2. Open `http://127.0.0.1:8000/` in a normal window. It shows the welcome page; each step starts with **Log in** in the top bar, and **Log out** returns to the welcome page.
 
 **Why two admins:** demo accounts are never written to the audit log, by design, so that test clicks don't pollute the real history. `panel.admin` is a real account, which is how step 7 can show a genuine audit entry.
 
@@ -147,6 +147,12 @@ From `projecthub_slice1/`, in PowerShell:
 - If `panel.admin` doesn't exist, use `demo.admin`. Adding the student works, but explain that it won't appear in the audit log because demo accounts are excluded.
 
 ---
+
+## If the panel asks for more (not timed)
+
+- **The coordinator uploads the final report:** as `demo.coordinator`, open a Computer Science project that is in progress, submitted or defended, then **Project workflow → Upload final report**. The file is listed under **Project files** with the coordinator's name, and the HOD's sign-off still archives it.
+- **Semesters (26A, 26B, 26C):** as `demo.coordinator`, open **Semesters** in the menu and add `26A` (the seed has none). On a project's workflow page choose **26A** and **Save semester**. Then **Deadlines → Add a deadline** for 26A only: it appears on 26A projects and nowhere else. The repository and running topics filter by semester.
+- **Searching by year:** in the repository, click **Year**: a year grid opens, with years that have projects clickable.
 
 ## Timing
 

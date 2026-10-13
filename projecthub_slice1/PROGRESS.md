@@ -1,6 +1,6 @@
 # Progress
 
-**Last updated:** 2026-10-10 · **Core workflows implemented; open questions and known limits remain**
+**Last updated:** 2026-10-13 · **Core workflows implemented; open questions and known limits remain**
 
 ## Implemented
 
@@ -18,6 +18,8 @@
 - **My details** (`/account/contact/`) for every account: personal email and phone, each with its own visibility (only me, staff only, all signed-in users); shown on project pages for the student and the supervisor; current students without a personal email are reminded to add one
 - The HOD appoints the FYP coordinator and the staff allowed to assign supervisors (D-19)
 - Login and logout (logout is POST only), role-based dashboard
+- Logged-out welcome page (`/`): live totals (archived and running projects, academic staff, faculties; real rows only, sample rows only on a demo-only database), how a project moves through the hub, and a tile per faculty; visitors' header shows Home, How it works, Faculties, Past research and one highlighted **Log in**; signing out lands on the welcome page (D-39)
+- The Baze University crest is the header brand on every page (`static/img/baze-logo.png`, "BU" if the file is missing); the login form sits on the left over a background picture
 - Glass look by default (`UI_THEME=glass`), with the classic look one setting away (D-35)
 - Separate portals and role-aware navigation for current students, alumni, supervisors, coordinators, HODs and system administrators
 - `role_required` permission helper (deny by default)
@@ -28,14 +30,19 @@
 - Permission-checked project downloads with per-file Baze-user/staff visibility and extension/size validation
 - Admin-only CSV import of historic project summaries, all or nothing: every bad row is listed with its line number and nothing is saved until every row is valid; supervisors and previous supervisors must be academic staff of the project's department. Demo sample: `docs/sample_import.csv`
 - Similar-topic checker: archived projects whose topics score above `SIMILARITY_THRESHOLD` are listed (`docs/explain/similarity.md`)
+- Search filters: the Year filter opens a calendar-style year grid (years with projects clickable); a Semester filter beside it (D-38)
+- Archived files show who uploaded them; earlier supervisors are listed once each and never repeat the final supervisor
+- A file missing from disk shows a plain "not available" page (404) instead of a server error, and is logged
 
 ### Project workflow and supervision
 - The proposal shows only the fields the supervisor's method needs, can be saved as a draft, opens with what was saved, and stays editable until the supervisor decides (D-36)
 - Student project creation and a role-checked proposal-to-HOD-archive workflow, with per-supervisor approval criteria, decision snapshots and status history
 - Students upload proposal and final report files; the project cannot be submitted until a final report is present
 - The department's coordinator can also upload the final document for a project in their department (in progress, submitted or defended), from "Upload final report" on the workflow page. The file is recorded under the coordinator and audited; the HOD's sign-off still archives the project and moves its files
+- Staff who may open a running project's files see them listed on its workflow page, newest first, with type, uploader and date
 - Screenshots (up to 6) and demo videos (up to 2, upload or YouTube/Drive/Vimeo link) on running and archived projects, content-checked and permission-served; they move to the archive at sign-off (D-30)
-- HOD sign-off, archive and convocation list (printable and CSV)
+- HOD sign-off, archive and convocation list (printable and CSV); ticking "Graduation verified" needs the graduation year (D-40)
+- Semesters entered by hand (26A, 26B, 26C): the coordinator (or an admin) creates them on **Semesters**, with optional dates as notes, and picks each project's semester at allocation or on its workflow page; faculty deadlines can be tied to a semester; the archive keeps the semester; convocation list and CSVs show it; older records stay "Not set" until someone fills them in (D-38)
 - Project list CSV for coordinators (faculty), HODs (department) and administrators (all), audited (D-34)
 - Student allocation lists students who have no supervisor yet (a coordinator sees and allocates across their whole faculty, D-29); allocating creates their project record ("Topic to be agreed"). Supervisors are offered least busy first with their load; a change of supervisor needs a reason (D-27)
 - Department-scoped supervisor assignment and reassignment for individually authorised staff, with a history recording who changed it, when, and why; supervisor workload counts in the assignment workspace
@@ -62,7 +69,7 @@
 - Live counters and the lists beside them follow the viewer: a demo account counts demo and real rows, a real account real rows only
 
 ## Verification status
-- `manage.py test apps`: **335 tests pass on SQLite (`DB_ENGINE=sqlite`) and on MySQL 8.4** (2026-10-13).
+- `manage.py test apps`: **350 tests pass on SQLite (`DB_ENGINE=sqlite`) and on MySQL 8.4** (2026-10-13).
 - `apps/accounts/tests_docs.py` checks that every row of `docs/code_map.md` names a real file and name.
 - Runtime in use: Python 3.14.0, Django 5.2.18, MySQL 8.4.
 
@@ -95,6 +102,7 @@ For the demo, run `.\run_demo.ps1` from the repository root instead. It uses its
 
 ### Known limits (from `docs/known_limits.md`)
 - Multiple supervisors per project (co-supervision) is planned, not built: each project has one current supervisor, and earlier supervisors are kept in its history.
+- Semesters are not deleted in the app, and `seed_demo` assigns none: in the demo, add 26A on **Semesters** first.
 - No "corrections required" loop after a defence; stages only move forward (R-11).
 - No email verification at registration; an administrator approves each registration by hand.
 - Running project files are listed for staff on the workflow page only (with type, uploader and date); the project summary page does not list them.

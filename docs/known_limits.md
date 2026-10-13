@@ -2,12 +2,17 @@
 
 These are things the platform does **not** do yet. Each entry says what is missing and what exists instead. Paths are relative to `projecthub_slice1/`.
 
-Test count when this list was last checked: **335 tests pass on SQLite and on MySQL 8.4** (`manage.py test apps`, 2026-10-13).
+Test count when this list was last checked: **350 tests pass on SQLite and on MySQL 8.4** (`manage.py test apps`, 2026-10-13).
 
 ## Planned, not built
 
 | Limit | What happens today |
 |---|---|
+| Semesters cannot be deleted in the app | A semester label (26A) can be added and its code and dates corrected on **Semesters**, but not removed, because projects, deadlines and past records point at it. The Django admin can delete one; the links then become "Not set" |
+| Existing projects and past records have no semester | They show "Not set" until the coordinator chooses one (workflow page, or the past project's page). Nothing is guessed from dates or student IDs (D-38). `seed_demo` assigns none either |
+| Only the coordinator of the project's own department sets its semester on the workflow page | A coordinator allocates across their faculty (D-29) and can choose the semester while allocating, but changing it later needs the department's own coordinator or an administrator |
+| The year grid does not hold A, B and C | Semester is a separate filter beside the year: pick a year, a semester, or both |
+| Where the pictures come from is not recorded | The crest (`static/img/baze-logo.png`), the login background and the welcome picture were supplied by the author. Confirm the source and permission of the two pictures before the site is shown publicly |
 | Multiple supervisors per project (co-supervision) is planned, not built | Each project has one current supervisor. A reassignment ends the old assignment and keeps it in the project's history, and the archive lists earlier supervisors once each, apart from the final one |
 
 ## Other limits found in the review (docs/review/01-inventory-and-workflows.md)
