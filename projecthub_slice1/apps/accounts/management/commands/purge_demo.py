@@ -2,7 +2,7 @@
 from django.core.management.base import BaseCommand
 from django.db import transaction
 
-from apps.academics.models import Department, Faculty, Programme
+from apps.academics.models import Department, Faculty, Programme, Semester
 from apps.accounts.models import User
 from apps.projects.models import ArchivedProject, Project, ProjectDocument, ProjectMedia
 from apps.supervision.models import SharedResource
@@ -28,4 +28,5 @@ class Command(BaseCommand):
         counts["programmes"] = Programme.objects.filter(is_demo=True).delete()[0]
         counts["departments"] = Department.objects.filter(is_demo=True).delete()[0]
         counts["faculties"] = Faculty.objects.filter(is_demo=True).delete()[0]
+        counts["semesters"] = Semester.objects.filter(is_demo=True).delete()[0]  # links to them are SET_NULL
         self.stdout.write(self.style.SUCCESS(f"Removed demo rows: {counts}"))

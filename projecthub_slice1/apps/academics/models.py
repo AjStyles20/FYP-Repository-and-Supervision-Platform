@@ -4,6 +4,10 @@ The whole university is described by this tree. Nothing else in the product bran
 particular faculty, so adding Law, Medicine or Engineering is a data change, not a code change.
 """
 
+import re
+
+from django.core.exceptions import ValidationError
+from django.core.validators import RegexValidator
 from django.db import models
 
 
@@ -86,3 +90,41 @@ class Programme(models.Model):
     @property
     def is_postgraduate(self):
         return self.level == QualificationLevel.POSTGRADUATE
+
+
+semester_code_validator = RegexValidator(
+    r"^\d{2}[A-C]$", "Use two digits for the year and A, B or C for the semester, like 26A.", flags=re.IGNORECASE
+)
+
+
+class Semester(models.Model):
+    """A semester label such as 26A, entered by hand (D-38).
+
+    Timing varies, so nothing is worked out from dates: the coordinator creates the label, may note
+    its start and end for information, and picks it for each project. A project's faculty deadlines
+    follow its semester, and the archive keeps the label.
+    """
+
+    code = models.CharField(
+        max_length=3, unique=True, validators=[semester_code_validator],
+        help_text="Two digits for the year and A, B or C, like 26A.",
+    )
+    starts_on = models.DateField(null=True, blank=True, help_text="Optional, for information only.")
+    ends_on = models.DateField(null=True, blank=True, help_text="Optional, for information only.")
+    is_demo = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-code"]
+
+    def __str__(self):
+        return self.code
+
+    def save(self, *args, **kwargs):
+        self.code = (self.code or "").strip().upper()  # 26a and 26A are the same semester
+        super().save(*args, **kwargs)
+
+    def clean(self):
+        super().clean()
+        if self.starts_on and self.ends_on and self.ends_on < self.starts_on:
+            raise ValidationError({"ends_on": "The end date cannot be before the start date."})

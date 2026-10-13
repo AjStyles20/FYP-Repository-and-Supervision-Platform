@@ -69,6 +69,15 @@
       {% endfor %}
     </select>
   </div>
+  <div>
+    <label for="semester-filter">Semester</label>
+    <select id="semester-filter" name="semester">
+      <option value="">All semesters</option>
+      {% for semester in semesters %}
+        <option value="{{ semester.pk }}" {% if semester_id == semester.pk|stringformat:"s" %}selected{% endif %}>{{ semester.code }}</option>
+      {% endfor %}
+    </select>
+  </div>
   <div class="filter-actions">
     <button type="submit" class="primary">Search</button>
     <a href="{% url 'repository' %}?section={{ section }}">Clear</a>
@@ -91,7 +100,7 @@
           <span class="status-pill {% if item.is_past %}past{% endif %}">
             {% if item.is_past %}Completed{% else %}{{ item.stage }}{% endif %}
           </span>
-          <span class="project-year">{{ item.year }}</span>
+          <span class="project-year">{{ item.year }}{% if item.project.semester %} · {{ item.project.semester }}{% endif %}</span>
         </div>
         {% if item.project.is_demo %}<span class="sample-label">Sample data</span>{% endif %}
         <h3><a href="{{ item.detail_url }}">{{ item.project.title }}</a></h3>

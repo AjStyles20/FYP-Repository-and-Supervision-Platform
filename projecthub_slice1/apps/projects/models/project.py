@@ -70,6 +70,10 @@ class Project(models.Model):
         limit_choices_to=SUPERVISOR_CHOICES,
     )
     stage = models.CharField(max_length=20, choices=ProjectStage.choices, default=ProjectStage.PROPOSED)
+    # Chosen by hand by the coordinator (D-38); empty means "not set yet".
+    semester = models.ForeignKey(
+        "academics.Semester", on_delete=models.SET_NULL, null=True, blank=True, related_name="projects",
+    )
 
     # Each date is recorded by an authorised person at the moment the step happens.
     approval_date = models.DateField(null=True, blank=True, help_text="Date the department approved the topic.")

@@ -10,13 +10,14 @@ from django.urls import reverse
 from django.utils import timezone
 from django.views.decorators.http import require_POST
 
+from apps.academics.models import Semester
 from apps.audit.services import log_event
 from apps.accounts.models import Role, STAFF_ROLES, StudentProfile, User
 from django.contrib.auth.decorators import login_required
 from apps.accounts.permissions import role_required
 
 from .forms import (
-    CompletionForm, CoordinatorApprovalForm, ProjectCsvImportForm, ProjectDocumentForm, ProjectProposalForm, ProjectStartForm, StageActionForm,
+    AllocationForm, CompletionForm, CoordinatorApprovalForm, ProjectCsvImportForm, ProjectSemesterForm, ProjectDocumentForm, ProjectProposalForm, ProjectStartForm, StageActionForm,
     DeadlineForm, MilestoneForm, ProjectMediaForm, SupervisorAssignmentForm, SupervisorDecisionForm, SupervisorProjectEditForm, UnassignedSuperviseeForm,
 )
 from .models import (
@@ -29,6 +30,7 @@ from .services.health import HEALTH_PREFETCH, can_see_health, health_score
 from .services.similarity import similar_archived_projects, similarity_threshold
 from .services.assignment import allocation_departments
 from .services.milestones import apply_faculty_deadlines, create_deadline, remove_deadline, update_deadline
+from .services.semesters import set_archived_semester, set_project_semester
 from .services import (
     save_proposal_draft, allocate_student, assign_project_supervisor, unassign_project_supervisor, log_approved_form, record_supervisor_decision,
     record_transition, sign_off_completion, submit_proposal, available_years,
@@ -104,6 +106,8 @@ def _repository_context(request, section):
         "department_id": filters["department"],
         "programme_id": filters["programme"],
         "year": filters["year"],
+        "semester_id": filters["semester"],
+        "semesters": Semester.objects.all(),
         "years": available_years(),
         "faculties": faculties_with_structure(),
         "can_see_student_id": can_see_student_id,
@@ -156,14 +160,30 @@ def current_project_detail(request, project_id):
     )
 
 
+def _can_set_semester(user, department_id):
+    """The department's coordinator, or an administrator, chooses a project's semester (D-38)."""
+    return user.role == Role.ADMIN or (
+        user.role == Role.COORDINATOR and user.department_id is not None and user.department_id == department_id
+    )
+
+
 @role_required(*REPOSITORY_ROLES)
 def past_project_detail(request, project_id):
     project = get_object_or_404(
         ArchivedProject.objects.select_related(
-            "student", "student__student_profile", "department__faculty", "programme", "supervisor"
+            "student", "student__student_profile", "department__faculty", "programme", "supervisor", "semester"
         ).prefetch_related("previous_supervisors"),
         pk=project_id,
     )
+    can_set_semester = _can_set_semester(request.user, project.department_id)
+    if request.method == "POST":
+        if request.POST.get("action") != "set_semester" or not can_set_semester:
+            raise PermissionDenied
+        semester_form = ProjectSemesterForm(request.POST)
+        if semester_form.is_valid():
+            changed = set_archived_semester(project, semester_form.cleaned_data["semester"], request.user)
+            messages.success(request, f"Semester set to {project.semester or 'Not set'}." if changed else "Nothing changed.")
+        return redirect("past_project_detail", project_id=project.pk)
     visible_documents = Q(visibility=ProjectDocument.Visibility.BAZE_USERS)
     if request.user.role in STAFF_ROLES:
         visible_documents |= Q(visibility=ProjectDocument.Visibility.STAFF_ONLY)
@@ -182,6 +202,7 @@ def past_project_detail(request, project_id):
             "documents": project.documents.filter(visible_documents).select_related("uploaded_by"),
             "media": project.media.filter(visible_documents),
             "can_add_media": request.user.role == Role.ADMIN,
+            "semester_form": ProjectSemesterForm(initial={"semester": project.semester_id}) if can_set_semester else None,
             "similar_projects": similar_archived_projects(project.title, project.description, exclude_id=project.pk),
             "similarity_threshold": similarity_threshold(),
         },
@@ -299,13 +320,18 @@ def faculty_deadlines(request):
     if not request.user.department_id:
         raise PermissionDenied
     faculty = request.user.department.faculty
-    deadlines = ProjectDeadline.objects.filter(faculty=faculty)
+    deadlines = ProjectDeadline.objects.filter(faculty=faculty).select_related("semester")
     action = request.POST.get("action", "") if request.method == "POST" else ""
     form = DeadlineForm(request.POST if action == "add" else None)
     if action == "add" and form.is_valid():
-        deadline = create_deadline(faculty, form.cleaned_data["name"], form.cleaned_data["due_date"], request.user)
-        log_event(actor=request.user, action="deadline.created", summary=f"Deadline set: {deadline}", obj=deadline)
-        messages.success(request, f"{deadline.name} added to every running project of {faculty.name}.")
+        semester = form.cleaned_data["semester"]
+        deadline = create_deadline(faculty, form.cleaned_data["name"], form.cleaned_data["due_date"], request.user, semester=semester)
+        log_event(actor=request.user, action="deadline.created", summary=f"Deadline set: {deadline}", obj=deadline,
+                  details={"semester": str(semester) if semester else "Every semester"})
+        if semester:
+            messages.success(request, f"{deadline.name} added to every running {semester} project of {faculty.name}.")
+        else:
+            messages.success(request, f"{deadline.name} added to every running project of {faculty.name}.")
         return redirect("faculty_deadlines")
     if action in ("update", "remove"):
         deadline = get_object_or_404(deadlines, pk=request.POST.get("deadline_id"))
@@ -451,7 +477,7 @@ def start_project(request):
 @role_required(*REPOSITORY_ROLES)
 def project_workflow(request, project_id):
     """The role-checked action page for proposal, approval, lifecycle and HOD sign-off."""
-    project = get_object_or_404(Project.objects.select_related("student", "supervisor"), pk=project_id)
+    project = get_object_or_404(Project.objects.select_related("student", "supervisor", "semester"), pk=project_id)
     user = request.user
     if user.role == Role.STUDENT:
         if project.student_id != user.pk:
@@ -464,6 +490,19 @@ def project_workflow(request, project_id):
             raise PermissionDenied
     elif user.role != Role.ADMIN:
         raise PermissionDenied
+
+    can_set_semester = not project.archived and _can_set_semester(user, project.department_id)
+    if request.method == "POST" and request.POST.get("action") == "set_semester":
+        if not can_set_semester:
+            raise PermissionDenied
+        semester_form = ProjectSemesterForm(request.POST)
+        if semester_form.is_valid():
+            changed = set_project_semester(project, semester_form.cleaned_data["semester"], user)
+            if changed:
+                messages.success(request, f"Semester set to {project.semester or 'Not set'}. Its faculty deadlines now follow it.")
+            else:
+                messages.info(request, "Nothing changed.")
+        return redirect("project_workflow", project_id=project.pk)
 
     stage = project.stage
     approval_method = "topic_only"
@@ -561,6 +600,7 @@ def project_workflow(request, project_id):
         "health": health_score(project) if can_see_health(user, project) else None,
         "show_similar": show_similar,
         "can_upload_final": _coordinator_can_upload(user, project),
+        "semester_form": ProjectSemesterForm(initial={"semester": project.semester_id}) if can_set_semester else None,
         "similar_projects": similar_archived_projects(project.title, project.description) if show_similar else [],
         "similarity_threshold": similarity_threshold(),
     })
@@ -692,7 +732,7 @@ def supervision(request):
 
 
 CONVOCATION_COLUMNS = ("Student name", "Student ID", "Programme", "Project title", "Supervisor",
-                       "Signed off on", "Graduation verified", "Graduation year")
+                       "Signed off on", "Graduation verified", "Graduation year", "Semester")
 
 
 def _csv_safe(value):
@@ -702,7 +742,7 @@ def _csv_safe(value):
 
 
 PROJECT_EXPORT_COLUMNS = ("Project title", "Student name", "Student ID", "Programme", "Department", "Supervisor",
-                          "Stage", "Health", "Milestones done", "Overdue milestones", "Started on")
+                          "Stage", "Health", "Milestones done", "Overdue milestones", "Started on", "Semester")
 
 
 @role_required(Role.COORDINATOR, Role.HOD, Role.ADMIN)
@@ -710,7 +750,7 @@ def export_projects(request):
     """The running projects in the viewer's scope as a CSV: a coordinator's faculty, an HOD's department,
     every project for an administrator. Health is filled only where the viewer may see it."""
     projects = Project.objects.filter(archived=False).select_related(
-        "student__student_profile", "programme", "department", "supervisor"
+        "student__student_profile", "programme", "department", "supervisor", "semester"
     ).prefetch_related(*HEALTH_PREFETCH).order_by("department__name", "student__last_name", "student__first_name")
     if request.user.role == Role.COORDINATOR:
         projects = projects.filter(department__in=allocation_departments(request.user))
@@ -737,6 +777,7 @@ def export_projects(request):
             f"{sum(m.done for m in milestones)} of {len(milestones)}",
             sum(1 for m in milestones if not m.done and m.due_date and m.due_date < today),
             timezone.localtime(project.created_at).date().isoformat(),
+            project.semester.code if project.semester else "Not set",
         )])
         count += 1
     log_event(actor=request.user, action="projects.exported", summary=f"Downloaded the project list ({count} projects)",
@@ -750,12 +791,19 @@ def convocation_list(request):
     completions = ProjectCompletion.objects.filter(
         project__department_id=request.user.department_id
     ).select_related(
-        "project__student__student_profile", "project__programme", "project__supervisor"
+        "project__student__student_profile", "project__programme", "project__supervisor", "project__semester"
     ).order_by("project__student__last_name", "project__student__first_name") if request.user.department_id else ProjectCompletion.objects.none()
     years = sorted({completion.signed_on.year for completion in completions}, reverse=True)
+    semesters = sorted({completion.project.semester for completion in completions if completion.project.semester_id},
+                       key=lambda semester: semester.code, reverse=True)
     year = request.GET.get("year", "")
     if year.isdigit():
         completions = completions.filter(signed_on__year=int(year))
+    semester_id = request.GET.get("semester", "")
+    if semester_id.isdigit():
+        completions = completions.filter(project__semester_id=int(semester_id))
+    else:
+        semester_id = ""
     rows = []
     for completion in completions:
         project = completion.project
@@ -770,12 +818,16 @@ def convocation_list(request):
             "signed_on": completion.signed_on,
             "graduation_verified": completion.graduation_verified,
             "graduation_year": completion.graduation_year or "",
+            "semester": project.semester.code if project.semester else "",
         })
     if request.GET.get("format") == "csv":
         import csv
 
         response = HttpResponse(content_type="text/csv; charset=utf-8")
         label = year if year.isdigit() else "all-years"
+        chosen = next((semester for semester in semesters if str(semester.pk) == semester_id), None)
+        if chosen:
+            label += f"-{chosen.code}"
         response["Content-Disposition"] = f'attachment; filename="convocation-list-{label}.csv"'
         response.write("\ufeff")  # lets Excel open the UTF-8 file with names intact
         writer = csv.writer(response)
@@ -784,11 +836,13 @@ def convocation_list(request):
             writer.writerow([_csv_safe(value) for value in (
                 row["student_name"], row["student_number"], row["programme"], row["title"], row["supervisor"],
                 row["signed_on"].isoformat(), "Yes" if row["graduation_verified"] else "No", row["graduation_year"],
+                row["semester"] or "Not set",
             )])
         log_event(actor=request.user, action="convocation.exported", summary=f"Downloaded the convocation list ({label})",
                   details={"year": label, "students": len(rows)})
         return response
-    return render(request, "projects/convocation.html", {"rows": rows, "years": years, "year": year, "department": request.user.department})
+    return render(request, "projects/convocation.html", {"rows": rows, "years": years, "year": year, "semesters": semesters,
+                                                          "semester_id": semester_id, "department": request.user.department})
 
 
 @role_required(Role.COORDINATOR, Role.HOD, Role.ADMIN)
@@ -820,7 +874,7 @@ def supervisor_assignments(request):
     scope = allocation_departments(request.user)
     faculty_wide = request.user.role == Role.COORDINATOR
     projects = Project.objects.filter(archived=False, department__in=scope).select_related(
-        "student", "department", "programme", "supervisor"
+        "student", "department", "programme", "supervisor", "semester"
     ).prefetch_related("supervisor_assignments__supervisor", "supervisor_assignments__assigned_by")
 
     # Staff in scope with their current load; the least busy are listed first.
@@ -851,10 +905,10 @@ def supervisor_assignments(request):
         if not raw_student_id.isdigit():
             raise Http404
         student = get_object_or_404(waiting_students, pk=raw_student_id)
-        form = SupervisorAssignmentForm(request.POST, supervisor_queryset=staff)
+        form = AllocationForm(request.POST, supervisor_queryset=staff)
         if form.is_valid():
             allocate_student(student, form.cleaned_data["supervisor"], request.user, form.cleaned_data["reason"],
-                             faculty_wide=faculty_wide)
+                             faculty_wide=faculty_wide, semester=form.cleaned_data["semester"])
             messages.success(request, f"{student.get_full_name() or student.username} is now supervised by "
                                       f"{form.cleaned_data['supervisor'].get_full_name() or form.cleaned_data['supervisor'].username}.")
             return redirect("supervisor_assignments")
@@ -895,7 +949,7 @@ def supervisor_assignments(request):
         )
         rows.append({"project": project, "form": form})
     student_rows = [
-        {"student": student, "form": bound_form if student.pk == bound_student_id else SupervisorAssignmentForm(supervisor_queryset=staff)}
+        {"student": student, "form": bound_form if student.pk == bound_student_id else AllocationForm(supervisor_queryset=staff)}
         for student in waiting_students
     ]
     return render(

@@ -16,6 +16,10 @@ class ProjectDeadline(models.Model):
     faculty = models.ForeignKey("academics.Faculty", on_delete=models.CASCADE, related_name="project_deadlines")
     name = models.CharField(max_length=120, help_text="For example \"Chapter 1: Introduction\".")
     due_date = models.DateField()
+    semester = models.ForeignKey(
+        "academics.Semester", on_delete=models.SET_NULL, null=True, blank=True, related_name="deadlines",
+        help_text="Only projects of this semester get the deadline. Empty: every running project.",
+    )
     position = models.PositiveSmallIntegerField(default=0, help_text="Display order.")
     created_by = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name="created_project_deadlines"

@@ -602,16 +602,19 @@ class RepositoryTests(TestCase):
         self.assertFalse(self.current_project.supervisor_assignments.exists())
 
 
-def _assignment_fixtures(suffix=""):
-    """A department, two supervisors and a student project, for the assignment constraint tests."""
+def _assignment_fixtures(suffix="", project_model=Project):
+    """A department, two supervisors and a student project, for the assignment constraint tests.
+
+    A migration test passes the historical Project model, whose table has fewer columns.
+    """
     faculty = Faculty.objects.create(name=f"Assignment Faculty{suffix}")
     department = Department.objects.create(faculty=faculty, name=f"Assignment Department{suffix}")
     programme = Programme.objects.create(department=department, name="Software Engineering", degree_type="BSc")
     student = User.objects.create(username=f"assign.student{suffix}", role=Role.STUDENT)
     first = User.objects.create(username=f"assign.first{suffix}", role=Role.SUPERVISOR, department=department)
     second = User.objects.create(username=f"assign.second{suffix}", role=Role.SUPERVISOR, department=department)
-    project = Project.objects.create(
-        student=student, title=f"Assignment project{suffix}", department=department, programme=programme
+    project = project_model.objects.create(
+        student_id=student.pk, title=f"Assignment project{suffix}", department_id=department.pk, programme_id=programme.pk
     )
     return project, first, second
 
@@ -707,8 +710,10 @@ class SupervisorAssignmentMigrationTests(TransactionTestCase):
     def test_existing_rows_are_converted_and_the_constraint_added(self):
         old_apps = self.executor.loader.project_state(self.before).apps
         OldAssignment = old_apps.get_model("projects", "ProjectSupervisorAssignment")
-        reassigned, first, second = _assignment_fixtures(" A")
-        unassigned, third, _ = _assignment_fixtures(" B")
+        # The projects are made with the old model too: today's Project has columns (such as its
+        # semester) that the schema at 0009 does not have yet.
+        reassigned, first, second = _assignment_fixtures(" A", project_model=old_apps.get_model("projects", "Project"))
+        unassigned, third, _ = _assignment_fixtures(" B", project_model=old_apps.get_model("projects", "Project"))
         earlier, later = timezone.now() - timedelta(days=30), timezone.now() - timedelta(days=10)
 
         ended = OldAssignment.objects.create(
@@ -728,6 +733,7 @@ class SupervisorAssignmentMigrationTests(TransactionTestCase):
 
         executor = MigrationExecutor(connection)
         executor.migrate(executor.loader.graph.leaf_nodes())
+        reassigned, unassigned = Project.objects.get(pk=reassigned.pk), Project.objects.get(pk=unassigned.pk)
 
         rows = {row.pk: row for row in ProjectSupervisorAssignment.objects.all()}
         self.assertIs(rows[kept.pk].is_current, True)

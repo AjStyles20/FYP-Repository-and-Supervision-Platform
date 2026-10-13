@@ -6,9 +6,14 @@ from ..models import Project, ProjectDeadline, ProjectMilestone
 
 
 def apply_faculty_deadlines(project):
-    """Give `project` a milestone for each of its faculty's deadlines it does not have yet."""
+    """Give `project` a milestone for each faculty deadline that applies to it and it does not have yet.
+
+    A deadline tied to a semester applies only to projects of that semester (D-38).
+    """
+    from .semesters import deadlines_for
+
     have = set(project.milestones.exclude(deadline=None).values_list("deadline_id", flat=True))
-    missing = ProjectDeadline.objects.filter(faculty_id=project.department.faculty_id).exclude(pk__in=have)
+    missing = deadlines_for(project).exclude(pk__in=have)
     ProjectMilestone.objects.bulk_create(
         ProjectMilestone(project=project, deadline=deadline, name=deadline.name, due_date=deadline.due_date,
                          position=deadline.position)
@@ -17,12 +22,15 @@ def apply_faculty_deadlines(project):
 
 
 @transaction.atomic
-def create_deadline(faculty, name, due_date, created_by):
-    """A coordinator's new faculty deadline, added as a milestone to every running project of the faculty."""
+def create_deadline(faculty, name, due_date, created_by, semester=None):
+    """A coordinator's new faculty deadline, added as a milestone to every running project of the faculty,
+    or only to those of `semester` when one is given (D-38)."""
     position = ProjectDeadline.objects.filter(faculty=faculty).count()
     deadline = ProjectDeadline.objects.create(faculty=faculty, name=name, due_date=due_date, position=position,
-                                              created_by=created_by)
+                                              created_by=created_by, semester=semester)
     projects = Project.objects.filter(archived=False, department__faculty=faculty)
+    if semester:
+        projects = projects.filter(semester=semester)
     ProjectMilestone.objects.bulk_create(
         ProjectMilestone(project=project, deadline=deadline, name=name, due_date=due_date, position=position)
         for project in projects

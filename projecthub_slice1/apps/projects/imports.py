@@ -15,7 +15,7 @@ from django.core.exceptions import ValidationError
 from django.db import DatabaseError, transaction
 
 from apps.accounts.models import Role, User
-from apps.academics.models import Department, Programme
+from apps.academics.models import Department, Programme, Semester
 
 from .models import ArchivedProject
 from .services.assignment import can_supervise_in
@@ -115,11 +115,17 @@ def _import_row(row):
         # Each person once, and never the final supervisor as an earlier one too.
         if person not in previous and person != supervisor:
             previous.append(person)
+    semester = None
+    code = row.get("semester", "").upper()  # optional column (D-38)
+    if code:
+        semester = Semester.objects.filter(code=code).first()
+        if semester is None:
+            raise ValidationError(f'No semester "{code}". Add it under Semesters first, or leave the cell empty.')
     if ArchivedProject.objects.filter(title=title[:255], student=student, year=year).exists():
         raise ValidationError("A past project with this title, student and year already exists.")
     project = ArchivedProject.objects.create(
         title=title[:255], description=row["description"], keywords=row["keywords"][:255],
-        year=year, completed_on=completed_on, department=department, programme=programme,
+        year=year, completed_on=completed_on, semester=semester, department=department, programme=programme,
         student=student, supervisor=supervisor, gap_summary=row["gap_summary"],
         is_demo=student.is_demo,  # a row about a demo student is demo data, so purge_demo removes it
     )

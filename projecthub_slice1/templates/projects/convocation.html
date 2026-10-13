@@ -9,10 +9,11 @@
 <section class="card no-print">
   <form method="get" class="filter-row">
     <div><label for="year">Sign-off year</label><select id="year" name="year"><option value="">All years</option>{% for option in years %}<option value="{{ option }}"{% if option|stringformat:"d" == year %} selected{% endif %}>{{ option }}</option>{% endfor %}</select></div>
+    <div><label for="semester">Semester</label><select id="semester" name="semester"><option value="">All semesters</option>{% for option in semesters %}<option value="{{ option.pk }}"{% if option.pk|stringformat:"d" == semester_id %} selected{% endif %}>{{ option.code }}</option>{% endfor %}</select></div>
     <button type="submit">Show</button>
   </form>
   <div class="actions">
-    <a class="btn btn-primary" href="?{% if year %}year={{ year }}&amp;{% endif %}format=csv">Download for Excel (CSV)</a>
+    <a class="btn btn-primary" href="?{% if year %}year={{ year }}&amp;{% endif %}{% if semester_id %}semester={{ semester_id }}&amp;{% endif %}format=csv">Download for Excel (CSV)</a>
     <button type="button" onclick="window.print()">Print</button>
   </div>
 </section>
@@ -21,7 +22,7 @@
   {% if rows %}
     <div class="table-wrap">
       <table>
-        <thead><tr><th>Student</th><th>Student ID</th><th>Programme</th><th>Project</th><th>Supervisor</th><th>Signed off</th><th>Graduation</th></tr></thead>
+        <thead><tr><th>Student</th><th>Student ID</th><th>Programme</th><th>Project</th><th>Supervisor</th><th>Signed off</th><th>Graduation</th><th>Semester</th></tr></thead>
         <tbody>
           {% for row in rows %}
             <tr>
@@ -32,6 +33,7 @@
               <td data-label="Supervisor">{{ row.supervisor|default:"—" }}</td>
               <td data-label="Signed off">{{ row.signed_on|date:"j M Y" }}</td>
               <td data-label="Graduation">{% if row.graduation_verified %}Verified{% if row.graduation_year %} · {{ row.graduation_year }}{% endif %}{% else %}Not yet verified{% endif %}</td>
+              <td data-label="Semester">{{ row.semester|default:"Not set" }}</td>
             </tr>
           {% endfor %}
         </tbody>

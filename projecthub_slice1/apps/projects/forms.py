@@ -1,6 +1,7 @@
 from django import forms
 from django.utils import timezone
 
+from apps.academics.models import Semester
 from apps.accounts.models import User
 from .models import Project, ProjectDocument, ProjectMedia, ProjectStage, SupervisorDecision
 from .models.media import (
@@ -44,6 +45,26 @@ class SupervisorAssignmentForm(forms.Form):
         if changing and not cleaned.get("reason", "").strip():
             self.add_error("reason", "Say why the supervisor is changing; it is kept in the history.")
         return cleaned
+
+
+def semester_field(empty_label, help_text=""):
+    """A choice of the semesters the coordinator has created (D-38); empty is allowed."""
+    return forms.ModelChoiceField(queryset=Semester.objects.all(), required=False, empty_label=empty_label,
+                                  label="Semester", help_text=help_text)
+
+
+class AllocationForm(SupervisorAssignmentForm):
+    """Allocating a supervisor to a student who has no project yet: the semester can be chosen too."""
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["semester"] = semester_field("Not set yet", "The project's semester, like 26A. You can set it later.")
+
+
+class ProjectSemesterForm(forms.Form):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["semester"] = semester_field("Not set")
 
 
 class UnassignedSuperviseeForm(forms.Form):
@@ -236,6 +257,11 @@ class ProjectMediaForm(forms.Form):
 class DeadlineForm(forms.Form):
     name = forms.CharField(max_length=120, label="Deadline", help_text="For example \"Chapter 1: Introduction\".")
     due_date = forms.DateField(label="Due date", widget=forms.DateInput(attrs={"type": "date"}))
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["semester"] = semester_field(
+            "Every semester", "Pick a semester to give this deadline only to that semester's students.")
 
 
 class MilestoneForm(forms.Form):

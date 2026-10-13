@@ -111,7 +111,7 @@ class HodResponsibilitiesTests(TestCase):
         self.assertEqual(response["Content-Type"], "text/csv; charset=utf-8")
         self.assertIn('filename="convocation-list-2026.csv"', response["Content-Disposition"])
         lines = response.content.decode("utf-8-sig").splitlines()
-        self.assertEqual(lines[0], "Student name,Student ID,Programme,Project title,Supervisor,Signed off on,Graduation verified,Graduation year")
+        self.assertEqual(lines[0], "Student name,Student ID,Programme,Project title,Supervisor,Signed off on,Graduation verified,Graduation year,Semester")
         self.assertEqual(len(lines), 2)
         self.assertTrue(lines[1].startswith("'=Cmd,"), lines[1])  # a formula-like name cannot run in Excel
         self.assertEqual(AuditEvent.objects.get(action="convocation.exported").details, {"year": "2026", "students": 1})

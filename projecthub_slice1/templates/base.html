@@ -42,6 +42,7 @@
         <a href="{% url 'approvals' %}">Approval register</a>
         <a href="{% url 'add_student_account' %}">Add student</a>
         <a href="{% url 'faculty_deadlines' %}">Deadlines</a>
+        <a href="{% url 'semesters' %}">Semesters</a>
         <a href="{% url 'supervision' %}">Supervised students</a>
         <a href="{% url 'announcements' %}">Notices</a>
         <a href="{% url 'academic_structure' %}">Academic structure</a>
@@ -53,6 +54,7 @@
         <a href="{% url 'academic_structure' %}">Academic structure</a>
       {% elif user.role == 'admin' %}
         <a href="{% url 'admin_tools' %}">System administration</a>
+        <a href="{% url 'semesters' %}">Semesters</a>
         <a href="{% url 'academic_structure' %}">Academic structure</a>
       {% endif %}
       <a href="{% url 'notifications' %}" class="nav-alerts" data-alerts-link aria-label="Alerts{% if unread_notification_count %}, {{ unread_notification_count }} unread{% endif %}">Alerts <span class="nav-count" data-counter="unread_notifications"{% if not unread_notification_count %} hidden{% endif %}>{{ unread_notification_count|default:0 }}</span></a>

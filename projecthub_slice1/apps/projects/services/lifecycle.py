@@ -155,6 +155,7 @@ def _archive_project(project, completion):
         year=completion.signed_on.year,
         completed_on=completion.signed_on,
         defence_date=project.defence_date,
+        semester=project.semester,
         department=project.department,
         programme=project.programme,
         student=project.student,

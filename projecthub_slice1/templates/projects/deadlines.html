@@ -4,7 +4,7 @@
 <section class="page-heading">
   <p class="eyebrow">{{ faculty.name }}</p>
   <h1>Deadlines</h1>
-  <p class="muted">Common deadlines for every running project in the faculty, such as chapter hand-ins. Each one appears on every student's milestones, and on projects started later too. Students get a reminder three days before.</p>
+  <p class="muted">Common deadlines for running projects in the faculty, such as chapter hand-ins. A deadline for every semester appears on every student's milestones; one for a semester (like 26A) only on that semester's projects, including projects started or moved into it later. Students get a reminder three days before.</p>
 </section>
 
 <section class="card">
@@ -18,6 +18,7 @@
             <input type="text" id="name-{{ deadline.pk }}" name="name" value="{{ deadline.name }}" maxlength="120" required>
             <label class="visually-hidden" for="date-{{ deadline.pk }}">Due date</label>
             <input type="date" id="date-{{ deadline.pk }}" name="due_date" value="{{ deadline.due_date|date:'Y-m-d' }}" required>
+            <span class="tag">{{ deadline.semester|default:"Every semester" }}</span>
             <button type="submit" name="action" value="update" class="btn-sm">Save</button>
             <button type="submit" name="action" value="remove" class="btn-sm">Remove</button>
           </form>

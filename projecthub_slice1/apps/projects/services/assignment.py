@@ -49,7 +49,7 @@ def allocation_departments(user):
 
 
 @transaction.atomic
-def allocate_student(student, supervisor, assigned_by, change_reason="", *, faculty_wide=False):
+def allocate_student(student, supervisor, assigned_by, change_reason="", *, faculty_wide=False, semester=None):
     """The coordinator allocates a supervisor to a student who has no project yet.
 
     Creates the student's project record (stage Proposed, title "Topic to be agreed") and assigns
@@ -59,7 +59,7 @@ def allocate_student(student, supervisor, assigned_by, change_reason="", *, facu
     profile = student.student_profile
     project = Project.objects.create(
         student=student, title=TOPIC_TO_BE_AGREED, programme=profile.programme,
-        department=profile.programme.department, is_demo=student.is_demo,
+        department=profile.programme.department, is_demo=student.is_demo, semester=semester,
     )
     ProjectStatusEvent.objects.create(
         project=project, from_stage="", to_stage=ProjectStage.PROPOSED, actor=assigned_by,

@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}Semesters · Baze Project Hub{% endblock %}
+{% block content %}
+<section class="page-heading">
+  <p class="eyebrow">Academic calendar</p>
+  <h1>Semesters</h1>
+  <p class="muted">Semester labels such as 26A, 26B and 26C, added by hand when they are needed. Timing varies, so the dates are optional notes and nothing is worked out from them. Choose a project's semester on its workflow page (or when allocating the student); its faculty deadlines then follow that semester, and the archive keeps the label.</p>
+</section>
+
+<section class="card">
+  <h2>Add a semester</h2>
+  <form method="post" class="filter-row">{% csrf_token %}<input type="hidden" name="action" value="add">
+    {% for field in form %}<div>{{ field.label_tag }}{{ field }}{% for error in field.errors %}<p class="error">{{ error }}</p>{% endfor %}</div>{% endfor %}
+    <button type="submit" class="primary">Add semester</button>
+  </form>
+  {% if form.non_field_errors %}<p class="error">{{ form.non_field_errors|join:" " }}</p>{% endif %}
+</section>
+
+<section class="card">
+  <h2>{{ rows|length }} semester{{ rows|length|pluralize }}</h2>
+  {% if rows %}
+    <ul class="plain-list">
+      {% for row in rows %}
+        <li>
+          <form method="post" class="filter-row">{% csrf_token %}<input type="hidden" name="action" value="update"><input type="hidden" name="semester_id" value="{{ row.semester.pk }}">
+            {% for field in row.form %}<div>{{ field.label_tag }}{{ field }}</div>{% endfor %}
+            <button type="submit" class="btn-sm">Save</button>
+          </form>
+          <p class="muted">{{ row.semester.running_count }} running project{{ row.semester.running_count|pluralize }} · {{ row.semester.archived_count }} past project{{ row.semester.archived_count|pluralize }} · {{ row.semester.deadline_count }} deadline{{ row.semester.deadline_count|pluralize }}{% if row.semester.is_demo %} · <span class="sample-label">Sample data</span>{% endif %}</p>
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p class="muted">No semesters yet. Add the first one above, like 26A.</p>
+  {% endif %}
+</section>
+{% endblock %}

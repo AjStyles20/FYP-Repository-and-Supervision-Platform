@@ -24,6 +24,10 @@ class ArchivedProject(models.Model):
     year = models.PositiveSmallIntegerField(help_text="Archive year, used for the repository year filter.")
     completed_on = models.DateField(null=True, blank=True, help_text="Date the HOD signed completion off.")
     defence_date = models.DateField(null=True, blank=True)
+    semester = models.ForeignKey(
+        "academics.Semester", on_delete=models.SET_NULL, null=True, blank=True, related_name="archived_projects",
+        help_text="The project's semester, kept even when sign-off falls in the next calendar year.",
+    )
 
     department = models.ForeignKey("academics.Department", on_delete=models.PROTECT, related_name="archived_projects")
     programme = models.ForeignKey("academics.Programme", on_delete=models.PROTECT, related_name="archived_projects")

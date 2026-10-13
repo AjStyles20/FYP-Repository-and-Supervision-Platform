@@ -84,7 +84,7 @@ class ProjectAdmin(admin.ModelAdmin):
     list_filter = ("department", "programme", "stage", "archived", "is_demo")
     search_fields = ("title", "keywords", "student__first_name", "student__last_name", "supervisor__first_name")
     readonly_fields = (
-        "supervisor", "stage", "approval_date", "submission_date", "defence_date", "archived",
+        "supervisor", "stage", "semester", "approval_date", "submission_date", "defence_date", "archived",
         "created_at", "updated_at",
     )
     inlines = (ProjectMilestoneInline, ProjectDocumentInline, ProjectStatusEventInline)

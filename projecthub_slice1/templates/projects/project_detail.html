@@ -8,7 +8,7 @@
 <section class="detail-hero">
   <div class="detail-topline">
     <span class="status-pill {% if is_past %}past{% endif %}">{% if is_past %}Past project{% else %}{{ project.get_stage_display }}{% endif %}</span>
-    <span class="muted">{% if is_past %}Archive year {{ project.year }}{% else %}Updated {{ project.updated_at|date:"j M Y" }}{% endif %}</span>
+    <span class="muted">{% if is_past %}Archive year {{ project.year }}{% else %}Updated {{ project.updated_at|date:"j M Y" }}{% endif %} · Semester {{ project.semester|default:"not set" }}</span>
   </div>
   <p class="eyebrow">{{ project.department.faculty.name }} · {{ project.department.name }} · {{ project.programme }}</p>
   <h1>{{ project.title }}</h1>
@@ -16,6 +16,12 @@
   <p class="detail-byline">{{ project.student.get_full_name|default:project.student.username }}{% if project.supervisor %}<span> · </span>Supervised by {{ project.supervisor.get_full_name|default:project.supervisor.username }}{% endif %}</p>
   {% if not is_past and request.user.role == 'student' and request.user.pk == project.student_id %}<p><a class="button" href="{% url 'project_workflow' project.pk %}">Project workflow</a></p>{% endif %}
   {% if not is_past and request.user.pk == project.supervisor_id %}<p><a class="button" href="{% url 'project_workflow' project.pk %}">Review project workflow</a></p>{% endif %}
+  {% if is_past and semester_form %}
+    <form method="post" class="filter-row semester-form">{% csrf_token %}<input type="hidden" name="action" value="set_semester">
+      <div><label for="id_semester">Semester</label>{{ semester_form.semester }}</div>
+      <button type="submit">Save semester</button>
+    </form>
+  {% endif %}
 </section>
 
 <div class="detail-layout">

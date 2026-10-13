@@ -27,7 +27,7 @@ SEARCH_FIELDS = (
 )
 PAST_SEARCH_FIELDS = SEARCH_FIELDS + ("gap_summary",)
 
-CURRENT_SELECT_RELATED = ("student", "student__student_profile", "department__faculty", "programme", "supervisor")
+CURRENT_SELECT_RELATED = ("student", "student__student_profile", "department__faculty", "programme", "supervisor", "semester")
 
 
 def read_filters(params):
@@ -44,6 +44,7 @@ def read_filters(params):
         "faculty": as_id("faculty"),
         "department": as_id("department"),
         "programme": as_id("programme"),
+        "semester": as_id("semester"),
         "level": level if level in QualificationLevel.values else "",
         "year": year if len(year) == 4 and year.isdigit() else "",
     }
@@ -103,6 +104,8 @@ def _apply_academic_filters(queryset, filters):
         queryset = queryset.filter(programme_id=filters["programme"])
     if filters["level"]:
         queryset = queryset.filter(programme__level=filters["level"])
+    if filters.get("semester"):
+        queryset = queryset.filter(semester_id=filters["semester"])
     return queryset
 
 
