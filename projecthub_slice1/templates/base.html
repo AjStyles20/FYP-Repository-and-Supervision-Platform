@@ -7,7 +7,7 @@
   <meta name="color-scheme" content="light">
   <link rel="stylesheet" href="{% static 'css/tokens.css' %}?v=3">
   <link rel="stylesheet" href="{% static 'css/app.css' %}?v=35">
-  {% if ui_theme == "glass" %}<link rel="stylesheet" href="{% static 'css/theme-glass.css' %}?v=4">{% endif %}
+  {% if ui_theme == "glass" %}<link rel="stylesheet" href="{% static 'css/theme-glass.css' %}?v=6">{% endif %}
 </head>
 <body class="{% block body_class %}{% endblock %}">
 <header class="top{% if not user.is_authenticated %} top-public{% endif %}">

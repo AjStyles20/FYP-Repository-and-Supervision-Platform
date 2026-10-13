@@ -1379,6 +1379,21 @@ class ThemeTests(TestCase):
         for kept in (":not(.btn-primary)", ":not(.button)", ":not(.btn-quiet)"):
             self.assertIn(kept, plain_rule)
 
+    def test_the_open_menu_is_solid_and_its_log_out_button_readable(self):
+        # A blurred panel inside the blurred header let the page show through, and the generic
+        # light button rule left "Log out" white on white; both are pinned here.
+        css = (settings.BASE_DIR / "static" / "css" / "theme-glass.css").read_text(encoding="utf-8")
+        menu_rule = css.split(".nav-js .top-nav {", 1)[1].split("}", 1)[0]
+        self.assertIn("background: #1c1618;", menu_rule)
+        self.assertIn("backdrop-filter: none;", menu_rule)
+        log_out_rule = css.split("#main-nav .inline-form .btn {", 1)[1].split("}", 1)[0]
+        self.assertIn("color: #ffffff;", log_out_rule)
+        self.assertIn("background: transparent;", log_out_rule)
+        self.assertIn(".top .tag,", css)
+        user = User.objects.create(username="menu.admin", role=Role.ADMIN)
+        self.client.force_login(user)
+        self.assertContains(self.client.get(reverse("dashboard")), '<form method="post" action="/logout/" class="inline-form">', html=False)
+
     def test_the_sign_in_hint_no_longer_offers_a_staff_username(self):
         page = self.client.get(reverse("login"))
         self.assertContains(page, "Use your Baze email. Students can also use their full student ID.")

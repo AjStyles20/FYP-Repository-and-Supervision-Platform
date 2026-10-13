@@ -57,11 +57,20 @@ input:focus, select:focus, textarea:focus { background: #ffffff; }
   -webkit-backdrop-filter: var(--glass-blur);
   backdrop-filter: var(--glass-blur);
 }
+/* The open menu is solid, not blurred glass: a blurred panel inside the blurred header let the
+   page show through it in Chrome. */
 .nav-js .top-nav {
-  background: rgba(28, 22, 24, 0.86);
-  -webkit-backdrop-filter: var(--glass-blur);
-  backdrop-filter: var(--glass-blur);
+  background: #1c1618;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
 }
+/* Log out in the menu: outlined white on the dark panel (an id, so no generic button rule wins). */
+#main-nav .inline-form .btn {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  color: #ffffff;
+}
+#main-nav .inline-form .btn:hover, #main-nav .inline-form .btn:focus-visible { background: rgba(255, 255, 255, 0.14); }
 .hero-band, .repository-hero, .supervisor-welcome, .detail-hero {
   background:
     radial-gradient(30rem 18rem at 100% 0%, rgba(220, 40, 60, 0.45), transparent 70%),
@@ -101,6 +110,7 @@ button:not(.primary):not(.btn-primary):not(.button):not(.btn-quiet):not(.passwor
 .hero-band .btn, .repository-hero .btn, .supervisor-welcome .btn, .detail-hero .btn { background: rgba(255, 255, 255, 0.12); border-color: rgba(255, 255, 255, 0.35); }
 /* Same as above, specific enough to beat the light glass rule for plain .btn, so a secondary
    button on a dark band keeps a see-through fill and white text instead of white on white. */
+.top .btn:not(.btn-primary):not(.btn-quiet),
 .hero-band .btn:not(.btn-primary):not(.btn-quiet), .repository-hero .btn:not(.btn-primary):not(.btn-quiet),
 .supervisor-welcome .btn:not(.btn-primary):not(.btn-quiet), .detail-hero .btn:not(.btn-primary):not(.btn-quiet) {
   background: rgba(255, 255, 255, 0.12); border-color: rgba(255, 255, 255, 0.55); color: #ffffff;
@@ -159,6 +169,7 @@ button:not(.primary):not(.btn-primary):not(.button):not(.btn-quiet):not(.passwor
   color: #6e0000;
 }
 /* Tags on a dark band: a clear outline and white text. */
+.top .tag,
 .hero-band .tag, .repository-hero .tag, .supervisor-welcome .tag, .detail-hero .tag,
 .hero-band .status-pill, .detail-hero .status-pill,
 .hero-band .sample-label, .repository-hero .sample-label, .supervisor-welcome .sample-label, .detail-hero .sample-label {
