@@ -1403,6 +1403,12 @@ class HomePageTests(TestCase):
         self.assertContains(page, 'alt="Baze University logo"')
         self.assertContains(page, "img/baze-logo.png")
 
+    def test_signing_out_lands_on_the_welcome_page_and_login_links_back(self):
+        user = User.objects.create(username="home.student", role=Role.STUDENT)
+        self.client.force_login(user)
+        self.assertRedirects(self.client.post(reverse("logout")), reverse("home"))
+        self.assertContains(self.client.get(reverse("login")), f'href="{reverse("home")}"')
+
     def test_signed_in_people_go_to_their_portal(self):
         user = User.objects.create(username="home.admin", role=Role.ADMIN)
         self.client.force_login(user)

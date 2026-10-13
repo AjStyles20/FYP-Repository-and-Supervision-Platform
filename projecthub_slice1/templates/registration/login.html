@@ -14,5 +14,6 @@
     <button type="submit" class="btn btn-primary">Log in</button>
   </form>
   {% if self_registration_open %}<p>New student or past final-year student? <a href="{% url 'register_student' %}">Create an account</a>.</p>{% else %}<p class="muted"><strong>No account yet?</strong> Students: see your FYP coordinator. Staff: contact the system administrator.</p>{% endif %}
+  <p class="muted"><a href="{% url 'home' %}">What is Baze Project Hub?</a></p>
 </section>
 {% endblock %}
