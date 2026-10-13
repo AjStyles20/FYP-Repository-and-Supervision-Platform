@@ -2,6 +2,14 @@
 
 These are things the platform does **not** do yet. Each entry says what is missing and what exists instead. Paths are relative to `projecthub_slice1/`.
 
+Test count when this list was last checked: **321 tests pass on SQLite and on MySQL 8.4** (`manage.py test apps`, 2026-10-13).
+
+## Planned, not built
+
+| Limit | What happens today |
+|---|---|
+| Multiple supervisors per project (co-supervision) is planned, not built | Each project has one current supervisor. A reassignment ends the old assignment and keeps it in the project's history, and the archive lists earlier supervisors once each, apart from the final one |
+
 ## Other limits found in the review (docs/review/01-inventory-and-workflows.md)
 
 | Limit | What happens today |
