@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}Baze Project Hub · Final-year research{% endblock %}
+{% block back %}{% endblock %}
+{% block content %}
+<section class="hero-band home-hero" aria-labelledby="home-heading">
+  <div class="hero-copy">
+    {% if logo_url %}<img class="home-logo" src="{{ logo_url }}" alt="Baze University logo" width="220" height="72">{% endif %}
+    <p class="eyebrow">Baze University · Final-year projects</p>
+    <h1 id="home-heading">Final-year research, from first idea to the archive</h1>
+    <p>Propose your topic, work with your supervisor, and leave a record that future students can build on. Every completed project, and the gap it leaves open, stays searchable for the Baze community.</p>
+    <div class="hero-actions"><a class="btn btn-primary" href="{% url 'login' %}">Sign in</a></div>
+  </div>
+</section>
+
+<section class="grid-3" aria-label="What the hub does">
+  <article class="card">
+    <h2>Search past research</h2>
+    <p class="muted">Browse projects the Head of Department has signed off, see who supervised them, and find the documented gaps waiting for a new student to continue.</p>
+  </article>
+  <article class="card">
+    <h2>Work with your supervisor</h2>
+    <p class="muted">Draft and submit your proposal, book meetings in your supervisor's office hours, and keep track of deadlines and milestones.</p>
+  </article>
+  <article class="card">
+    <h2>A record you can trust</h2>
+    <p class="muted">Approvals, meeting records and sign-offs are kept with who did what and when, so the history of every project can be checked.</p>
+  </article>
+</section>
+
+<p class="muted home-note"><strong>No account yet?</strong> Students: see your FYP coordinator. Staff: contact the system administrator.</p>
+{% endblock %}

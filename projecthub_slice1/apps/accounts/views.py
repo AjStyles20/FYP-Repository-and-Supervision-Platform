@@ -33,8 +33,20 @@ from .models import STAFF_ROLES, Role, StudentProfile, SupervisorProfile, User
 from .permissions import role_required
 
 
+# The university logo is a file the department provides (it is not committed with the code):
+# put it at static/img/baze-logo.svg or static/img/baze-logo.png. Without it the page shows no logo.
+LOGO_FILES = ("img/baze-logo.svg", "img/baze-logo.png")
+
+
 def home(request):
-    return redirect("dashboard" if request.user.is_authenticated else "login")
+    """The logged-out home page; signed-in people go straight to their portal."""
+    if request.user.is_authenticated:
+        return redirect("dashboard")
+    from django.contrib.staticfiles import finders
+    from django.templatetags.static import static
+
+    logo = next((name for name in LOGO_FILES if finders.find(name)), None)
+    return render(request, "home.html", {"logo_url": static(logo) if logo else ""})
 
 
 class ProjectLoginView(LoginView):

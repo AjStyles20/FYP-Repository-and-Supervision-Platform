@@ -589,3 +589,11 @@ td form { display: flex; flex-wrap: wrap; gap: var(--space-2); margin: 0; }
 
 /* Text for screen readers only (labels of compact inline forms). */
 .visually-hidden { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+
+/* ---------- Logged-out home page (templates/home.html) ---------- */
+.home-logo { display: block; height: 72px; width: auto; max-width: 100%; margin-bottom: var(--space-4); padding: var(--space-2) var(--space-3); background: #ffffff; border-radius: var(--radius); object-fit: contain; }
+.home-hero h1 { max-width: 22ch; }
+.grid-3 { display: grid; gap: var(--space-4); grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 900px) { .grid-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+.grid-3 > .card + .card { margin-top: 0; }
+.home-note { text-align: center; }

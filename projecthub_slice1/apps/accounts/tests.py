@@ -1383,3 +1383,25 @@ class ThemeTests(TestCase):
         page = self.client.get(reverse("login"))
         self.assertContains(page, "Use your Baze email. Students can also use their full student ID.")
         self.assertNotContains(page, "account username")
+
+
+class HomePageTests(TestCase):
+    """The logged-out home page: a research hero, sign-in, and the logo when the file is present."""
+
+    def test_visitors_see_the_hero_and_a_sign_in_link(self):
+        page = self.client.get(reverse("home"))
+        self.assertContains(page, "Final-year research, from first idea to the archive")
+        self.assertContains(page, f'href="{reverse("login")}"')
+        self.assertNotContains(page, "baze-logo")  # no file in static/img, so no broken image
+
+    def test_the_logo_shows_when_the_file_is_there(self):
+        from unittest import mock
+        with mock.patch("django.contrib.staticfiles.finders.find", side_effect=lambda name: name if name.endswith(".png") else None):
+            page = self.client.get(reverse("home"))
+        self.assertContains(page, 'alt="Baze University logo"')
+        self.assertContains(page, "img/baze-logo.png")
+
+    def test_signed_in_people_go_to_their_portal(self):
+        user = User.objects.create(username="home.admin", role=Role.ADMIN)
+        self.client.force_login(user)
+        self.assertRedirects(self.client.get(reverse("home")), reverse("dashboard"), fetch_redirect_response=False)
