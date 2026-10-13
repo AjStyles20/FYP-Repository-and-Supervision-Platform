@@ -669,10 +669,17 @@ body.page-login .card.narrow { background: rgba(255, 255, 255, 0.94); box-shadow
   position: absolute; top: 0; right: 0; z-index: 0;
   width: min(52%, 44rem); height: 100%;
   object-fit: cover; object-position: center;
-  opacity: 0.9; pointer-events: none;
-  /* One soft oval: solid around the lightbulb, melting into the band on every side. */
-  -webkit-mask-image: radial-gradient(ellipse 72% 88% at 62% 50%, #000 35%, rgba(0, 0, 0, 0.6) 58%, transparent 82%);
-  mask-image: radial-gradient(ellipse 72% 88% at 62% 50%, #000 35%, rgba(0, 0, 0, 0.6) 58%, transparent 82%);
+  pointer-events: none;
+  /* Livelier than the source: more colour and contrast, so the glow stands out on the crimson. */
+  filter: saturate(1.35) contrast(1.15) brightness(1.08);
+  /* Solid over most of the picture: a soft fade from the text side, and a soft oval at the
+     other edges, so it melts into the band with no hard line anywhere. */
+  -webkit-mask-image: linear-gradient(to right, transparent 0%, #000 38%),
+                      radial-gradient(ellipse 85% 105% at 62% 50%, #000 55%, rgba(0, 0, 0, 0.7) 75%, transparent 96%);
+  -webkit-mask-composite: source-in;
+  mask-image: linear-gradient(to right, transparent 0%, #000 38%),
+              radial-gradient(ellipse 85% 105% at 62% 50%, #000 55%, rgba(0, 0, 0, 0.7) 75%, transparent 96%);
+  mask-composite: intersect;
 }
 /* Where the text and the artwork would overlap, keep the text column clear. */
 @media (min-width: 700px) and (max-width: 1099px) { .home-hero .hero-copy { max-width: 56%; } .home-hero-art { width: 48%; } }

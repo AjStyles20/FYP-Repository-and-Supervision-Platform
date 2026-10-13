@@ -1402,8 +1402,8 @@ class HomePageTests(TestCase):
     def test_the_hero_shows_the_artwork_and_the_crest_stays_in_the_header_only(self):
         page = self.client.get(reverse("home"))
         self.assertContains(page, 'class="home-hero-art"')
-        self.assertContains(page, "img/image.jpg")
-        self.assertTrue((settings.BASE_DIR / "static" / "img" / "image.jpg").exists())
+        self.assertContains(page, "img/image2.jpg")
+        self.assertTrue((settings.BASE_DIR / "static" / "img" / "image2.jpg").exists())
         self.assertNotContains(page, 'alt="Baze University logo"')  # removed from the hero
         self.assertContains(page, 'class="brand-logo"')
 
