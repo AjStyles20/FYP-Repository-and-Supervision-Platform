@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block title %}File not available · Baze Project Hub{% endblock %}
+{% block content %}
+<section class="card narrow">
+  <h1>This {{ what }} is not available</h1>
+  <p>The record is still here, but the {{ what }} itself is no longer on the server, so it cannot be opened.</p>
+  <p class="muted">Ask the person who uploaded it to upload it again, or tell the system administrator.</p>
+  <div class="actions"><a class="btn btn-primary" href="javascript:history.back()">Go back</a><a class="btn" href="{% url 'dashboard' %}">Portal home</a></div>
+</section>
+{% endblock %}

@@ -23,6 +23,7 @@ from .models import (
     ArchivedProject, Project, ProjectApprovalForm, ProjectCompletion, ProjectDeadline, ProjectDocument, ProjectMedia, ProjectMilestone, ProjectStage,
     ProjectStatusEvent,
 )
+from .files import open_stored_file
 from .imports import import_archived_projects
 from .services.health import HEALTH_PREFETCH, can_see_health, health_score
 from .services.similarity import similar_archived_projects, similarity_threshold
@@ -166,7 +167,8 @@ def past_project_detail(request, project_id):
             "is_past": True,
             "can_see_student_id": request.user.role in STAFF_ROLES,
             "student_profile": _student_profile(project.student),
-            "previous_supervisors": list(project.previous_supervisors.all()),
+            # Older archive rows may list the final supervisor among the earlier ones; show each once.
+            "previous_supervisors": [person for person in project.previous_supervisors.all() if person.pk != project.supervisor_id],
             "documents": project.documents.filter(visible_documents),
             "media": project.media.filter(visible_documents),
             "can_add_media": request.user.role == Role.ADMIN,
@@ -188,11 +190,10 @@ def download_project_document(request, document_id):
         and document.uploaded_by_id != request.user.pk
     ):
         raise PermissionDenied
-    return FileResponse(
-        document.file.open("rb"),
-        as_attachment=True,
-        filename=Path(document.file.name).name,
-    )
+    opened, missing = open_stored_file(request, document.file, "file")
+    if missing:
+        return missing
+    return FileResponse(opened, as_attachment=True, filename=Path(document.file.name).name)
 
 
 def _save_media(request, form, *, project=None, archived_project=None):
@@ -251,7 +252,10 @@ def project_media_file(request, media_id):
     item = get_object_or_404(ProjectMedia.objects.select_related("project", "archived_project"), pk=media_id)
     if not item.file or not _can_view_media(request.user, item):
         raise Http404  # 404, not 403, so an ID does not confirm the file exists
-    response = FileResponse(item.file.open("rb"), content_type=item.content_type)
+    opened, missing = open_stored_file(request, item.file, "image" if item.kind == ProjectMedia.Kind.IMAGE else "video")
+    if missing:
+        return missing
+    response = FileResponse(opened, content_type=item.content_type)
     response["Content-Disposition"] = "inline"
     response["X-Content-Type-Options"] = "nosniff"
     response["Cache-Control"] = "private, max-age=3600"

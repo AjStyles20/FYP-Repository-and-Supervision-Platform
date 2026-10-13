@@ -109,10 +109,12 @@ def _import_row(row):
     if profile and profile.programme_id != programme.pk:
         raise ValidationError(f'Student "{student.username}" is registered on a different programme.')
     supervisor = _supervisor(row["supervisor_username"], department, "supervisor") if row["supervisor_username"] else None
-    previous = [
-        _supervisor(username, department, "previous supervisor")
-        for username in filter(None, (item.strip() for item in row["previous_supervisors"].split(";")))
-    ]
+    previous = []
+    for username in filter(None, (item.strip() for item in row["previous_supervisors"].split(";"))):
+        person = _supervisor(username, department, "previous supervisor")
+        # Each person once, and never the final supervisor as an earlier one too.
+        if person not in previous and person != supervisor:
+            previous.append(person)
     if ArchivedProject.objects.filter(title=title[:255], student=student, year=year).exists():
         raise ValidationError("A past project with this title, student and year already exists.")
     project = ArchivedProject.objects.create(

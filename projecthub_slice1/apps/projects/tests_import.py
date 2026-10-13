@@ -59,6 +59,11 @@ class CsvImportTests(TestCase):
         self.assertEqual((imported, errors), (2, []))
         self.assertEqual(list(ArchivedProject.objects.get(title="Second topic").previous_supervisors.all()), [self.retired])
 
+    def test_previous_supervisors_are_kept_once_and_never_repeat_the_final_supervisor(self):
+        imported, errors = import_archived_projects(csv_file(self.row(previous_supervisors="okoro; retired;retired")))
+        self.assertEqual((imported, errors), (1, []))
+        self.assertEqual(list(ArchivedProject.objects.get().previous_supervisors.all()), [self.retired])
+
     def test_one_bad_row_imports_nothing_and_every_bad_row_is_listed(self):
         imported, errors = import_archived_projects(csv_file(
             self.row(),

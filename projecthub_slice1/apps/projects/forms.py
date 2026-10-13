@@ -161,6 +161,8 @@ class CompletionForm(forms.Form):
             raise forms.ValidationError("Either record the gap or confirm there is none, not both.")
         if not has_gap and not cleaned.get("no_gap"):
             raise forms.ValidationError("Record the documented gap, or confirm that there is none.")
+        if cleaned.get("graduation_verified") and not cleaned.get("graduation_year"):
+            self.add_error("graduation_year", "Enter the graduation year when you tick Graduation verified.")
         return cleaned
 
 

@@ -13,6 +13,7 @@ from django.http import FileResponse, Http404
 from apps.audit.services import log_event
 from apps.accounts.models import Role, StudentProfile, SupervisorProfile
 from apps.accounts.permissions import role_required
+from apps.projects.files import open_stored_file
 from apps.projects.models import Project
 
 from .forms import (
@@ -431,7 +432,10 @@ def download_shared_resource(request, resource_id):
         can_access = False
     if not can_access:
         raise PermissionDenied
-    return FileResponse(resource.file.open("rb"), as_attachment=True, filename=Path(resource.file.name).name)
+    opened, missing = open_stored_file(request, resource.file, "file")
+    if missing:
+        return missing
+    return FileResponse(opened, as_attachment=True, filename=Path(resource.file.name).name)
 
 
 @role_required(Role.SUPERVISOR, Role.COORDINATOR, Role.HOD)

@@ -171,10 +171,14 @@ def supervision_history_for(project):
 
 
 def previous_supervisors_for(project):
-    """Everyone who supervised this project before the current supervisor."""
-    return [
-        row.supervisor
-        for row in project.supervisor_assignments.filter(ended_at__isnull=False)
-        .select_related("supervisor")
-        .order_by("assigned_at")
-    ]
+    """Everyone who supervised this project before the current supervisor, each once, in order.
+
+    Someone reassigned more than once appears once, and the current (final) supervisor is never
+    listed as an earlier one, even if they also held the project before.
+    """
+    seen, earlier = {project.supervisor_id}, []
+    for row in project.supervisor_assignments.filter(ended_at__isnull=False).select_related("supervisor").order_by("assigned_at"):
+        if row.supervisor_id not in seen:
+            seen.add(row.supervisor_id)
+            earlier.append(row.supervisor)
+    return earlier

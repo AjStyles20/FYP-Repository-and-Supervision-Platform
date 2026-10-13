@@ -114,6 +114,8 @@ def sign_off_completion(
         raise ValidationError("Either record the gap or confirm there is none, not both.")
     if not gap_summary and not no_gap:
         raise ValidationError("Record the documented gap, or confirm that there is none.")
+    if graduation_verified and not graduation_year:
+        raise ValidationError("Enter the graduation year when graduation is verified.")
     project = Project.objects.select_for_update().get(pk=project.pk)
     if project.archived:
         raise ValidationError("This project has already been signed off and archived.")
