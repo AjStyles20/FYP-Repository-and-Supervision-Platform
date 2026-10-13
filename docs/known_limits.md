@@ -2,7 +2,7 @@
 
 These are things the platform does **not** do yet. Each entry says what is missing and what exists instead. Paths are relative to `projecthub_slice1/`.
 
-Test count when this list was last checked: **321 tests pass on SQLite and on MySQL 8.4** (`manage.py test apps`, 2026-10-13).
+Test count when this list was last checked: **326 tests pass on SQLite and on MySQL 8.4** (`manage.py test apps`, 2026-10-13).
 
 ## Planned, not built
 
@@ -18,6 +18,7 @@ Test count when this list was last checked: **321 tests pass on SQLite and on My
 | No email verification when a student account is added | The coordinator or administrator adds each student in person, after checking their details; no code is sent to the Baze email (self-registration, which also had no verification, is off) |
 | Personal emails and phone numbers are not verified | Each person types their own under My details. The format is checked (a personal email cannot be a Baze address; a phone number must look like one), but no code is sent to confirm it |
 | Staff have no page that lists a running project's files | Files can be downloaded by the student and by staff of the project's department, but only the student's "My project" page lists them |
+| A final document the coordinator uploads is not listed on the student's "My project" page | The coordinator can upload the final document for a project in their department (in progress, submitted or defended). It is recorded under the coordinator, kept staff-only, and moves into the archive at the HOD's sign-off, but "My project" lists only the student's own uploads and files shared with all Baze users |
 | `SupervisionLogEntry` (running log) has no screens | Meeting records and notices cover progress tracking |
 | No pagination on the repository | All matching projects are listed on one page |
 | Uploaded videos may not allow skipping ahead | Django serves uploaded videos without range requests, so a browser plays them from the start; some browsers cannot jump to a later point. Production should serve media through the web server (or use a video link) |

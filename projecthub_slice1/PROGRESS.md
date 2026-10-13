@@ -33,6 +33,7 @@
 - The proposal shows only the fields the supervisor's method needs, can be saved as a draft, opens with what was saved, and stays editable until the supervisor decides (D-36)
 - Student project creation and a role-checked proposal-to-HOD-archive workflow, with per-supervisor approval criteria, decision snapshots and status history
 - Students upload proposal and final report files; the project cannot be submitted until a final report is present
+- The department's coordinator can also upload the final document for a project in their department (in progress, submitted or defended), from "Upload final report" on the workflow page. The file is recorded under the coordinator and audited; the HOD's sign-off still archives the project and moves its files
 - Screenshots (up to 6) and demo videos (up to 2, upload or YouTube/Drive/Vimeo link) on running and archived projects, content-checked and permission-served; they move to the archive at sign-off (D-30)
 - HOD sign-off, archive and convocation list (printable and CSV)
 - Project list CSV for coordinators (faculty), HODs (department) and administrators (all), audited (D-34)
@@ -61,7 +62,7 @@
 - Live counters and the lists beside them follow the viewer: a demo account counts demo and real rows, a real account real rows only
 
 ## Verification status
-- `manage.py test apps`: **321 tests pass on SQLite (`DB_ENGINE=sqlite`) and on MySQL 8.4** (2026-10-13).
+- `manage.py test apps`: **326 tests pass on SQLite (`DB_ENGINE=sqlite`) and on MySQL 8.4** (2026-10-13).
 - `apps/accounts/tests_docs.py` checks that every row of `docs/code_map.md` names a real file and name.
 - Runtime in use: Python 3.14.0, Django 5.2.18, MySQL 8.4.
 
