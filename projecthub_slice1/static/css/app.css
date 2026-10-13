@@ -659,3 +659,21 @@ body.page-login {
 }
 body.page-login .card.narrow { background: rgba(255, 255, 255, 0.94); box-shadow: 0 18px 48px rgba(30, 30, 40, 0.18); }
 @media (max-width: 600px) { body.page-login { background-attachment: scroll; } }
+
+/* Welcome hero artwork (static/img/image.jpg): set into the right of the crimson band and
+   faded out towards the text and at the edges, so it melts into the band instead of sitting
+   on it as a box. Decorative only; hidden on narrow screens where it would sit behind the text. */
+.home-hero { position: relative; overflow: hidden; isolation: isolate; }
+.home-hero .hero-copy { position: relative; z-index: 1; }
+.home-hero-art {
+  position: absolute; top: 0; right: 0; z-index: 0;
+  width: min(52%, 44rem); height: 100%;
+  object-fit: cover; object-position: center;
+  opacity: 0.9; pointer-events: none;
+  /* One soft oval: solid around the lightbulb, melting into the band on every side. */
+  -webkit-mask-image: radial-gradient(ellipse 72% 88% at 62% 50%, #000 35%, rgba(0, 0, 0, 0.6) 58%, transparent 82%);
+  mask-image: radial-gradient(ellipse 72% 88% at 62% 50%, #000 35%, rgba(0, 0, 0, 0.6) 58%, transparent 82%);
+}
+/* Where the text and the artwork would overlap, keep the text column clear. */
+@media (min-width: 700px) and (max-width: 1099px) { .home-hero .hero-copy { max-width: 56%; } .home-hero-art { width: 48%; } }
+@media (max-width: 699px) { .home-hero-art { display: none; } }

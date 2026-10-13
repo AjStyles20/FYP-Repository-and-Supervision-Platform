@@ -37,9 +37,7 @@ def home(request):
     """The logged-out home page; signed-in people go straight to their portal."""
     if request.user.is_authenticated:
         return redirect("dashboard")
-    from .context_processors import logo_url
-
-    return render(request, "home.html", {"logo_url": logo_url(), **_welcome_figures()})
+    return render(request, "home.html", _welcome_figures())
 
 
 def _welcome_figures():

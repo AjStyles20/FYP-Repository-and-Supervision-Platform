@@ -1399,12 +1399,13 @@ class HomePageTests(TestCase):
         # Students request a meeting in an office-hours window and the supervisor accepts or declines it.
         self.assertContains(page, "request meetings in your supervisor's office hours")
 
-    def test_the_logo_shows_when_the_file_is_there(self):
-        from unittest import mock
-        with mock.patch("django.contrib.staticfiles.finders.find", side_effect=lambda name: name if name.endswith(".png") else None):
-            page = self.client.get(reverse("home"))
-        self.assertContains(page, 'alt="Baze University logo"')
-        self.assertContains(page, "img/baze-logo.png")
+    def test_the_hero_shows_the_artwork_and_the_crest_stays_in_the_header_only(self):
+        page = self.client.get(reverse("home"))
+        self.assertContains(page, 'class="home-hero-art"')
+        self.assertContains(page, "img/image.jpg")
+        self.assertTrue((settings.BASE_DIR / "static" / "img" / "image.jpg").exists())
+        self.assertNotContains(page, 'alt="Baze University logo"')  # removed from the hero
+        self.assertContains(page, 'class="brand-logo"')
 
     def test_the_welcome_page_shows_totals_and_faculty_tiles_from_real_data(self):
         from apps.academics.models import Department, Faculty
