@@ -1393,6 +1393,8 @@ class HomePageTests(TestCase):
         self.assertContains(page, "Final-year research, from first idea to the archive")
         self.assertContains(page, f'href="{reverse("login")}"')
         self.assertNotContains(page, "baze-logo")  # no file in static/img, so no broken image
+        # Students request a meeting in an office-hours window and the supervisor accepts or declines it.
+        self.assertContains(page, "request meetings in your supervisor's office hours")
 
     def test_the_logo_shows_when_the_file_is_there(self):
         from unittest import mock
