@@ -597,3 +597,50 @@ td form { display: flex; flex-wrap: wrap; gap: var(--space-2); margin: 0; }
 @media (min-width: 900px) { .grid-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 .grid-3 > .card + .card { margin-top: 0; }
 .home-note { text-align: center; }
+
+/* Welcome page sections: numbers band, discover + steps, faculty tiles */
+.home-stats { display: grid; gap: var(--space-4); grid-template-columns: repeat(2, minmax(0, 1fr)); margin: var(--space-6) 0; padding: var(--space-6) var(--space-4); background: var(--gray-0); border: var(--border); border-radius: var(--radius-lg); box-shadow: var(--shadow); }
+@media (min-width: 900px) { .home-stats { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+.home-stat { display: flex; flex-direction: column; align-items: center; text-align: center; gap: var(--space-1); }
+.home-stat svg { width: 40px; height: 40px; fill: none; stroke: var(--accent); stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+.home-stat strong { font-size: var(--text-3xl); line-height: 1.1; color: var(--gray-900); }
+.home-stat span { font-size: var(--text-sm); color: var(--gray-700); }
+.home-discover { display: grid; gap: var(--space-6); margin: var(--space-8) 0; align-items: start; }
+@media (min-width: 900px) { .home-discover { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } }
+.home-discover h2 { font-size: var(--text-2xl); text-transform: uppercase; letter-spacing: 0.02em; }
+.home-discover h2 span { color: var(--accent); }
+.home-lead { font-weight: 600; font-style: italic; color: var(--gray-900); }
+.home-steps { list-style: none; margin: 0; padding: 0; counter-reset: step; display: grid; gap: var(--space-3); }
+.home-steps li { counter-increment: step; display: grid; grid-template-columns: 2.25rem minmax(0, 1fr); column-gap: var(--space-3); padding: var(--space-3) var(--space-4); background: var(--gray-0); border: var(--border); border-radius: var(--radius); box-shadow: var(--shadow-sm); }
+.home-steps li::before { content: counter(step); grid-row: span 2; width: 2.25rem; height: 2.25rem; display: grid; place-items: center; border-radius: var(--radius-full); background: var(--accent); color: var(--on-accent); font-weight: 700; }
+.home-steps span { color: var(--gray-700); font-size: var(--text-sm); }
+.home-faculties { margin: var(--space-8) 0 var(--space-4); }
+.home-faculties h2 { font-size: var(--text-2xl); margin-bottom: var(--space-4); }
+.faculty-tiles { display: grid; gap: var(--space-4); grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 600px) { .faculty-tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (min-width: 900px) { .faculty-tiles { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+.faculty-tile { display: flex; flex-direction: column; justify-content: space-between; gap: var(--space-4); min-height: 8.5rem; padding: var(--space-4) var(--space-5); border-radius: var(--radius-lg); color: #ffffff; text-decoration: none; box-shadow: var(--shadow); transition: transform 0.15s ease, box-shadow 0.15s ease; }
+.faculty-tile strong { font-size: var(--text-lg); text-transform: uppercase; letter-spacing: 0.02em; line-height: 1.25; color: #ffffff; }
+.faculty-tile span { font-size: var(--text-sm); color: rgba(255, 255, 255, 0.92); }
+.faculty-tile:hover, .faculty-tile:focus-visible { transform: translateY(-2px); box-shadow: 0 10px 24px rgba(60, 20, 30, 0.22); color: #ffffff; }
+.faculty-tile:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
+.tile-a { background: linear-gradient(135deg, #6e0011, #b3001f); }
+.tile-b { background: linear-gradient(135deg, #24262a, #555b63); }
+.tile-c { background: linear-gradient(135deg, #3d0b1a, #7e2338); }
+.tile-d { background: linear-gradient(135deg, #1c3554, #36618f); }
+@media (prefers-reduced-motion: reduce) { .faculty-tile { transition: none; } .faculty-tile:hover { transform: none; } }
+
+/* Logged-out header: on wide screens the few public links sit in the bar itself (no hamburger),
+   with Log in as the one highlighted action. Small screens keep the hamburger panel. */
+/* In the dark header band --accent is white and --on-accent crimson, like the hero's primary button. */
+.top-nav .nav-login { background: var(--accent); color: var(--on-accent); font-weight: 600; text-align: center; }
+.top-nav .nav-login:hover, .top-nav .nav-login:focus-visible { background: var(--accent-hover); color: var(--on-accent); }
+@media (min-width: 900px) {
+  .top-public .nav-toggle { display: none; }
+  .top-public .top-nav, .nav-js .top-public .top-nav, .nav-js .top-public .top-nav:not(.is-open) {
+    display: flex; position: static; flex-direction: row; align-items: center; width: auto; max-height: none;
+    overflow: visible; padding: 0; background: none; border: 0; box-shadow: none;
+    -webkit-backdrop-filter: none; backdrop-filter: none;
+  }
+  .top-public .top-nav .nav-login { margin-left: var(--space-2); padding-inline: var(--space-4); }
+}

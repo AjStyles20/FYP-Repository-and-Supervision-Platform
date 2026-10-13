@@ -1403,6 +1403,61 @@ class HomePageTests(TestCase):
         self.assertContains(page, 'alt="Baze University logo"')
         self.assertContains(page, "img/baze-logo.png")
 
+    def test_the_welcome_page_shows_totals_and_faculty_tiles_from_real_data(self):
+        from apps.academics.models import Department, Faculty
+        from apps.projects.models import ArchivedProject, Project
+
+        faculty = Faculty.objects.create(name="Faculty of Computing")
+        department = Department.objects.create(faculty=faculty, name="Computer Science")
+        programme = Programme.objects.create(department=department, name="Computer Science", degree_type="BSc")
+        student = User.objects.create(username="welcome.student", role=Role.STUDENT)
+        User.objects.create(username="welcome.supervisor", role=Role.SUPERVISOR, department=department)
+        Project.objects.create(student=student, title="Running topic", department=department, programme=programme)
+        ArchivedProject.objects.create(title="Finished topic", year=2025, department=department, programme=programme, student=student)
+        demo = Faculty.objects.create(name="Sample Faculty", is_demo=True)
+        demo_department = Department.objects.create(faculty=demo, name="Sample Department", is_demo=True)
+        demo_programme = Programme.objects.create(department=demo_department, name="Sample", degree_type="BSc", is_demo=True)
+        demo_student = User.objects.create(username="demo.welcome", role=Role.STUDENT, is_demo=True)
+        Project.objects.create(student=demo_student, title="Sample topic", department=demo_department, programme=demo_programme, is_demo=True)
+
+        page = self.client.get(reverse("home"))
+
+        self.assertEqual(page.context["figures"], {"archived": 1, "running": 1, "staff": 1, "faculties": 1})
+        self.assertContains(page, "Faculty of Computing")
+        self.assertContains(page, "1 department · 1 archived project")
+        self.assertContains(page, f'href="{reverse("repository")}?faculty={faculty.pk}"')
+        self.assertNotContains(page, "Sample Faculty")  # demo rows stay out once real data exists
+        self.assertContains(page, "Browse past research")
+
+    def test_visitors_get_a_public_nav_bar_and_one_word_for_logging_in(self):
+        for name in ("home", "login"):
+            with self.subTest(page=name):
+                page = self.client.get(reverse(name))
+                self.assertContains(page, '<header class="top top-public">', html=False)
+                self.assertContains(page, f'<a href="{reverse("home")}#how-it-works">How it works</a>', html=True)
+                self.assertContains(page, f'<a href="{reverse("home")}#faculties">Faculties</a>', html=True)
+                self.assertContains(page, f'<a href="{reverse("repository")}">Past research</a>', html=True)
+                self.assertContains(page, f'<a href="{reverse("login")}" class="nav-login">Log in</a>', html=True)
+                self.assertNotContains(page, "Sign in")
+        user = User.objects.create(username="nav.student", role=Role.STUDENT)
+        self.client.force_login(user)
+        self.assertNotContains(self.client.get(reverse("dashboard")), "top-public")
+
+    def test_a_demo_only_database_shows_its_sample_figures(self):
+        from apps.academics.models import Department, Faculty
+        from apps.projects.models import Project
+
+        faculty = Faculty.objects.create(name="Sample Faculty", is_demo=True)
+        department = Department.objects.create(faculty=faculty, name="Sample Department", is_demo=True)
+        programme = Programme.objects.create(department=department, name="Sample", degree_type="BSc", is_demo=True)
+        student = User.objects.create(username="demo.only", role=Role.STUDENT, is_demo=True)
+        Project.objects.create(student=student, title="Sample topic", department=department, programme=programme, is_demo=True)
+
+        page = self.client.get(reverse("home"))
+
+        self.assertEqual((page.context["figures"]["running"], page.context["figures"]["faculties"]), (1, 1))
+        self.assertContains(page, "Sample Faculty")
+
     def test_signing_out_lands_on_the_welcome_page_and_login_links_back(self):
         user = User.objects.create(username="home.student", role=Role.STUDENT)
         self.client.force_login(user)

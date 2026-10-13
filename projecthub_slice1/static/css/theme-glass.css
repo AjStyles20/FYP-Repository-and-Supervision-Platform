@@ -99,6 +99,12 @@ button:not(.primary):not(.btn-primary):not(.button):not(.btn-quiet):not(.passwor
   border: 1px solid rgba(120, 100, 110, 0.28);
 }
 .hero-band .btn, .repository-hero .btn, .supervisor-welcome .btn, .detail-hero .btn { background: rgba(255, 255, 255, 0.12); border-color: rgba(255, 255, 255, 0.35); }
+/* Same as above, specific enough to beat the light glass rule for plain .btn, so a secondary
+   button on a dark band keeps a see-through fill and white text instead of white on white. */
+.hero-band .btn:not(.btn-primary):not(.btn-quiet), .repository-hero .btn:not(.btn-primary):not(.btn-quiet),
+.supervisor-welcome .btn:not(.btn-primary):not(.btn-quiet), .detail-hero .btn:not(.btn-primary):not(.btn-quiet) {
+  background: rgba(255, 255, 255, 0.12); border-color: rgba(255, 255, 255, 0.55); color: #ffffff;
+}
 .hero-band .btn-primary, .repository-hero .btn-primary, .supervisor-welcome .btn-primary { background: #ffffff; color: #8a0000; box-shadow: none; }
 .password-toggle { background: transparent; }
 

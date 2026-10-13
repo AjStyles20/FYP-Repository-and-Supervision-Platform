@@ -46,7 +46,40 @@ def home(request):
     from django.templatetags.static import static
 
     logo = next((name for name in LOGO_FILES if finders.find(name)), None)
-    return render(request, "home.html", {"logo_url": static(logo) if logo else ""})
+    return render(request, "home.html", {"logo_url": static(logo) if logo else "", **_welcome_figures()})
+
+
+def _welcome_figures():
+    """Totals and the faculty list for the welcome page: numbers only, nothing about any person.
+
+    Real rows only, unless the database holds no real projects at all (the demo), so a real
+    deployment never shows sample data to visitors and the demo does not show zeros.
+    """
+    from django.db.models import Count
+
+    from apps.academics.models import Faculty
+
+    include_demo = not (Project.objects.filter(is_demo=False).exists() or ArchivedProject.objects.filter(is_demo=False).exists())
+    real = Q() if include_demo else Q(is_demo=False)
+    archived = ArchivedProject.objects.filter(real)
+    faculties = (
+        Faculty.objects.filter(real)
+        .annotate(
+            department_count=Count("departments", filter=None if include_demo else Q(departments__is_demo=False), distinct=True),
+            archived_count=Count("departments__archived_projects", distinct=True,
+                                 filter=None if include_demo else Q(departments__archived_projects__is_demo=False)),
+        )
+        .order_by("name")
+    )
+    return {
+        "figures": {
+            "archived": archived.count(),
+            "running": Project.objects.filter(real, archived=False).count(),
+            "staff": User.objects.filter(real, is_active=True, role__in=(Role.SUPERVISOR, Role.COORDINATOR, Role.HOD)).count(),
+            "faculties": len(faculties),
+        },
+        "faculties": faculties,
+    }
 
 
 class ProjectLoginView(LoginView):

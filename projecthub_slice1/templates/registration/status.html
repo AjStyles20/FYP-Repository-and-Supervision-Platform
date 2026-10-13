@@ -8,8 +8,8 @@
   <p class="eyebrow">Student registration</p>
   {% if invalid %}
     <h1>This status link is not valid</h1>
-    <p>It may have expired or been copied incompletely. You can still check: sign in with your Baze email and password, and the login page tells you whether your registration is waiting or was not approved.</p>
-    <p><a class="btn btn-primary" href="{% url 'login' %}">Go to sign in</a></p>
+    <p>It may have expired or been copied incompletely. You can still check: log in with your Baze email and password, and the login page tells you whether your registration is waiting or was not approved.</p>
+    <p><a class="btn btn-primary" href="{% url 'login' %}">Go to log in</a></p>
   {% else %}
     <h1>Hello {{ student.first_name|default:"there" }}</h1>
     <div data-status-panel="pending"{% if status != "pending" %} hidden{% endif %}>
@@ -19,8 +19,8 @@
     </div>
     <div data-status-panel="approved"{% if status != "approved" %} hidden{% endif %}>
       <p><span class="tag tag-live">Approved</span></p>
-      <p>Your account is ready. Sign in with your Baze email or student ID and the password you chose.</p>
-      <p><a class="btn btn-primary" href="{% url 'login' %}">Sign in</a></p>
+      <p>Your account is ready. Log in with your Baze email or student ID and the password you chose.</p>
+      <p><a class="btn btn-primary" href="{% url 'login' %}">Log in</a></p>
     </div>
     <div data-status-panel="rejected"{% if status != "rejected" %} hidden{% endif %}>
       <p><span class="tag">Not approved</span></p>
