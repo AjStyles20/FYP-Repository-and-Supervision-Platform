@@ -122,7 +122,7 @@ class SemesterTests(TestCase):
         create_deadline(self.faculty, "Chapter 3 (26B)", date(2026, 6, 15), self.coordinator, semester=self.b)
         self.client.force_login(self.coordinator)
         self.assertContains(self.client.get(url), "Save semester")
-        self.assertRedirects(self.client.post(url, {"action": "set_semester", "semester": self.b.pk}), url,
+        self.assertRedirects(self.client.post(url, {"action": "set_semester", "semester": " 26b "}), url,
                              fetch_redirect_response=False)
         self.project.refresh_from_db()
         self.assertEqual(self.project.semester, self.b)
@@ -131,7 +131,7 @@ class SemesterTests(TestCase):
             with self.subTest(user=user.username):
                 self.client.force_login(user)
                 self.assertNotContains(self.client.get(url), "Save semester")
-                self.assertEqual(self.client.post(url, {"action": "set_semester", "semester": self.a.pk}).status_code, 403)
+                self.assertEqual(self.client.post(url, {"action": "set_semester", "semester": "26A"}).status_code, 403)
         self.project.refresh_from_db()
         self.assertEqual(self.project.semester, self.b)
 
@@ -139,7 +139,7 @@ class SemesterTests(TestCase):
         create_deadline(self.faculty, "Chapter 1 (26B)", date(2026, 5, 20), self.coordinator, semester=self.b)
         self.client.force_login(self.coordinator)
         self.client.post(reverse("supervisor_assignments"), {"student_id": self.waiting.pk, "supervisor": self.supervisor.pk,
-                                                              "reason": "", "semester": self.b.pk})
+                                                              "reason": "", "semester": "26B"})
         project = Project.objects.get(student=self.waiting)
         self.assertEqual(project.semester, self.b)
         self.assertEqual(self.milestone_names(project), {"Chapter 1 (26B)"})
@@ -158,11 +158,11 @@ class SemesterTests(TestCase):
         url = reverse("past_project_detail", args=[archived.pk])
         self.client.force_login(self.supervisor)
         self.assertContains(self.client.get(url), "Semester not set")
-        self.assertEqual(self.client.post(url, {"action": "set_semester", "semester": self.a.pk}).status_code, 403)
+        self.assertEqual(self.client.post(url, {"action": "set_semester", "semester": "26A"}).status_code, 403)
         self.client.force_login(self.other_coordinator)
-        self.assertEqual(self.client.post(url, {"action": "set_semester", "semester": self.a.pk}).status_code, 403)
+        self.assertEqual(self.client.post(url, {"action": "set_semester", "semester": "26A"}).status_code, 403)
         self.client.force_login(self.coordinator)
-        self.assertRedirects(self.client.post(url, {"action": "set_semester", "semester": self.a.pk}), url)
+        self.assertRedirects(self.client.post(url, {"action": "set_semester", "semester": "26a"}), url)
         archived.refresh_from_db()
         self.assertEqual(archived.semester, self.a)
         self.assertContains(self.client.get(url), "Semester 26A")
@@ -173,17 +173,18 @@ class SemesterTests(TestCase):
         ArchivedProject.objects.create(title="Past 26B", year=2026, semester=self.b, department=self.department,
                                        programme=self.programme, student=self.second)
         self.client.force_login(self.supervisor)
-        past = self.client.get(reverse("repository"), {"semester": self.a.pk})
+        past = self.client.get(reverse("repository"), {"semester": "26 a"})
         self.assertEqual([item["project"].title for item in past.context["items"]], ["Past 26A"])
-        self.assertContains(past, '<option value="%d" selected>26A</option>' % self.a.pk, html=True)
-        running = self.client.get(reverse("running_topics"), {"semester": self.b.pk})
+        self.assertContains(past, 'value="26A"')
+        self.assertContains(past, '<datalist id="semester-codes"><option value="26B"></option><option value="26A"></option></datalist>', html=True)
+        running = self.client.get(reverse("running_topics"), {"semester": "26B"})
         self.assertEqual([item["project"].title for item in running.context["items"]], ["Clinic Queue"])
 
     def test_the_convocation_list_and_the_export_show_the_semester(self):
         ProjectCompletion.objects.create(project=self.project, hod=self.hod, signed_on=date(2027, 1, 8))
         ProjectCompletion.objects.create(project=self.other_project, hod=self.hod, signed_on=date(2026, 9, 1))
         self.client.force_login(self.hod)
-        page = self.client.get(reverse("convocation_list"), {"semester": self.a.pk})
+        page = self.client.get(reverse("convocation_list"), {"semester": "26a"})
         self.assertEqual([row["title"] for row in page.context["rows"]], ["Exam Planner"])
         rows = list(csv.reader(StringIO(self.client.get(reverse("convocation_list"), {"format": "csv"}).content.decode("utf-8-sig"))))
         self.assertEqual(rows[0][-1], "Semester")
@@ -224,8 +225,64 @@ class SemesterTests(TestCase):
     def test_deadlines_page_offers_the_semester(self):
         self.client.force_login(self.coordinator)
         url = reverse("faculty_deadlines")
-        self.client.post(url, {"action": "add", "name": "Chapter 2", "due_date": "2026-03-01", "semester": self.a.pk})
+        self.client.post(url, {"action": "add", "name": "Chapter 2", "due_date": "2026-03-01", "semester": "26A"})
         deadline = ProjectDeadline.objects.get(name="Chapter 2")
         self.assertEqual(deadline.semester, self.a)
         self.assertContains(self.client.get(url), "26A")
         self.assertEqual(self.milestone_names(self.other_project), set())
+
+    # --- typed by hand ---------------------------------------------------------------------------
+
+    def test_typing_a_new_semester_on_a_project_adds_it(self):
+        url = reverse("project_workflow", args=[self.project.pk])
+        self.client.force_login(self.coordinator)
+        page = self.client.get(url)
+        self.assertContains(page, 'list="semester-codes"')
+        self.assertContains(page, 'value="26A"')  # the current semester is in the box
+        self.client.post(url, {"action": "set_semester", "semester": "26 c"})
+        self.project.refresh_from_db()
+        self.assertEqual(self.project.semester.code, "26C")
+        self.assertEqual(Semester.objects.filter(code="26C").count(), 1)
+        self.assertTrue(AuditEvent.objects.filter(action="semester.created").exists())
+        # Typing the same code again reuses it.
+        self.client.post(reverse("project_workflow", args=[self.other_project.pk]), {"action": "set_semester", "semester": "26C"})
+        self.assertEqual(Semester.objects.filter(code="26C").count(), 1)
+        # An empty box means "not set".
+        self.client.post(url, {"action": "set_semester", "semester": ""})
+        self.project.refresh_from_db()
+        self.assertIsNone(self.project.semester)
+
+    def test_a_wrongly_typed_semester_is_refused_and_nothing_is_added(self):
+        url = reverse("project_workflow", args=[self.project.pk])
+        self.client.force_login(self.coordinator)
+        for typed in ("2026A", "26D", "26-A", "semester one"):
+            with self.subTest(typed=typed):
+                response = self.client.post(url, {"action": "set_semester", "semester": typed}, follow=True)
+                self.assertContains(response, "Type the semester as two digits and A, B or C, like 26A.")
+        self.project.refresh_from_db()
+        self.assertEqual(self.project.semester, self.a)
+        self.assertEqual(set(Semester.objects.values_list("code", flat=True)), {"26A", "26B"})
+
+    def test_searching_a_semester_never_adds_one_and_explains_empty_or_wrong_input(self):
+        self.client.force_login(self.supervisor)
+        empty = self.client.get(reverse("repository"), {"semester": "25C"})
+        self.assertContains(empty, "No projects in 25C.")
+        wrong = self.client.get(reverse("repository"), {"semester": "2026A"})
+        self.assertContains(wrong, "Type the semester as two digits and A, B or C, like 26A.")
+        self.assertFalse(Semester.objects.filter(code__in=["25C", "2026A"]).exists())
+
+    def test_the_demo_seed_has_three_semesters_and_spreads_running_projects(self):
+        from django.core.management import call_command
+        import shutil
+        import tempfile
+        from django.test import override_settings
+
+        media = tempfile.mkdtemp(prefix="projecthub-semester-seed-")
+        self.addCleanup(shutil.rmtree, media, ignore_errors=True)
+        with override_settings(MEDIA_ROOT=media):
+            call_command("seed_demo", password="pass-for-tests-1", force=True, stdout=StringIO())  # tests run with DEBUG off
+        self.assertTrue({"26A", "26B", "26C"} <= set(Semester.objects.values_list("code", flat=True)))
+        running = Project.objects.filter(is_demo=True, archived=False)
+        self.assertFalse(running.filter(semester__isnull=True).exists())
+        self.assertEqual(set(running.values_list("semester__code", flat=True)), {"26A", "26B"})
+        self.assertFalse(ArchivedProject.objects.filter(is_demo=True, semester__isnull=False).exists())

@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load semesters %}
 {% block title %}Student allocation · Baze Project Hub{% endblock %}
 {% block content %}
 <section class="page-heading">
@@ -126,4 +127,5 @@
     </div>
   {% endfor %}
 </section>
+{% semester_codes %}
 {% endblock %}

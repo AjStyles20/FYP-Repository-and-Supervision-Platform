@@ -151,7 +151,7 @@ From `projecthub_slice1/`, in PowerShell:
 ## If the panel asks for more (not timed)
 
 - **The coordinator uploads the final report:** as `demo.coordinator`, open a Computer Science project that is in progress, submitted or defended, then **Project workflow → Upload final report**. The file is listed under **Project files** with the coordinator's name, and the HOD's sign-off still archives it.
-- **Semesters (26A, 26B, 26C):** as `demo.coordinator`, open **Semesters** in the menu and add `26A` (the seed has none). On a project's workflow page choose **26A** and **Save semester**. Then **Deadlines → Add a deadline** for 26A only: it appears on 26A projects and nowhere else. The repository and running topics filter by semester.
+- **Semesters (26A, 26B, 26C):** the seed puts the running projects in 26A and 26B. As `demo.coordinator`, open a project's workflow page, type `26C` in **Semester** and click **Save semester**: 26C is added on first use. Then **Deadlines → Add a deadline** with semester `26C`: it appears on that project and nowhere else. In **Running topics**, type `26A` in **Semester** to filter.
 - **Searching by year:** in the repository, click **Year**: a year grid opens, with years that have projects clickable.
 
 ## Timing

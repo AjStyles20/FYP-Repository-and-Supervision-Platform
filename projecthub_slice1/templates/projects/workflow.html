@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load semesters %}
 {% block title %}Project workflow · {{ project.title }}{% endblock %}
 {% block back %}<p class="breadcrumb back-link"><a href="{% url 'current_project_detail' project.pk %}"><span aria-hidden="true">←</span> Project summary</a></p>{% endblock %}
 {% block content %}
@@ -11,8 +12,8 @@
     <form method="post" class="filter-row semester-form">{% csrf_token %}<input type="hidden" name="action" value="set_semester">
       <div><label for="id_semester">Semester</label>{{ semester_form.semester }}</div>
       <button type="submit">Save semester</button>
-    </form>
-    <p class="muted">The project's faculty deadlines follow its semester. {% if not semester_form.fields.semester.queryset.exists %}No semesters yet: add one under <a href="{% url 'semesters' %}">Semesters</a>.{% endif %}</p>
+    </form>{% semester_codes %}
+    <p class="muted">Type it, like 26A; a new semester is added the first time it is used. The project's faculty deadlines follow its semester.</p>
   {% endif %}
   {% include "projects/_health.html" %}
   {% if project.supervisor_id %}<section class="form-note"><strong>Supervisor approval criteria:</strong> {% if approval_method == "literature_review" %}Literature review and research gap{% elif approval_method == "working_project" %}Working project demonstration{% else %}Topic, aim and methodology{% endif %}{% if approval_criteria %}<br>{{ approval_criteria|linebreaksbr }}{% else %}<br><span class="muted">No additional criteria have been posted.</span>{% endif %}</section>{% endif %}

@@ -37,14 +37,18 @@ def read_filters(params):
         value = (params.get(name) or "").strip()
         return value if value.isdigit() else ""
 
+    from apps.academics.models import SEMESTER_CODE, normalise_semester_code
+
     level = (params.get("level") or "").strip()
+    semester = normalise_semester_code(params.get("semester"))
     year = (params.get("year") or "").strip()
     return {
         "q": (params.get("q") or "").strip(),
         "faculty": as_id("faculty"),
         "department": as_id("department"),
         "programme": as_id("programme"),
-        "semester": as_id("semester"),
+        "semester": semester if SEMESTER_CODE.match(semester) else "",
+        "semester_typed": semester,
         "level": level if level in QualificationLevel.values else "",
         "year": year if len(year) == 4 and year.isdigit() else "",
     }
@@ -105,7 +109,7 @@ def _apply_academic_filters(queryset, filters):
     if filters["level"]:
         queryset = queryset.filter(programme__level=filters["level"])
     if filters.get("semester"):
-        queryset = queryset.filter(semester_id=filters["semester"])
+        queryset = queryset.filter(semester__code=filters["semester"])
     return queryset
 
 

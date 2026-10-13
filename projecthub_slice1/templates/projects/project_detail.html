@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load contact %}
+{% load contact semesters %}
 {% block title %}{{ project.title }} · Baze Project Hub{% endblock %}
 {% block main_class %}wide{% endblock %}
 {% block back %}<p class="breadcrumb back-link"><a href="{% url 'repository' %}?section={% if is_past %}past{% else %}current{% endif %}"><span aria-hidden="true">←</span> Repository</a></p>{% endblock %}
@@ -20,7 +20,7 @@
     <form method="post" class="filter-row semester-form">{% csrf_token %}<input type="hidden" name="action" value="set_semester">
       <div><label for="id_semester">Semester</label>{{ semester_form.semester }}</div>
       <button type="submit">Save semester</button>
-    </form>
+    </form>{% semester_codes %}
   {% endif %}
 </section>
 

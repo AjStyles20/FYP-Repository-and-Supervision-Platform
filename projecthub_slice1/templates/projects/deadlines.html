@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load semesters %}
 {% block title %}Deadlines · Baze Project Hub{% endblock %}
 {% block content %}
 <section class="page-heading">
@@ -35,6 +36,6 @@
   <form method="post" class="stack-form">{% csrf_token %}<input type="hidden" name="action" value="add">
     {% for field in form %}<div class="form-row">{{ field.label_tag }}{{ field }}{% if field.help_text %}<small class="muted">{{ field.help_text }}</small>{% endif %}{% for error in field.errors %}<p class="error">{{ error }}</p>{% endfor %}</div>{% endfor %}
     <button type="submit" class="primary">Add deadline</button>
-  </form>
+  </form>{% semester_codes %}
 </section>
 {% endblock %}

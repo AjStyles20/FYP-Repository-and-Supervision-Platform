@@ -307,7 +307,7 @@ Guards: `apps/audit/models.py`, `apps/projects/models/project.py`, `apps/project
 
 ### 34. A year has three semesters with different timing. How does the system cope?
 
-**Say:** "Semesters are entered by hand, because the timing changes and some have no fixed dates. The coordinator creates 26A, 26B or 26C when needed, can note the dates, and picks each project's semester. Defence dates were already recorded per student, so a 26A defence in early January or in the semester's last month both work. Deadlines can be tied to a semester, so 26A's Chapter 3 date never lands on a 26B student. When a 26C project is signed off in January, the archive still says 26C, and searches and the convocation list can use the semester or the year."
+**Say:** "Semesters are typed by hand, because the timing changes and some have no fixed dates. The coordinator types 26A, 26B or 26C on the project; a new one is added the first time it's used, and it must look like 26A, so '26 a' and '26A' can't become two different semesters. Dates can be noted, but nothing depends on them. Defence dates were already recorded per student, so a 26A defence in early January or in the semester's last month both work. Deadlines can be tied to a semester, so 26A's Chapter 3 date never lands on a 26B student. When a 26C project is signed off in January, the archive still says 26C, and searches and the convocation list can use the semester or the year."
 
 **How it works:** `Semester` in `apps/academics/models.py`; `deadlines_for` and `set_project_semester` in `apps/projects/services/semesters.py`; the Semesters page `semesters` in `apps/academics/views.py`. Tests: `apps/projects/tests_semesters.py`. Decision D-38.
 

@@ -19,7 +19,7 @@ from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
 from django.utils import timezone
 
-from apps.academics.models import Department, Faculty, Programme
+from apps.academics.models import Department, Faculty, Programme, Semester
 from apps.accounts.demo_pdf import demo_pdf, demo_png
 from apps.accounts.models import Role, StudentProfile, SupervisorProfile, User
 from apps.projects.models import (
@@ -252,6 +252,7 @@ class Command(BaseCommand):
             self._health_story()
         self._replace_external_demo_links()
         self._demo_media()
+        self._demo_semesters()
         # Building the story submits proposals, which alerts supervisors; the ones they already decided
         # are old news, so only the proposals still waiting stay unread.
         from apps.projects.models import ProjectApprovalForm
@@ -265,6 +266,15 @@ class Command(BaseCommand):
         self.stdout.write(self.style.SUCCESS(f"Demo data ready ({built} new projects)."))
         self.stdout.write(f"Log in as any demo.* user. Password: {opts['password']}")
         self.stdout.write(self.style.WARNING("Demo accounts are for development only. Remove them with: python manage.py purge_demo"))
+
+    def _demo_semesters(self):
+        """26A, 26B and 26C (D-38), with the running demo projects spread over 26A and 26B. The past
+        projects stay "Not set", as older real records do, to show how one is filled in."""
+        semesters = [Semester.objects.get_or_create(code=code, defaults={"is_demo": True})[0] for code in ("26A", "26B", "26C")]
+        unset = Project.objects.filter(is_demo=True, archived=False, semester__isnull=True).order_by("pk")
+        for index, project in enumerate(unset):
+            # update(), so the project's back-dated "last updated" time is left alone
+            Project.objects.filter(pk=project.pk).update(semester=semesters[index % 2])
 
     # --- structure and people ------------------------------------------------------------------
 

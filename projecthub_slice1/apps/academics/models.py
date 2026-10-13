@@ -92,6 +92,14 @@ class Programme(models.Model):
         return self.level == QualificationLevel.POSTGRADUATE
 
 
+SEMESTER_CODE = re.compile(r"^\d{2}[A-C]$")
+
+
+def normalise_semester_code(value):
+    """Typed semesters are compared in one form: spaces dropped and capitals, so "26 a" is 26A."""
+    return re.sub(r"\s+", "", value or "").upper()
+
+
 semester_code_validator = RegexValidator(
     r"^\d{2}[A-C]$", "Use two digits for the year and A, B or C for the semester, like 26A.", flags=re.IGNORECASE
 )
@@ -121,7 +129,7 @@ class Semester(models.Model):
         return self.code
 
     def save(self, *args, **kwargs):
-        self.code = (self.code or "").strip().upper()  # 26a and 26A are the same semester
+        self.code = normalise_semester_code(self.code)  # 26a, 26 A and 26A are the same semester
         super().save(*args, **kwargs)
 
     def clean(self):

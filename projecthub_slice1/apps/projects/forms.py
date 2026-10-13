@@ -1,7 +1,7 @@
 from django import forms
 from django.utils import timezone
 
-from apps.academics.models import Semester
+from apps.academics.models import SEMESTER_CODE, normalise_semester_code
 from apps.accounts.models import User
 from .models import Project, ProjectDocument, ProjectMedia, ProjectStage, SupervisorDecision
 from .models.media import (
@@ -47,10 +47,29 @@ class SupervisorAssignmentForm(forms.Form):
         return cleaned
 
 
-def semester_field(empty_label, help_text=""):
-    """A choice of the semesters the coordinator has created (D-38); empty is allowed."""
-    return forms.ModelChoiceField(queryset=Semester.objects.all(), required=False, empty_label=empty_label,
-                                  label="Semester", help_text=help_text)
+class SemesterCodeField(forms.CharField):
+    """A semester typed by hand, like 26A (D-38). Cleans to the code in one form ("26 a" -> "26A"),
+    or "" when left empty. Codes already in use are offered as suggestions (the semester_codes tag)."""
+
+    def __init__(self, **kwargs):
+        kwargs.setdefault("required", False)
+        kwargs.setdefault("max_length", 20)  # room for a mistyped value, so the format message explains it
+        kwargs.setdefault("label", "Semester")
+        kwargs.setdefault("widget", forms.TextInput(attrs={
+            "placeholder": "26A", "list": "semester-codes", "autocomplete": "off", "autocapitalize": "characters",
+            "size": 6, "class": "semester-input",
+        }))
+        super().__init__(**kwargs)
+
+    def clean(self, value):
+        code = normalise_semester_code(super().clean(value))
+        if code and not SEMESTER_CODE.match(code):
+            raise forms.ValidationError("Type the semester as two digits and A, B or C, like 26A.")
+        return code
+
+
+def semester_field(help_text=""):
+    return SemesterCodeField(help_text=help_text)
 
 
 class AllocationForm(SupervisorAssignmentForm):
@@ -58,13 +77,13 @@ class AllocationForm(SupervisorAssignmentForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields["semester"] = semester_field("Not set yet", "The project's semester, like 26A. You can set it later.")
+        self.fields["semester"] = semester_field("The project's semester, like 26A. Optional; you can set it later.")
 
 
 class ProjectSemesterForm(forms.Form):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields["semester"] = semester_field("Not set")
+        self.fields["semester"] = semester_field("Type it, like 26A. A new semester is added the first time it is used; leave empty for not set.")
 
 
 class UnassignedSuperviseeForm(forms.Form):
@@ -261,7 +280,7 @@ class DeadlineForm(forms.Form):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields["semester"] = semester_field(
-            "Every semester", "Pick a semester to give this deadline only to that semester's students.")
+            "Leave empty for every semester, or type one (like 26A) to give the deadline only to that semester's students.")
 
 
 class MilestoneForm(forms.Form):

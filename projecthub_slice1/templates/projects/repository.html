@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load static %}
+{% load static semesters %}
 {% block title %}Project repository · Baze Project Hub{% endblock %}
 {% block main_class %}wide{% endblock %}
 {% block content %}
@@ -71,12 +71,10 @@
   </div>
   <div>
     <label for="semester-filter">Semester</label>
-    <select id="semester-filter" name="semester">
-      <option value="">All semesters</option>
-      {% for semester in semesters %}
-        <option value="{{ semester.pk }}" {% if semester_id == semester.pk|stringformat:"s" %}selected{% endif %}>{{ semester.code }}</option>
-      {% endfor %}
-    </select>
+    <input id="semester-filter" name="semester" type="text" value="{{ semester }}" placeholder="All semesters, or e.g. 26A"
+           list="semester-codes" autocomplete="off" autocapitalize="characters" maxlength="8"{% if semester_invalid %} aria-invalid="true" aria-describedby="semester-error"{% endif %}>
+    {% semester_codes %}
+    {% if semester_invalid %}<small id="semester-error" class="error">Type the semester as two digits and A, B or C, like 26A.</small>{% endif %}
   </div>
   <div class="filter-actions">
     <button type="submit" class="primary">Search</button>
@@ -119,6 +117,7 @@
   <section class="empty-state card">
     <div class="empty-icon" aria-hidden="true">⌕</div>
     <h3>No projects found</h3>
+    {% if semester and not semester_invalid %}<p>No projects in {{ semester }}{% if year %} in {{ year }}{% endif %}.</p>{% endif %}
     <p class="muted">Try another search or remove one of the filters. {% if is_running_topics %}Only active student topics appear in this directory.{% else %}Only projects signed off by the Head of Department appear in this repository.{% endif %}</p>
     <a href="{% if is_running_topics %}{% url 'running_topics' %}{% else %}{% url 'repository' %}{% endif %}">Clear filters</a>
   </section>

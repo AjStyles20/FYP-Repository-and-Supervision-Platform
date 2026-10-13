@@ -10,7 +10,7 @@ from django.urls import reverse
 from django.utils import timezone
 from django.views.decorators.http import require_POST
 
-from apps.academics.models import Semester
+from apps.academics.models import SEMESTER_CODE, normalise_semester_code
 from apps.audit.services import log_event
 from apps.accounts.models import Role, STAFF_ROLES, StudentProfile, User
 from django.contrib.auth.decorators import login_required
@@ -30,7 +30,7 @@ from .services.health import HEALTH_PREFETCH, can_see_health, health_score
 from .services.similarity import similar_archived_projects, similarity_threshold
 from .services.assignment import allocation_departments
 from .services.milestones import apply_faculty_deadlines, create_deadline, remove_deadline, update_deadline
-from .services.semesters import set_archived_semester, set_project_semester
+from .services.semesters import semester_for_code, set_archived_semester, set_project_semester
 from .services import (
     save_proposal_draft, allocate_student, assign_project_supervisor, unassign_project_supervisor, log_approved_form, record_supervisor_decision,
     record_transition, sign_off_completion, submit_proposal, available_years,
@@ -106,8 +106,8 @@ def _repository_context(request, section):
         "department_id": filters["department"],
         "programme_id": filters["programme"],
         "year": filters["year"],
-        "semester_id": filters["semester"],
-        "semesters": Semester.objects.all(),
+        "semester": filters["semester"] or filters["semester_typed"],
+        "semester_invalid": bool(filters["semester_typed"]) and not filters["semester"],
         "years": available_years(),
         "faculties": faculties_with_structure(),
         "can_see_student_id": can_see_student_id,
@@ -181,8 +181,11 @@ def past_project_detail(request, project_id):
             raise PermissionDenied
         semester_form = ProjectSemesterForm(request.POST)
         if semester_form.is_valid():
-            changed = set_archived_semester(project, semester_form.cleaned_data["semester"], request.user)
+            semester = semester_for_code(semester_form.cleaned_data["semester"], request.user)
+            changed = set_archived_semester(project, semester, request.user)
             messages.success(request, f"Semester set to {project.semester or 'Not set'}." if changed else "Nothing changed.")
+        else:
+            messages.error(request, " ".join(semester_form.errors["semester"]))
         return redirect("past_project_detail", project_id=project.pk)
     visible_documents = Q(visibility=ProjectDocument.Visibility.BAZE_USERS)
     if request.user.role in STAFF_ROLES:
@@ -202,7 +205,7 @@ def past_project_detail(request, project_id):
             "documents": project.documents.filter(visible_documents).select_related("uploaded_by"),
             "media": project.media.filter(visible_documents),
             "can_add_media": request.user.role == Role.ADMIN,
-            "semester_form": ProjectSemesterForm(initial={"semester": project.semester_id}) if can_set_semester else None,
+            "semester_form": ProjectSemesterForm(initial={"semester": project.semester.code if project.semester else ""}) if can_set_semester else None,
             "similar_projects": similar_archived_projects(project.title, project.description, exclude_id=project.pk),
             "similarity_threshold": similarity_threshold(),
         },
@@ -324,7 +327,7 @@ def faculty_deadlines(request):
     action = request.POST.get("action", "") if request.method == "POST" else ""
     form = DeadlineForm(request.POST if action == "add" else None)
     if action == "add" and form.is_valid():
-        semester = form.cleaned_data["semester"]
+        semester = semester_for_code(form.cleaned_data["semester"], request.user)
         deadline = create_deadline(faculty, form.cleaned_data["name"], form.cleaned_data["due_date"], request.user, semester=semester)
         log_event(actor=request.user, action="deadline.created", summary=f"Deadline set: {deadline}", obj=deadline,
                   details={"semester": str(semester) if semester else "Every semester"})
@@ -497,11 +500,14 @@ def project_workflow(request, project_id):
             raise PermissionDenied
         semester_form = ProjectSemesterForm(request.POST)
         if semester_form.is_valid():
-            changed = set_project_semester(project, semester_form.cleaned_data["semester"], user)
+            semester = semester_for_code(semester_form.cleaned_data["semester"], user)
+            changed = set_project_semester(project, semester, user)
             if changed:
                 messages.success(request, f"Semester set to {project.semester or 'Not set'}. Its faculty deadlines now follow it.")
             else:
                 messages.info(request, "Nothing changed.")
+        else:
+            messages.error(request, " ".join(semester_form.errors["semester"]))
         return redirect("project_workflow", project_id=project.pk)
 
     stage = project.stage
@@ -600,7 +606,7 @@ def project_workflow(request, project_id):
         "health": health_score(project) if can_see_health(user, project) else None,
         "show_similar": show_similar,
         "can_upload_final": _coordinator_can_upload(user, project),
-        "semester_form": ProjectSemesterForm(initial={"semester": project.semester_id}) if can_set_semester else None,
+        "semester_form": ProjectSemesterForm(initial={"semester": project.semester.code if project.semester else ""}) if can_set_semester else None,
         "similar_projects": similar_archived_projects(project.title, project.description) if show_similar else [],
         "similarity_threshold": similarity_threshold(),
     })
@@ -794,16 +800,13 @@ def convocation_list(request):
         "project__student__student_profile", "project__programme", "project__supervisor", "project__semester"
     ).order_by("project__student__last_name", "project__student__first_name") if request.user.department_id else ProjectCompletion.objects.none()
     years = sorted({completion.signed_on.year for completion in completions}, reverse=True)
-    semesters = sorted({completion.project.semester for completion in completions if completion.project.semester_id},
-                       key=lambda semester: semester.code, reverse=True)
     year = request.GET.get("year", "")
     if year.isdigit():
         completions = completions.filter(signed_on__year=int(year))
-    semester_id = request.GET.get("semester", "")
-    if semester_id.isdigit():
-        completions = completions.filter(project__semester_id=int(semester_id))
-    else:
-        semester_id = ""
+    typed = normalise_semester_code(request.GET.get("semester", ""))
+    semester = typed if SEMESTER_CODE.match(typed) else ""
+    if semester:
+        completions = completions.filter(project__semester__code=semester)
     rows = []
     for completion in completions:
         project = completion.project
@@ -825,9 +828,8 @@ def convocation_list(request):
 
         response = HttpResponse(content_type="text/csv; charset=utf-8")
         label = year if year.isdigit() else "all-years"
-        chosen = next((semester for semester in semesters if str(semester.pk) == semester_id), None)
-        if chosen:
-            label += f"-{chosen.code}"
+        if semester:
+            label += f"-{semester}"
         response["Content-Disposition"] = f'attachment; filename="convocation-list-{label}.csv"'
         response.write("\ufeff")  # lets Excel open the UTF-8 file with names intact
         writer = csv.writer(response)
@@ -841,8 +843,9 @@ def convocation_list(request):
         log_event(actor=request.user, action="convocation.exported", summary=f"Downloaded the convocation list ({label})",
                   details={"year": label, "students": len(rows)})
         return response
-    return render(request, "projects/convocation.html", {"rows": rows, "years": years, "year": year, "semesters": semesters,
-                                                          "semester_id": semester_id, "department": request.user.department})
+    return render(request, "projects/convocation.html", {"rows": rows, "years": years, "year": year, "semester": semester or typed,
+                                                          "semester_invalid": bool(typed) and not semester,
+                                                          "department": request.user.department})
 
 
 @role_required(Role.COORDINATOR, Role.HOD, Role.ADMIN)
@@ -908,7 +911,7 @@ def supervisor_assignments(request):
         form = AllocationForm(request.POST, supervisor_queryset=staff)
         if form.is_valid():
             allocate_student(student, form.cleaned_data["supervisor"], request.user, form.cleaned_data["reason"],
-                             faculty_wide=faculty_wide, semester=form.cleaned_data["semester"])
+                             faculty_wide=faculty_wide, semester=semester_for_code(form.cleaned_data["semester"], request.user))
             messages.success(request, f"{student.get_full_name() or student.username} is now supervised by "
                                       f"{form.cleaned_data['supervisor'].get_full_name() or form.cleaned_data['supervisor'].username}.")
             return redirect("supervisor_assignments")

@@ -3,9 +3,24 @@
 from django.db import transaction
 from django.db.models import Q
 
+from apps.academics.models import Semester
 from apps.audit.services import log_event
 
 from ..models import ArchivedProject, ProjectDeadline
+
+
+def semester_for_code(code, actor):
+    """The semester for a typed code, added the first time it is used (D-38); "" means none.
+
+    The code has already been checked and put in one form by SemesterCodeField.
+    """
+    if not code:
+        return None
+    semester, created = Semester.objects.get_or_create(code=code)
+    if created:
+        log_event(actor=actor, action="semester.created", summary=f"Added semester {semester} (first used on a project or deadline)",
+                  obj=semester)
+    return semester
 
 
 def deadlines_for(project):
