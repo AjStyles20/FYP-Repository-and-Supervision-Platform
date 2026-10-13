@@ -659,6 +659,8 @@ body.page-login {
 }
 body.page-login .card.narrow { background: rgba(255, 255, 255, 0.94); box-shadow: 0 18px 48px rgba(30, 30, 40, 0.18); }
 @media (max-width: 600px) { body.page-login { background-attachment: scroll; } }
+/* On wide screens the form sits on the left, in line with the header brand, so the picture shows on the right. */
+@media (min-width: 900px) { body.page-login .card.narrow { margin-inline: 0 auto; } }
 
 /* Welcome hero artwork (static/img/image.jpg): set into the right of the crimson band and
    faded out towards the text and at the edges, so it melts into the band instead of sitting
