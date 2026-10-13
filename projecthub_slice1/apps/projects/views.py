@@ -20,7 +20,7 @@ from .forms import (
     DeadlineForm, MilestoneForm, ProjectMediaForm, SupervisorAssignmentForm, SupervisorDecisionForm, SupervisorProjectEditForm, UnassignedSuperviseeForm,
 )
 from .models import (
-    ArchivedProject, Project, ProjectApprovalForm, ProjectCompletion, ProjectDeadline, ProjectDocument, ProjectMedia, ProjectMilestone, ProjectStage,
+    ArchivedProject, DocumentType, Project, ProjectApprovalForm, ProjectCompletion, ProjectDeadline, ProjectDocument, ProjectMedia, ProjectMilestone, ProjectStage,
     ProjectStatusEvent,
 )
 from .files import open_stored_file
@@ -37,6 +37,16 @@ from .services import (
 )
 
 REPOSITORY_ROLES = (Role.SUPERVISOR, Role.COORDINATOR, Role.HOD, Role.ADMIN, Role.STUDENT)
+STUDENT_UPLOAD_STAGES = (ProjectStage.PROPOSED, ProjectStage.SUPERVISOR_ACCEPTED, ProjectStage.APPROVED, ProjectStage.IN_PROGRESS)
+# The department's coordinator may upload the final document late in the project; the HOD still signs off.
+COORDINATOR_UPLOAD_STAGES = (ProjectStage.IN_PROGRESS, ProjectStage.SUBMITTED, ProjectStage.DEFENDED)
+
+
+def _coordinator_can_upload(user, project):
+    return (
+        user.role == Role.COORDINATOR and user.department_id is not None and user.department_id == project.department_id
+        and not project.archived and project.stage in COORDINATOR_UPLOAD_STAGES
+    )
 
 
 def _warn_about_similar_topics(request, project):
@@ -541,6 +551,7 @@ def project_workflow(request, project_id):
         "approval_criteria": approval_criteria,
         "health": health_score(project) if can_see_health(user, project) else None,
         "show_similar": show_similar,
+        "can_upload_final": _coordinator_can_upload(user, project),
         "similar_projects": similar_archived_projects(project.title, project.description) if show_similar else [],
         "similarity_threshold": similarity_threshold(),
     })
@@ -931,12 +942,20 @@ def import_projects(request):
     return render(request, "projects/import_projects.html", {"form": form, "imported": imported, "row_errors": row_errors})
 
 
-@role_required(Role.STUDENT)
+@role_required(Role.STUDENT, Role.COORDINATOR)
 def upload_project_document(request, project_id):
-    project = get_object_or_404(Project, pk=project_id, student=request.user, archived=False)
-    if project.stage not in (ProjectStage.PROPOSED, ProjectStage.SUPERVISOR_ACCEPTED, ProjectStage.APPROVED, ProjectStage.IN_PROGRESS):
-        raise PermissionDenied
-    form = ProjectDocumentForm(request.POST or None, request.FILES or None)
+    is_coordinator = request.user.role == Role.COORDINATOR
+    if is_coordinator:
+        # Only a project in the coordinator's own department; anything else is "not found".
+        project = get_object_or_404(Project, pk=project_id, department_id=request.user.department_id or 0, archived=False)
+        if not _coordinator_can_upload(request.user, project):
+            raise PermissionDenied
+    else:
+        project = get_object_or_404(Project, pk=project_id, student=request.user, archived=False)
+        if project.stage not in STUDENT_UPLOAD_STAGES:
+            raise PermissionDenied
+    initial = {"document_type": DocumentType.REPORT} if is_coordinator else None
+    form = ProjectDocumentForm(request.POST or None, request.FILES or None, initial=initial)
     if request.method == "POST" and form.is_valid():
         document = form.save(commit=False)
         document.project = project
@@ -944,7 +963,11 @@ def upload_project_document(request, project_id):
         document.visibility = ProjectDocument.Visibility.STAFF_ONLY
         document.is_demo = project.is_demo
         document.save()
-        log_event(actor=request.user, action="project.document_uploaded", summary=f"File uploaded for {project.title}", obj=project, details={"document_type": document.document_type})
+        log_event(actor=request.user, action="project.document_uploaded", summary=f"File uploaded for {project.title}", obj=project,
+                  details={"document_type": document.document_type, "uploaded_by_role": request.user.role})
+        if is_coordinator:
+            messages.success(request, "File uploaded for the student. It moves into the archive when the HOD signs off.")
+            return redirect("project_workflow", project_id=project.pk)
         messages.success(request, "File uploaded. It is visible to academic staff and to you.")
         return redirect("my_project")
-    return render(request, "projects/document_upload.html", {"project": project, "form": form})
+    return render(request, "projects/document_upload.html", {"project": project, "form": form, "is_coordinator": is_coordinator})
