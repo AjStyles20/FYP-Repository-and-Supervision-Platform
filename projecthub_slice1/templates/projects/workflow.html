@@ -33,6 +33,23 @@
     <div class="actions"><a class="btn" href="{% url 'upload_project_document' project.pk %}">Upload final report</a></div>
   {% endif %}
 </section>
+{% if documents is not None %}
+<section class="card documents-panel">
+  <h2>Project files</h2>
+  {% if documents %}
+    <ul class="document-list">
+      {% for document in documents %}
+        <li>
+          <span><strong>{{ document.title }}</strong><small>{{ document.get_document_type_display }} · Uploaded by {% if document.uploaded_by %}{{ document.uploaded_by.get_full_name|default:document.uploaded_by.username }}{% else %}an unknown account{% endif %} · {{ document.uploaded_at|date:"j M Y H:i" }}</small></span>
+          <a href="{% url 'download_project_document' document.pk %}">Download</a>
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p class="muted">No files yet.</p>
+  {% endif %}
+</section>
+{% endif %}
 {% if show_similar %}{% include "projects/_similar_projects.html" with matches=similar_projects threshold=similarity_threshold %}{% endif %}
 <section class="card">
   <h2>History</h2>

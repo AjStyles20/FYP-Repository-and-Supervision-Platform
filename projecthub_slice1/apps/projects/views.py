@@ -179,7 +179,7 @@ def past_project_detail(request, project_id):
             "student_profile": _student_profile(project.student),
             # Older archive rows may list the final supervisor among the earlier ones; show each once.
             "previous_supervisors": [person for person in project.previous_supervisors.all() if person.pk != project.supervisor_id],
-            "documents": project.documents.filter(visible_documents),
+            "documents": project.documents.filter(visible_documents).select_related("uploaded_by"),
             "media": project.media.filter(visible_documents),
             "can_add_media": request.user.role == Role.ADMIN,
             "similar_projects": similar_archived_projects(project.title, project.description, exclude_id=project.pk),
@@ -543,7 +543,16 @@ def project_workflow(request, project_id):
         if form is not None:
             form.add_error(None, error.messages[0])
     show_similar = user.role == Role.STUDENT and stage == ProjectStage.PROPOSED
+    # Staff see the project's files here, each only if they could already open it; students use My project.
+    documents = None
+    if user.role in STAFF_ROLES:
+        documents = [
+            document
+            for document in project.documents.select_related("project", "uploaded_by").order_by("-uploaded_at", "-pk")
+            if _can_open_current_project_files(user, document)
+        ]
     return render(request, "projects/workflow.html", {
+        "documents": documents,
         "project": project,
         "form": form,
         "is_proposal_form": isinstance(form, ProjectProposalForm),

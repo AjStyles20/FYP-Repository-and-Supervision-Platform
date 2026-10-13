@@ -49,7 +49,7 @@
           <ul class="document-list">
             {% for document in documents %}
               <li>
-                <span><strong>{{ document.title }}</strong><small>{{ document.get_visibility_display }}</small></span>
+                <span><strong>{{ document.title }}</strong><small>{{ document.get_visibility_display }} · Uploaded by {% if document.uploaded_by %}{{ document.uploaded_by.get_full_name|default:document.uploaded_by.username }}{% else %}an unknown account{% endif %}</small></span>
                 <a href="{% url 'download_project_document' document.pk %}">Download</a>
               </li>
             {% endfor %}

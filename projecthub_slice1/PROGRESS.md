@@ -62,7 +62,7 @@
 - Live counters and the lists beside them follow the viewer: a demo account counts demo and real rows, a real account real rows only
 
 ## Verification status
-- `manage.py test apps`: **326 tests pass on SQLite (`DB_ENGINE=sqlite`) and on MySQL 8.4** (2026-10-13).
+- `manage.py test apps`: **330 tests pass on SQLite (`DB_ENGINE=sqlite`) and on MySQL 8.4** (2026-10-13).
 - `apps/accounts/tests_docs.py` checks that every row of `docs/code_map.md` names a real file and name.
 - Runtime in use: Python 3.14.0, Django 5.2.18, MySQL 8.4.
 
@@ -97,7 +97,7 @@ For the demo, run `.\run_demo.ps1` from the repository root instead. It uses its
 - Multiple supervisors per project (co-supervision) is planned, not built: each project has one current supervisor, and earlier supervisors are kept in its history.
 - No "corrections required" loop after a defence; stages only move forward (R-11).
 - No email verification at registration; an administrator approves each registration by hand.
-- Staff have no page that lists a running project's files; only the student's "My project" page lists them.
+- Running project files are listed for staff on the workflow page only (with type, uploader and date); the project summary page does not list them.
 - Milestones cannot be created or edited in the app, only in the Django admin.
 - `SupervisionLogEntry` (running log) has no screens.
 - No pagination on the repository.

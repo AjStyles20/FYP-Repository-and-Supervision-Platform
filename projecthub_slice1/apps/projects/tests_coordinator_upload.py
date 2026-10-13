@@ -104,3 +104,88 @@ class CoordinatorUploadTests(TestCase):
         self.assertEqual((document.archived_project, document.project, document.uploaded_by), (archived, None, self.coordinator))
         self.project.refresh_from_db()
         self.assertTrue(self.project.archived)
+
+
+@override_settings(MEDIA_ROOT=MEDIA)
+class ProjectFileListTests(TestCase):
+    """Staff see a running project's files on the workflow page; archived files name their uploader."""
+
+    @classmethod
+    def setUpTestData(cls):
+        faculty = Faculty.objects.create(name="File List Faculty")
+        department = Department.objects.create(faculty=faculty, name="Computer Science")
+        other = Department.objects.create(faculty=faculty, name="Software Engineering")
+        programme = Programme.objects.create(department=department, name="Computer Science", degree_type="BSc")
+        cls.student = User.objects.create(username="list.student", first_name="Ada", last_name="Bello", role=Role.STUDENT)
+        StudentProfile.objects.create(user=cls.student, student_number="BU/22A/CS/3002", programme=programme)
+        cls.supervisor = User.objects.create(username="list.supervisor", role=Role.SUPERVISOR, department=department)
+        cls.coordinator = User.objects.create(username="list.coordinator", first_name="Grace", last_name="Okafor",
+                                              role=Role.COORDINATOR, department=department)
+        cls.hod = User.objects.create(username="list.hod", role=Role.HOD, department=department)
+        cls.admin = User.objects.create(username="list.admin", role=Role.ADMIN)
+        cls.other_coordinator = User.objects.create(username="list.other.coordinator", role=Role.COORDINATOR, department=other)
+        cls.other_hod = User.objects.create(username="list.other.hod", role=Role.HOD, department=other)
+        cls.project = Project.objects.create(
+            student=cls.student, title="Clinic Queue Manager", department=department, programme=programme,
+            supervisor=cls.supervisor, stage=ProjectStage.IN_PROGRESS,
+        )
+
+    def setUp(self):
+        self.workflow = reverse("project_workflow", args=[self.project.pk])
+
+    def add_document(self, title, uploader, document_type=DocumentType.OTHER):
+        return ProjectDocument.objects.create(
+            project=self.project, title=title, document_type=document_type, file=report(f"{title}.pdf"),
+            uploaded_by=uploader, visibility=ProjectDocument.Visibility.STAFF_ONLY,
+        )
+
+    def test_department_staff_see_the_files_newest_first(self):
+        older = self.add_document("Draft chapter", self.student)
+        newer = self.add_document("Final report", self.coordinator, DocumentType.REPORT)
+        for user in (self.supervisor, self.coordinator, self.hod, self.admin):
+            with self.subTest(user=user.username):
+                self.client.force_login(user)
+                page = self.client.get(self.workflow)
+                self.assertEqual(page.context["documents"], [newer, older])
+                self.assertContains(page, "Project files")
+                self.assertContains(page, "Uploaded by Grace Okafor")  # the coordinator's upload
+                self.assertContains(page, "Uploaded by Ada Bello")
+                self.assertContains(page, "Final report")
+                self.assertContains(page, reverse("download_project_document", args=[newer.pk]))
+
+    def test_an_empty_list_says_so(self):
+        self.client.force_login(self.coordinator)
+        self.assertContains(self.client.get(self.workflow), "No files yet.")
+
+    def test_students_other_departments_and_visitors_do_not_see_the_list(self):
+        document = self.add_document("Final report", self.coordinator, DocumentType.REPORT)
+        download = reverse("download_project_document", args=[document.pk])
+
+        self.client.force_login(self.student)
+        page = self.client.get(self.workflow)
+        self.assertIsNone(page.context["documents"])
+        self.assertNotContains(page, "Project files")
+        self.assertNotContains(page, download)
+
+        for user in (self.other_coordinator, self.other_hod):
+            with self.subTest(user=user.username):
+                self.client.force_login(user)
+                self.assertEqual(self.client.get(self.workflow).status_code, 403)
+
+        self.client.logout()
+        response = self.client.get(self.workflow)
+        self.assertEqual(response.status_code, 302)
+        self.assertIn(reverse("login"), response["Location"])
+
+    def test_the_archived_page_names_who_uploaded_each_file(self):
+        self.add_document("Final report", self.coordinator, DocumentType.REPORT)
+        self.add_document("Abstract", self.student)
+        Project.objects.filter(pk=self.project.pk).update(stage=ProjectStage.DEFENDED)
+        self.project.refresh_from_db()
+        _, archived = sign_off_completion(self.project, self.hod, signed_on=date(2026, 10, 13), no_gap=True)
+
+        self.client.force_login(self.supervisor)
+        page = self.client.get(reverse("past_project_detail", args=[archived.pk]))
+
+        self.assertContains(page, "Uploaded by Grace Okafor")
+        self.assertContains(page, "Uploaded by Ada Bello")
