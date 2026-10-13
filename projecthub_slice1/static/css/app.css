@@ -686,3 +686,26 @@ body.page-login .card.narrow { background: rgba(255, 255, 255, 0.94); box-shadow
 /* Where the text and the artwork would overlap, keep the text column clear. */
 @media (min-width: 700px) and (max-width: 1099px) { .home-hero .hero-copy { max-width: 56%; } .home-hero-art { width: 48%; } }
 @media (max-width: 699px) { .home-hero-art { display: none; } }
+
+/* Year filter as a calendar-style year grid (static/js/year-picker.js). The native select stays
+   in the form, visually hidden, so the value still submits; without JavaScript it shows as usual. */
+/* The filter card is lifted above the result cards, so the open panel is never drawn under them. */
+.repository-filter { position: relative; z-index: 5; }
+.year-picker { position: relative; }
+.year-picker-native { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); border: 0; white-space: nowrap; }
+.year-picker-toggle { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); width: 100%; min-height: 2.75rem; padding: var(--space-2) var(--space-3); text-align: left; font: inherit; color: var(--gray-900); background: var(--gray-0); border: 1px solid var(--gray-300); border-radius: var(--radius-sm); cursor: pointer; }
+.year-picker-toggle svg { width: 1.25rem; height: 1.25rem; flex: none; fill: none; stroke: var(--accent); stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+.year-picker-toggle:focus-visible { outline: none; box-shadow: var(--focus); }
+.year-picker-panel { position: absolute; z-index: 20; top: calc(100% + var(--space-1)); right: 0; width: 17rem; max-width: calc(100vw - 2 * var(--gutter)); padding: var(--space-3); background: #ffffff; border: 1px solid var(--gray-200); border-radius: var(--radius); box-shadow: 0 12px 32px rgba(30, 30, 40, 0.18); }
+.year-picker-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--space-2); }
+.year-picker-range { font-weight: 700; color: var(--gray-900); }
+.year-picker-nav { width: 2rem; height: 2rem; padding: 0; font-size: 1.25rem; line-height: 1; color: var(--gray-900); background: transparent; border: 1px solid var(--gray-200); border-radius: var(--radius-sm); cursor: pointer; }
+.year-picker-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--space-1); }
+.year-picker-year { padding: var(--space-2) 0; font: inherit; font-size: var(--text-sm); font-weight: 600; color: var(--gray-900); background: transparent; border: 1px solid transparent; border-radius: var(--radius-sm); cursor: pointer; }
+.year-picker-year:hover:not([disabled]), .year-picker-year:focus-visible { background: var(--accent-soft); border-color: var(--accent); outline: none; }
+.year-picker-year.is-this-year { border-color: var(--gray-300); }
+.year-picker-year.is-outside { color: var(--gray-500); font-weight: 400; }
+.year-picker-year[disabled] { color: var(--gray-300); cursor: default; }
+.year-picker-year.is-selected { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+.year-picker-all { width: 100%; margin-top: var(--space-2); padding: var(--space-2); font: inherit; font-size: var(--text-sm); font-weight: 600; color: var(--accent); background: transparent; border: 1px solid var(--gray-200); border-radius: var(--radius-sm); cursor: pointer; }
+.year-picker-all[aria-pressed="true"] { background: var(--accent-soft); border-color: var(--accent); }

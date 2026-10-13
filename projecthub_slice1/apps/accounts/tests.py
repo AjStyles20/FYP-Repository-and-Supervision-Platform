@@ -1394,6 +1394,19 @@ class ThemeTests(TestCase):
         self.client.force_login(user)
         self.assertContains(self.client.get(reverse("dashboard")), '<form method="post" action="/logout/" class="inline-form">', html=False)
 
+    def test_the_year_filter_is_a_year_grid_over_the_native_select(self):
+        user = User.objects.create(username="year.student", role=Role.STUDENT)
+        self.client.force_login(user)
+        page = self.client.get(reverse("repository"))
+        # The select still submits the year (and works without JavaScript); the script draws the grid.
+        self.assertContains(page, '<select id="year-filter" name="year" data-year-picker>', html=False)
+        self.assertContains(page, "js/year-picker.js")
+        script = (settings.BASE_DIR / "static" / "js" / "year-picker.js").read_text(encoding="utf-8")
+        for expected in ("select[data-year-picker]", 'aria-haspopup", "dialog', "cell.disabled = true", "Escape", "is-selected"):
+            self.assertIn(expected, script)
+        css = (settings.BASE_DIR / "static" / "css" / "theme-glass.css").read_text(encoding="utf-8")
+        self.assertIn(':not([class*="year-picker"])', css.split("button:not(.primary)", 1)[1].split("{", 1)[0])
+
     def test_the_sign_in_hint_no_longer_offers_a_staff_username(self):
         page = self.client.get(reverse("login"))
         self.assertContains(page, "Use your Baze email. Students can also use their full student ID.")

@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load static %}
 {% block title %}Project repository · Baze Project Hub{% endblock %}
 {% block main_class %}wide{% endblock %}
 {% block content %}
@@ -61,7 +62,7 @@
   </div>
   <div>
     <label for="year-filter">Year</label>
-    <select id="year-filter" name="year">
+    <select id="year-filter" name="year" data-year-picker>
       <option value="">All years</option>
       {% for available_year in years %}
         <option value="{{ available_year }}" {% if year == available_year|stringformat:"s" %}selected{% endif %}>{{ available_year }}</option>
@@ -114,3 +115,4 @@
   </section>
 {% endif %}
 {% endblock %}
+{% block scripts %}<script src="{% static 'js/year-picker.js' %}?v=2" defer></script>{% endblock %}
