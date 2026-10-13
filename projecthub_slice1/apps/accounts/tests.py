@@ -1389,10 +1389,13 @@ class HomePageTests(TestCase):
     """The logged-out home page: a research hero, sign-in, and the logo when the file is present."""
 
     def test_visitors_see_the_hero_and_a_sign_in_link(self):
-        page = self.client.get(reverse("home"))
+        from unittest import mock
+        with mock.patch("django.contrib.staticfiles.finders.find", return_value=None):
+            page = self.client.get(reverse("home"))
         self.assertContains(page, "Final-year research, from first idea to the archive")
         self.assertContains(page, f'href="{reverse("login")}"')
-        self.assertNotContains(page, "baze-logo")  # no file in static/img, so no broken image
+        self.assertNotContains(page, "baze-logo")  # no logo file, so no broken image
+        self.assertContains(page, '<span class="brand-mark" aria-hidden="true">BU</span>', html=True)
         # Students request a meeting in an office-hours window and the supervisor accepts or declines it.
         self.assertContains(page, "request meetings in your supervisor's office hours")
 
@@ -1463,6 +1466,17 @@ class HomePageTests(TestCase):
         self.client.force_login(user)
         self.assertRedirects(self.client.post(reverse("logout")), reverse("home"))
         self.assertContains(self.client.get(reverse("login")), f'href="{reverse("home")}"')
+
+    def test_the_baze_crest_is_the_header_brand_and_the_login_page_has_its_background(self):
+        page = self.client.get(reverse("login"))
+        self.assertContains(page, 'class="brand-logo"')
+        self.assertContains(page, "img/baze-logo.png")
+        self.assertNotContains(page, '<span class="brand-mark"')
+        self.assertContains(page, '<body class="page-login">', html=False)
+        self.assertNotContains(self.client.get(reverse("home")), "page-login")
+        css = (settings.BASE_DIR / "static" / "css" / "app.css").read_text(encoding="utf-8")
+        self.assertIn('url("../img/login-background.jpg")', css)
+        self.assertTrue((settings.BASE_DIR / "static" / "img" / "login-background.jpg").exists())
 
     def test_signed_in_people_go_to_their_portal(self):
         user = User.objects.create(username="home.admin", role=Role.ADMIN)

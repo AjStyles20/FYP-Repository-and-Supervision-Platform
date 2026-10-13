@@ -644,3 +644,18 @@ td form { display: flex; flex-wrap: wrap; gap: var(--space-2); margin: 0; }
   }
   .top-public .top-nav .nav-login { margin-left: var(--space-2); padding-inline: var(--space-4); }
 }
+
+/* The Baze crest in the header brand: black line art, so it sits on a small white tile. */
+.brand-logo { display: block; width: 2.25rem; height: 2.25rem; padding: 2px; background: #ffffff; border-radius: var(--radius-sm); object-fit: contain; }
+
+/* Login page: the photo behind the form, softened so the form stays the clear focus.
+   body.page-login outranks the plain body background in both themes. */
+body.page-login {
+  background-color: #eef0f2;
+  background-image: linear-gradient(rgba(255, 255, 255, 0.35), rgba(255, 255, 255, 0.55)), url("../img/login-background.jpg");
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+}
+body.page-login .card.narrow { background: rgba(255, 255, 255, 0.94); box-shadow: 0 18px 48px rgba(30, 30, 40, 0.18); }
+@media (max-width: 600px) { body.page-login { background-attachment: scroll; } }
