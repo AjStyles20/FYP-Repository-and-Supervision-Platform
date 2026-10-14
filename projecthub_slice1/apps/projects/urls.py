@@ -24,5 +24,6 @@ urlpatterns = [
     path("approvals/", views.approvals, name="approvals"),
     path("convocation/", views.convocation_list, name="convocation_list"),
     path("guidelines/", views.guidelines, name="guidelines"),
+    path("guidelines/documents/<str:name>", views.department_document, name="department_document"),
     path("admin/import-projects/", views.import_projects, name="import_projects"),
 ]

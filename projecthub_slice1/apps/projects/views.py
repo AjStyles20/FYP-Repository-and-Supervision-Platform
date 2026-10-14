@@ -1,5 +1,6 @@
 from pathlib import Path
 
+from django.conf import settings
 from django.contrib import messages
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.db import transaction
@@ -962,6 +963,38 @@ def supervisor_assignments(request):
     )
 
 
+# Documents the department's supervisors give every final-year student, offered on the Project guide.
+# They live in department_documents/ (committed with the code) and are served only to signed-in
+# users, unlike static files. Only names in this list can be downloaded.
+DEPARTMENT_DOCUMENTS = (
+    ("fyp-report-instructions.pdf", "FYP report instructions and template (PDF)",
+     "Front pages, chapter structure, formatting, referencing (APA 7), plagiarism limits and hard-copy submission."),
+    ("fyp-report-instructions.docx", "FYP report instructions and template (Word)",
+     "The same document as a Word file, to write the report in."),
+)
+
+
+def _department_documents():
+    documents = []
+    for name, title, description in DEPARTMENT_DOCUMENTS:
+        path = settings.BASE_DIR / "department_documents" / name
+        documents.append({"name": name, "title": title, "description": description,
+                          "size": path.stat().st_size if path.is_file() else None})
+    return documents
+
+
+@role_required(*REPOSITORY_ROLES)
+def department_document(request, name):
+    """Download one supervisor-provided document; any signed-in student or staff member."""
+    if name not in {document_name for document_name, _, _ in DEPARTMENT_DOCUMENTS}:
+        raise Http404
+    try:
+        handle = (settings.BASE_DIR / "department_documents" / name).open("rb")
+    except OSError:
+        return render(request, "file_missing.html", {"what": "file"}, status=404)
+    return FileResponse(handle, as_attachment=True, filename=name)
+
+
 @role_required(*REPOSITORY_ROLES)
 def guidelines(request):
     from apps.supervision.models import SharedResource, student_resource_scope
@@ -986,6 +1019,7 @@ def guidelines(request):
     return render(request, "projects/guidelines.html", {
         "guide_resources": resources,
         "show_resources": request.user.role != Role.ADMIN,
+        "department_documents": _department_documents(),
     })
 
 

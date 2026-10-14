@@ -167,6 +167,7 @@
 | The visitors' header (Home, How it works, Log in) | `templates/base.html` | `top-public` |
 | Which logo file the header uses | `apps/accounts/context_processors.py` | `def logo_url` |
 | The page shown when a stored file is missing | `apps/projects/files.py` | `def open_stored_file` |
+| The supervisor-provided documents on the Project guide (files in `department_documents/`) | `apps/projects/views.py` | `DEPARTMENT_DOCUMENTS` |
 | When the coordinator may upload the final document | `apps/projects/views.py` | `def _coordinator_can_upload` |
 | Who sees a running project's files (and the workflow file list) | `apps/projects/views.py` | `def _can_open_current_project_files` |
 | Earlier supervisors listed once | `apps/projects/services/assignment.py` | `def previous_supervisors_for` |

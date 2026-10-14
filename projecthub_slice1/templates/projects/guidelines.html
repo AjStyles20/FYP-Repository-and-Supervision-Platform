@@ -8,6 +8,19 @@
   <div class="card"><h2>Recommended milestones</h2><ul><li>Topic selection and problem framing</li><li>Literature review and project plan</li><li>Implementation and testing</li><li>Draft report and presentation preparation</li><li>Defence and final archival</li></ul></div>
 </section>
 
+<section class="card" aria-labelledby="department-documents-heading">
+  <h2 id="department-documents-heading">Supervisor-provided documents</h2>
+  <p class="muted">For every final-year student: how to write, format and submit the project report.</p>
+  <ul class="document-list">
+    {% for document in department_documents %}
+      <li>
+        <span><strong>{{ document.title }}</strong><small>{{ document.description }}{% if document.size %} · {{ document.size|filesizeformat }}{% endif %}</small></span>
+        <a href="{% url 'department_document' document.name %}">Download</a>
+      </li>
+    {% endfor %}
+  </ul>
+</section>
+
 {% if show_resources %}<section><div class="results-heading"><div><h2>Shared guide documents</h2><p class="muted">{% if user.role == "student" %}Guides and resources your supervisor has shared with you.{% elif user.role == "supervisor" %}Guides you have shared with your students, and ones shared on projects you supervise.{% else %}Guides shared in your department.{% endif %}</p></div><span class="result-count">{{ guide_resources|length }} resource{{ guide_resources|length|pluralize }}</span></div>
   {% for resource in guide_resources %}<article class="card"><p class="eyebrow">Updated {{ resource.updated_at|date:"j M Y, H:i" }} · Shared by {{ resource.author.get_full_name|default:resource.author.username }}</p><h3>{{ resource.title }}</h3>{% if resource.description %}<p>{{ resource.description|linebreaksbr }}</p>{% endif %}{% if resource.file %}<a class="btn btn-sm" href="{% url 'download_shared_resource' resource.pk %}">Download file</a>{% elif resource.url %}<a class="btn btn-sm" href="{{ resource.url }}" target="_blank" rel="noopener">Open guide</a>{% endif %}</article>{% empty %}<div class="card empty-state"><h3>No uploaded guide documents yet</h3><p class="muted">{% if user.role == "student" %}When your supervisor shares a guide or resource with you, it will appear here.{% elif user.role == "supervisor" %}Use “Upload or edit a guide” to share one with your students.{% else %}When a supervisor in your department shares a guide, it will appear here.{% endif %}</p></div>{% endfor %}
 </section>{% endif %}

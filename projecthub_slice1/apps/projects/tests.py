@@ -1395,3 +1395,30 @@ class ProjectStartKeywordsTests(TestCase):
 
         self.client.post(reverse("start_project"), {"title": "Library Seat Booking", "description": "", "keywords": ""})
         self.assertEqual(Project.objects.get(student=student).keywords, "")
+
+
+class SupervisorProvidedDocumentTests(TestCase):
+    """The report instructions on the Project guide: every signed-in user, never the public."""
+
+    def test_everyone_signed_in_sees_and_downloads_them_and_visitors_do_not(self):
+        for role in (Role.STUDENT, Role.SUPERVISOR, Role.COORDINATOR, Role.HOD, Role.ADMIN):
+            with self.subTest(role=role):
+                self.client.force_login(User.objects.create(username=f"guide.{role}", role=role))
+                page = self.client.get(reverse("guidelines"))
+                self.assertContains(page, "Supervisor-provided documents")
+                for name in ("fyp-report-instructions.pdf", "fyp-report-instructions.docx"):
+                    self.assertContains(page, reverse("department_document", args=[name]))
+                download = self.client.get(reverse("department_document", args=["fyp-report-instructions.pdf"]))
+                self.assertEqual(download.status_code, 200)
+                self.assertIn('attachment; filename="fyp-report-instructions.pdf"', download["Content-Disposition"])
+                self.assertTrue(b"".join(download.streaming_content).startswith(b"%PDF"))
+        self.client.logout()
+        response = self.client.get(reverse("department_document", args=["fyp-report-instructions.pdf"]))
+        self.assertEqual(response.status_code, 302)
+        self.assertIn(reverse("login"), response["Location"])
+
+    def test_only_the_listed_documents_can_be_downloaded(self):
+        self.client.force_login(User.objects.create(username="guide.reader", role=Role.STUDENT))
+        for name in ("settings.py", "..", "fyp-report-instructions.txt"):
+            with self.subTest(name=name):
+                self.assertEqual(self.client.get(reverse("department_document", args=[name])).status_code, 404)

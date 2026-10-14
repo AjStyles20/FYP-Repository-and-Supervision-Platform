@@ -51,6 +51,7 @@
 - Weekly supervisor availability windows; students request a meeting in a window and the supervisor accepts (it becomes a scheduled meeting) or declines with a reason; both are alerted (D-32)
 - Department/project notices with first-seen and acknowledgement timestamps (the author is not asked to acknowledge their own notice); shared supervisor resources with permission-checked downloads
 - Faculty deadlines set by the coordinator become milestones on every running project; supervisors add per-student milestones and mark them done; students are reminded three days before (D-33)
+- Supervisor-provided documents on the Project guide: the department's FYP report instructions and template (PDF and Word), downloadable by every signed-in student and staff member, never by the public
 - Project health score with reasons, shown only to the roles allowed to see it (`docs/explain/health-score.md`)
 
 ### Alerts, automation and live counters
@@ -69,7 +70,7 @@
 - Live counters and the lists beside them follow the viewer: a demo account counts demo and real rows, a real account real rows only
 
 ## Verification status
-- `manage.py test apps`: **354 tests pass on SQLite (`DB_ENGINE=sqlite`) and on MySQL 8.4** (2026-10-13).
+- `manage.py test apps`: **356 tests pass on SQLite (`DB_ENGINE=sqlite`) and on MySQL 8.4** (2026-10-13).
 - `apps/accounts/tests_docs.py` checks that every row of `docs/code_map.md` names a real file and name.
 - Runtime in use: Python 3.14.0, Django 5.2.18, MySQL 8.4.
 

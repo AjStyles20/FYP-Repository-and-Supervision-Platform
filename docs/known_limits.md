@@ -2,7 +2,7 @@
 
 These are things the platform does **not** do yet. Each entry says what is missing and what exists instead. Paths are relative to `projecthub_slice1/`.
 
-Test count when this list was last checked: **354 tests pass on SQLite and on MySQL 8.4** (`manage.py test apps`, 2026-10-13).
+Test count when this list was last checked: **356 tests pass on SQLite and on MySQL 8.4** (`manage.py test apps`, 2026-10-13).
 
 ## Planned, not built
 
