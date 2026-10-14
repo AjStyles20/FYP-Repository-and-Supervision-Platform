@@ -90,7 +90,7 @@ def register_student(request):
         try:
             student = form.save()
         except IntegrityError:
-            form.add_error(None, "An account already exists with this email address or student ID.")
+            form.add_error(None, "An account already exists with this email address or student identification number.")
         else:
             messages.success(request, "Your registration has been submitted for review.")
             return redirect("registration_status", token=registration_status_token(student))
@@ -599,9 +599,9 @@ DEPARTMENT_STAFF_ACTIONS = {
 
 @role_required(Role.HOD)
 def department_staff(request):
-    """The HOD appoints the FYP coordinator and the lecturers who allocate supervisors (D-19).
+    """The Head of Department appoints the final-year project coordinator and the lecturers who allocate supervisors (D-19).
 
-    Only supervisors and coordinators in the HOD's own department can be changed, and only between
+    Only supervisors and coordinators in the Head of Department's own department can be changed, and only between
     those two roles; accounts themselves are still created by the system administrator.
     """
     hod = request.user
@@ -624,7 +624,7 @@ def department_staff(request):
                       obj=member, details={field: {"from": str(before), "to": str(value)}})
             name = member.get_full_name() or member.username
             messages.success(request, {
-                "make_coordinator": f"{name} is now the FYP coordinator for the department.",
+                "make_coordinator": f"{name} is now the final-year project coordinator for the department.",
                 "make_supervisor": f"{name} is now a supervisor (no longer coordinator).",
                 "grant_allocation": f"{name} can now assign supervisors in the department.",
                 "remove_allocation": f"{name} can no longer assign supervisors.",

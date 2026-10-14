@@ -20,5 +20,5 @@ stateDiagram-v2
     Approved --> InProgress: assigned supervisor marks work started
     InProgress --> Submitted: the project's student, only if a REPORT document exists<br/>(sets submission_date)
     Submitted --> Defended: coordinator of the project's department records the defence<br/>(sets defence_date)
-    Defended --> Completed: HOD of the project's department signs off<br/>(sign_off_completion, needs a gap summary or the "no gap" box)
+    Defended --> Completed: Head of the project's department signs off<br/>(sign_off_completion, needs a gap summary or the "no gap" box)
     Completed --> [*]: ArchivedProject created, files moved, project.archived = True

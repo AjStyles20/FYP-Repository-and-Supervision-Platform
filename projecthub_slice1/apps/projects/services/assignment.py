@@ -22,7 +22,7 @@ SUPERVISOR_ROLES = (Role.SUPERVISOR, Role.COORDINATOR, Role.HOD)
 
 
 def can_supervise_in(user, department_id, *, require_active=True, faculty_wide=False):
-    """The supervisor rule: academic staff (supervisor, coordinator or HOD) of the project's department,
+    """The supervisor rule: academic staff (supervisor, coordinator or Head of Department) of the project's department,
     or of its faculty when a coordinator allocates (`faculty_wide`, D-29).
 
     The CSV importer passes require_active=False, because a historic project may name someone who
@@ -40,7 +40,7 @@ def can_supervise_in(user, department_id, *, require_active=True, faculty_wide=F
 def allocation_departments(user):
     """The departments `user` allocates in (D-29): a coordinator works across their whole faculty,
     whatever their own teaching field; anyone else given the allocation permission (a supervisor or
-    HOD), their own department."""
+    Head of Department), their own department."""
     if not user.department_id:
         return Department.objects.none()
     if user.role == Role.COORDINATOR:

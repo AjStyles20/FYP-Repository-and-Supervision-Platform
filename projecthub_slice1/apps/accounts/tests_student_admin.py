@@ -88,15 +88,15 @@ class ManageStudentAccountTests(TestCase):
         self.assertEqual([message.to for message in mail.outbox], [["tolu.ade2@bazeuniversity.edu.ng"]])
 
         self.client.logout()
-        # The corrected Baze email signs in; the student ID does not (D-41).
+        # The corrected Baze email signs in; the student identification number does not (D-41).
         for identifier, expected in (("tolu.ade2@bazeuniversity.edu.ng", 302), ("BU/23A/IT/5001", 200)):
             self.assertEqual(self.client.post(reverse("login"), {"username": identifier, "password": PASSWORD}).status_code, expected)
             self.client.logout()
 
     def test_wrong_corrections_are_refused_and_nothing_changes(self):
         cases = (
-            ({"student_number": "5001"}, "full student ID as it appears"),
-            ({"student_number": "BU/23B/CS/5002"}, "Another student already has this student ID"),
+            ({"student_number": "5001"}, "full student identification number as it appears"),
+            ({"student_number": "BU/23B/CS/5002"}, "Another student already has this student identification number"),
             ({"email": "other@bazeuniversity.edu.ng"}, "Another account already uses this email address"),
             ({"email": "tolu@gmail.com"}, "Use a Baze email address"),
         )

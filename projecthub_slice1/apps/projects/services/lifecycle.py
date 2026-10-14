@@ -1,10 +1,10 @@
-"""Project lifecycle: moving a stage forward, and the HOD sign-off that archives a project.
+"""Project lifecycle: moving a stage forward, and the Head of Department sign-off that archives a project.
 
 Two rules from the decision log shape everything here:
 
-* D-15 — a defence and completion are different events. The HOD signs completion off after
+* D-15 — a defence and completion are different events. The Head of Department signs completion off after
   confirming the department's conditions; only then does the project become past work.
-* Graduation is recorded only when the HOD confirms it. It is never inferred from the project
+* Graduation is recorded only when the Head of Department confirms it. It is never inferred from the project
   finishing.
 """
 
@@ -66,7 +66,7 @@ def record_transition(project, to_stage, actor=None, note="", when=None):
     if actor.role == Role.COORDINATOR and actor.department_id != project.department_id:
         raise ValidationError("Only a coordinator in the project's department can record this transition.")
     if actor.role == Role.HOD and actor.department_id != project.department_id:
-        raise ValidationError("Only the HOD in the project's department can record this transition.")
+        raise ValidationError("Only the Head of the project's department can record this transition.")
     if actor.role == Role.STUDENT and project.student_id != actor.pk:
         raise ValidationError("You can only submit your own project.")
     if to_stage == ProjectStage.SUBMITTED and not project.documents.filter(document_type=DocumentType.REPORT).exists():
@@ -102,9 +102,9 @@ def sign_off_completion(
     graduation_year=None,
     no_gap=False,
 ):
-    """Record the HOD's completion sign-off and archive the project.
+    """Record the Head of Department's completion sign-off and archive the project.
 
-    The HOD must either record the documented gap or tick that there is none, so an empty gap on
+    The Head of Department must either record the documented gap or tick that there is none, so an empty gap on
     the archived record is always a deliberate statement, never an omission.
 
     Returns (completion, archived_project).
@@ -122,7 +122,7 @@ def sign_off_completion(
     if project.stage != ProjectStage.DEFENDED:
         raise ValidationError("A project can only be signed off after it has been defended.")
     if hod.role != Role.HOD or hod.department_id != project.department_id:
-        raise ValidationError("Only the HOD for the project's department can sign off completion.")
+        raise ValidationError("Only the Head of the project's department can sign off completion.")
 
     completion, _ = ProjectCompletion.objects.update_or_create(
         project=project,

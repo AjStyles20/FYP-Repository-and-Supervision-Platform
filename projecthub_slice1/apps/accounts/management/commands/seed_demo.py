@@ -5,7 +5,7 @@ twenty-one student projects spread across every stage, from an unassigned propos
 projects with documented gaps. One archived project ("Campus Shuttle Tracker") overlaps a running
 topic, so the similar-topic checker has a match to show, and a few projects are given back-dated
 history, meetings and milestones so the health score shows all three bands (see _health_story). Each project is moved forward through the same services the web
-pages use (proposal, supervisor decision, coordinator log, stage changes, HOD sign-off), so its
+pages use (proposal, supervisor decision, coordinator log, stage changes, Head of Department sign-off), so its
 status history, approval form and decision history are real, not typed in.
 
 Demo activity is not written to the audit log (apps/audit/services.py skips is_demo rows).
@@ -235,7 +235,7 @@ class Command(BaseCommand):
                 user=user,
                 defaults={"student_number": number, "programme": programmes[dep], "enrolment_year": 2022},
             )
-            if profile.student_number != number:  # an older demo database used IDs without the batch letter
+            if profile.student_number != number:  # an older demo database used identification numbers without the batch letter
                 profile.student_number = number
                 profile.save(update_fields=["student_number"])
 

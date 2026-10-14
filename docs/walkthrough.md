@@ -4,11 +4,11 @@ This guide describes the account flow currently implemented in Django and the ac
 
 ## Account access
 
-1. Everyone logs in with their Baze email address, students and staff alike (D-41). The student ID and internal usernames do not sign in.
-2. Students do not create their own accounts. The FYP coordinator (any programme of their faculty) or the administrator adds each final-year student with their Baze email, full student ID, programme and status; the account is active at once, and the student chooses their own password at first sign-in.
+1. Everyone logs in with their Baze email address, students and staff alike (D-41). The student identification number and internal usernames do not sign in.
+2. Students do not create their own accounts. The final-year project coordinator (any programme of their faculty) or the administrator adds each final-year student with their Baze email, full student identification number, programme and status; the account is active at once, and the student chooses their own password at first sign-in.
 3. Public self-registration is switched off; if a department switches it on, registrations wait for an administrator's approval.
 4. Staff and administrator accounts are created only by an administrator.
-5. An administrator reviews pending student registrations from **Admin tools**. Approval activates the account; rejection keeps it inactive. The administrator also fixes account mistakes: correcting a student's or staff member's name, Baze email, student ID or programme, and resetting forgotten passwords.
+5. An administrator reviews pending student registrations from **Admin tools**. Approval activates the account; rejection keeps it inactive. The administrator also fixes account mistakes: correcting a student's or staff member's name, Baze email, student identification number or programme, and resetting forgotten passwords.
 6. Everyone keeps their own contact details under **My details**: a personal email and a phone number, each shown only to the audience they choose (only me (the default), staff only, or all signed-in Baze users). The Baze email cannot be changed there.
 7. Every password field has an eye button to show or hide what was typed.
 8. The local `seed_demo` command creates clearly marked development accounts (a "Sample" tag, `is_demo`). They are test fixtures and must not be treated as university users.
@@ -24,9 +24,9 @@ The intended project progression is:
 | Approved | Begin work | Student and supervisor |
 | In progress | Submit final work | Student |
 | Submitted | Record the defence outcome | Coordinator |
-| Defended | Sign off and archive | HOD |
+| Defended | Sign off and archive | Head of Department |
 
-The coordinator gives each student of the department a supervisor on **Student allocation**, before or after the student starts their project record; supervisors are listed least busy first, and a change of supervisor needs a reason. Students can start a project record, save the digital proposal as a draft, and submit it when ready; it stays editable until the supervisor decides. The assigned supervisor records a decision, a coordinator logs accepted forms, the supervisor records work-start, the student records submission, the coordinator records defence, and the department HOD signs completion off and archives it. Each transition is restricted by role and department and appends a status event.
+The coordinator gives each student of the department a supervisor on **Student allocation**, before or after the student starts their project record; supervisors are listed least busy first, and a change of supervisor needs a reason. Students can start a project record, save the digital proposal as a draft, and submit it when ready; it stays editable until the supervisor decides. The assigned supervisor records a decision, a coordinator logs accepted forms, the supervisor records work-start, the student records submission, the coordinator records defence, and the department Head of Department signs completion off and archives it. Each transition is restricted by role and department and appends a status event.
 
 The student's **My project** page links to the workflow and meeting history, and lets them add screenshots and a demo video of their system. Assigned supervisors schedule and edit meeting records; students can request a meeting in their supervisor's availability windows, which the supervisor accepts or declines, and can confirm or dispute meeting records. Edits retain a version row. The coordinator sets the faculty's deadlines, which appear as milestones on every project; supervisors add their own milestones and mark them done. Supervisors can publish project or department notices, with first-seen and acknowledgement times recorded per user. Administrators can review the audit log and import past project summaries from CSV; the import is all or nothing, and every wrong row is listed with its line number.
 

@@ -6,7 +6,7 @@ Code: `ReadOnlyAdmin` and `ProjectAdmin` in `projecthub_slice1/apps/projects/adm
 
 ## Purpose
 
-Every step of a project, from approval to HOD sign-off, is recorded when it happens: a status event, the date of the step, and an audit entry naming who did it. If a superuser could change the stage or a date in the Django admin, the project would show a step that nobody took, with no event and no audit entry behind it. The project history would then be unreliable, and that history is the evidence the platform exists to keep.
+Every step of a project, from approval to Head of Department sign-off, is recorded when it happens: a status event, the date of the step, and an audit entry naming who did it. If a superuser could change the stage or a date in the Django admin, the project would show a step that nobody took, with no event and no audit entry behind it. The project history would then be unreliable, and that history is the evidence the platform exists to keep.
 
 ## Files involved
 
@@ -28,7 +28,7 @@ Paths are relative to `projecthub_slice1/`.
 1. A superuser opens a project in the Django admin. Stage, the three stage dates and archived are shown as plain text, not as inputs.
 2. They change the title and save. Django builds the form only from the editable fields, so a stage, a date or `archived=on` added to the POST by hand is ignored. The title is saved; the protected fields keep their values.
 3. They open an approval form or a completion record. The page shows the record but has no Save or Delete button, because `has_change_permission` and `has_delete_permission` return `False`.
-4. A POST sent by hand to that record's change, add or delete URL gets **403 Forbidden**. The "Delete selected" bulk action is not offered, because Django removes it when delete permission is `False`.
+4. A POST sent by hand to that record's change, add or delete web address gets **403 Forbidden**. The "Delete selected" bulk action is not offered, because Django removes it when delete permission is `False`.
 5. To move a project on, the right person uses the workflow page (`/projects/workflow/<id>/`). That writes the status event, the date and the audit entry together.
 6. Day-to-day administration starts at **Admin tools** (`/admin-tools/`), the only page that links to the audit log and the CSV import. Both are refused (403) for every role except administrator.
 
@@ -51,7 +51,7 @@ Paths are relative to `projecthub_slice1/`.
 
 1. Why is it not enough to hide the stage field in the workflow pages, and why does the admin need its own rule?
 2. A superuser edits the HTML form and adds `stage=completed` to the POST before saving a project in the admin. What happens to the stage, and what happens to the title they also changed?
-3. What does Django return for a POST to an approval form's delete URL, and why is the "Delete selected" action missing from the list page?
+3. What does Django return for a POST to an approval form's delete web address, and why is the "Delete selected" action missing from the list page?
 4. Which of the history tables are protected by something other than the admin, and by what?
 5. Which page links to the audit log, and what does a coordinator see if they type the audit log's address?
 

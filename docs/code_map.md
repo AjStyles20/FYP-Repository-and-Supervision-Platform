@@ -6,7 +6,7 @@
 
 | To change… | Open | Look for |
 |---|---|---|
-| The list of roles (student, supervisor, coordinator, HOD, admin) | `apps/accounts/models.py` | `class Role` |
+| The list of roles (student, supervisor, coordinator, Head of Department, admin) | `apps/accounts/models.py` | `class Role` |
 | Which roles may open a page | `apps/accounts/permissions.py` | `def role_required` |
 | The admin's "Add staff account" form | `apps/accounts/forms.py` | `class StaffAccountForm` |
 | Editing, deactivating or resetting a staff account | `apps/accounts/views.py` | `def manage_staff_account` |
@@ -15,15 +15,15 @@
 | Finding a student in Admin tools | `apps/accounts/views.py` | `found_students` |
 | Correcting a student's account, resetting their password, (de)activating it | `apps/accounts/views.py` | `def manage_student_account` |
 | What may be corrected on a student, and the programme rule | `apps/accounts/forms.py` | `class StudentEditForm` |
-| The shared checks for a corrected Baze email and a student ID | `apps/accounts/forms.py` | `def corrected_baze_email` |
+| The shared checks for a corrected Baze email and a student identification number | `apps/accounts/forms.py` | `def corrected_baze_email` |
 | How long and how random a temporary password is | `apps/accounts/forms.py` | `def generate_temporary_password` |
 | The forced password change at first sign-in | `apps/accounts/middleware.py` | `class ForcePasswordChangeMiddleware` |
-| The HOD appointing the FYP coordinator and allocators | `apps/accounts/views.py` | `def department_staff` |
+| The Head of Department appointing the final-year project coordinator and allocators | `apps/accounts/views.py` | `def department_staff` |
 | Adding a student account (who may, which programmes, temporary password) | `apps/accounts/views.py` | `def add_student_account` |
 | The add-student form and its checks | `apps/accounts/forms.py` | `class AddStudentForm` |
 | Switching public self-registration on or off | `config/settings.py` | `STUDENT_SELF_REGISTRATION` |
 | The student sign-up form (used only when self-registration is on) | `apps/accounts/forms.py` | `class StudentRegistrationForm` |
-| The accepted student ID format and its error message | `config/settings.py` | `STUDENT_ID_REGEX` |
+| The accepted student identification number format and its error message | `config/settings.py` | `STUDENT_ID_REGEX` |
 | Approving or rejecting a registration | `apps/accounts/views.py` | `def review_student_registration` |
 | The approval and rejection email text | `apps/accounts/views.py` | `def _email_registration_decision` |
 | The registration status page and its signed link | `apps/accounts/views.py` | `def registration_status` |
@@ -36,7 +36,7 @@
 | The stage names and their order | `apps/projects/models/project.py` | `class ProjectStage` |
 | Which role may move a project from one stage to the next | `apps/projects/services/lifecycle.py` | `TRANSITION_ROLES` |
 | What happens when a stage changes (event, dates, audit) | `apps/projects/services/lifecycle.py` | `def record_transition` |
-| HOD sign-off, archiving and graduation | `apps/projects/services/lifecycle.py` | `def sign_off_completion` |
+| Head of Department sign-off, archiving and graduation | `apps/projects/services/lifecycle.py` | `def sign_off_completion` |
 | What a student's proposal must contain | `apps/projects/services/approval.py` | `def submit_proposal` |
 | Saving a proposal as a draft (not yet with the supervisor) | `apps/projects/services/approval.py` | `def save_proposal_draft` |
 | Which proposal fields a student sees (by the supervisor's method) | `apps/projects/forms.py` | `class ProjectProposalForm` |
@@ -48,7 +48,7 @@
 | Who allocates where (a coordinator: their faculty; others: their department) | `apps/projects/services/assignment.py` | `def allocation_departments` |
 | Which students wait for a supervisor, and the least-busy-first order | `apps/projects/views.py` | `waiting_students` |
 | The "(N active)" labels and the reason required to change a supervisor | `apps/projects/forms.py` | `class SupervisorAssignmentForm` |
-| The HOD's convocation list and its CSV columns | `apps/projects/views.py` | `CONVOCATION_COLUMNS` |
+| The Head of Department's convocation list and its CSV columns | `apps/projects/views.py` | `CONVOCATION_COLUMNS` |
 | The project list download, its columns and who gets which projects | `apps/projects/views.py` | `PROJECT_EXPORT_COLUMNS` |
 
 ## Similar topics and health score

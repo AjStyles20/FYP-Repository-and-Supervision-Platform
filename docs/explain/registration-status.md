@@ -33,7 +33,7 @@ A new student account stays inactive until an administrator approves it. Without
 
 ## Rules
 
-- **No account enumeration.** There is no page that takes an email or student ID and returns a status. Only the person who just registered receives the link, and the token cannot be forged without the server's `SECRET_KEY`.
+- **No account enumeration.** There is no page that takes an email or student identification number and returns a status. Only the person who just registered receives the link, and the token cannot be forged without the server's `SECRET_KEY`.
 - **The token holds only the account's id**, signed with a salt specific to this feature, so a token from another part of the site cannot be reused here.
 - **Links expire** after `REGISTRATION_STATUS_MAX_AGE_DAYS`. Once expired, the student can still check by signing in: with the correct password, the login page says "still awaiting approval" or "was not approved".
 - **Only the student's own status and first name are shown**: no other personal data. Responses carry `Cache-Control: no-store`.

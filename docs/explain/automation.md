@@ -90,6 +90,6 @@ This suits a demo or a single server. The process must stay open: closing the te
 
 ## Limits
 
-- Reminders are in-app only: no email or SMS.
+- Reminders are in-app only: no email or text message.
 - At-risk alerts inherit the health score's limits: hand-picked heuristic weights, and milestones that today can only be added in Django admin.
 - A reminder repeats daily for as long as the condition holds. Reading an alert does not stop the next day's reminder; fixing the cause does (acknowledging the notice, reviewing the registration, or bringing the project back under the at-risk band).

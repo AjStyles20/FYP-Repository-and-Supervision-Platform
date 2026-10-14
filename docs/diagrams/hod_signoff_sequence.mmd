@@ -1,11 +1,11 @@
-%% HOD sign-off and archive, as implemented.
-%% View: projecthub_slice1/apps/projects/views.py project_workflow (HOD branch at stage DEFENDED).
+%% Head of Department sign-off and archive, as implemented.
+%% View: projecthub_slice1/apps/projects/views.py project_workflow (Head of Department branch at stage DEFENDED).
 %% Form: apps/projects/forms.py CompletionForm.clean. Service: apps/projects/services/lifecycle.py
 %% sign_off_completion, _archive_project, _update_student_status. All service steps run in one
 %% database transaction (@transaction.atomic on sign_off_completion).
 sequenceDiagram
     autonumber
-    actor HOD as HOD (role hod)
+    actor HOD as Head of Department (role hod)
     participant View as project_workflow view
     participant Form as CompletionForm
     participant Svc as sign_off_completion
@@ -13,7 +13,7 @@ sequenceDiagram
     participant Audit as log_event
 
     HOD->>View: GET /projects/workflow/<id>/
-    View->>View: role_required, HOD must be in the project's department, else 403
+    View->>View: role_required, Head of Department must be in the project's department, else 403
     View->>Form: CompletionForm(initial gap_summary = project.gap_summary)
     View-->>HOD: workflow page with the sign-off form
     HOD->>View: POST signed_on, completion_note, gap_summary or no_gap, graduation_verified, graduation_year
@@ -25,7 +25,7 @@ sequenceDiagram
         View->>Svc: sign_off_completion(project, hod, **cleaned_data)
         Svc->>Svc: check gap or no_gap again
         Svc->>DB: SELECT project FOR UPDATE
-        Svc->>Svc: refuse if archived, stage is not DEFENDED, or HOD of another department (ValidationError)
+        Svc->>Svc: refuse if archived, stage is not DEFENDED, or Head of another department (ValidationError)
         Svc->>DB: update_or_create ProjectCompletion (hod, signed_on, gap, no_gap_confirmed, graduation fields)
         Svc->>DB: create ArchivedProject (year = signed_on.year, gap, source_project, is_demo)
         Svc->>DB: set previous_supervisors from ended assignment rows
@@ -36,7 +36,7 @@ sequenceDiagram
         else not verified
             Svc->>DB: StudentProfile.student_status = FYP_COMPLETED
         end
-        Svc->>DB: append ProjectStatusEvent DEFENDED -> COMPLETED (actor = HOD)
+        Svc->>DB: append ProjectStatusEvent DEFENDED -> COMPLETED (actor = Head of Department)
         Svc->>DB: ProjectCompletion.archived_project = archive
         Svc->>Audit: project.archived (skipped when the archive is demo data)
         Svc-->>View: (completion, archived)

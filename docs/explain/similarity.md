@@ -60,10 +60,10 @@ The first version had no step 4. The table below re-scores the same texts with a
 
 | Comparison | Without stripping | With stripping |
 |---|---|---|
-| "Exam Seat Allocation for Lecture Halls" vs archived "Exam Seating Allocation Tool" (title + abstract) | 3/13 = 0.231 (not listed) | 4/11 = 0.364 (**listed**) |
-| "Exam Seat Allocation" vs "Exam Seating Allocation" (titles only) | 0.500 | 1.000 |
-| Campus Shuttle Delay Tracker vs Campus Shuttle Tracker | 0.500 | 0.700 |
-| Campus Shuttle Delay Tracker vs Student Wellbeing Check-in Chatbot | 0.105 | 0.118 |
+| "Exam Seat Allocation for Lecture Halls" Versus archived "Exam Seating Allocation Tool" (title + abstract) | 3/13 = 0.231 (not listed) | 4/11 = 0.364 (**listed**) |
+| "Exam Seat Allocation" Versus "Exam Seating Allocation" (titles only) | 0.500 | 1.000 |
+| Campus Shuttle Delay Tracker versus Campus Shuttle Tracker | 0.500 | 0.700 |
+| Campus Shuttle Delay Tracker versus Student Wellbeing Check-in Chatbot | 0.105 | 0.118 |
 
 Across all 210 pairs of the 21 demo projects (the original 190 pairs plus the 20 that involve the new archived project):
 

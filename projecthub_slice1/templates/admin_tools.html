@@ -6,7 +6,7 @@
 <section class="card" aria-labelledby="admin-tools-heading">
   <h2 id="admin-tools-heading">Tools</h2>
   <ul class="plain-list">
-    <li><a href="{% url 'add_staff_account' %}">Add staff account</a> <span class="muted">· supervisors, coordinators, HODs and administrators</span></li>
+    <li><a href="{% url 'add_staff_account' %}">Add staff account</a> <span class="muted">· supervisors, coordinators, Heads of Department and administrators</span></li>
     <li><a href="{% url 'manage_structure' %}">Academic structure</a> <span class="muted">· faculties, departments and programmes</span></li>
     <li><a href="{% url 'import_projects' %}">Import past projects from CSV</a> <span class="muted">· historic project summaries, checked row by row</span></li>
     <li><a href="{% url 'export_projects' %}">Download project list (CSV)</a> <span class="muted">· every running project with its supervisor, stage and milestones</span></li>
@@ -19,13 +19,13 @@
   {% if pending_students %}
     <div class="table-wrap">
       <table>
-        <thead><tr><th>Student</th><th>Baze email</th><th>Student ID</th><th>Programme</th><th>Status</th><th>Action</th></tr></thead>
+        <thead><tr><th>Student</th><th>Baze email</th><th>Student identification number</th><th>Programme</th><th>Status</th><th>Action</th></tr></thead>
         <tbody>
           {% for student in pending_students %}
             <tr>
               <td data-label="Student"><a href="{% url 'manage_student_account' student.pk %}">{{ student.get_full_name|default:student.username }}</a></td>
               <td data-label="Baze email">{{ student.email }}</td>
-              <td data-label="Student ID">{{ student.student_profile.student_number }}</td>
+              <td data-label="Student identification number">{{ student.student_profile.student_number }}</td>
               <td data-label="Programme">{{ student.student_profile.programme }}</td>
               <td data-label="Status">{{ student.student_profile.get_student_status_display }}</td>
               <td data-label="Action">
@@ -47,23 +47,23 @@
 </section>
 <section class="card" id="students">
   <div class="section-title"><h2>Student accounts</h2><a class="btn btn-sm" href="{% url 'add_student_account' %}">Add student account</a></div>
-  <p class="muted">Find a student to correct their details (name, Baze email, student ID, programme), reset a forgotten password, or deactivate or reactivate their account.</p>
+  <p class="muted">Find a student to correct their details (name, Baze email, student identification number, programme), reset a forgotten password, or deactivate or reactivate their account.</p>
   <form method="get" action="{% url 'admin_tools' %}#students" class="stack-form" role="search">
-    <label for="student-search">Name, Baze email or student ID</label>
-    <input type="search" id="student-search" name="q" value="{{ student_query }}" placeholder="e.g. Amina, amina@bazeuniversity.edu.ng or BU/22A/CS/4012">
+    <label for="student-search">Name, Baze email or student identification number</label>
+    <input type="search" id="student-search" name="q" value="{{ student_query }}" placeholder="For example Amina, amina@bazeuniversity.edu.ng or BU/22A/CS/4012">
     <button type="submit">Find student</button>
   </form>
   {% if student_query %}
     {% if found_students %}
       <div class="table-wrap">
         <table>
-          <thead><tr><th>Student</th><th>Baze email</th><th>Student ID</th><th>Programme</th><th>Status</th></tr></thead>
+          <thead><tr><th>Student</th><th>Baze email</th><th>Student identification number</th><th>Programme</th><th>Status</th></tr></thead>
           <tbody>
             {% for student in found_students %}
               <tr>
                 <td data-label="Student"><a href="{% url 'manage_student_account' student.pk %}">{{ student.get_full_name|default:student.username }}</a>{% if student.is_demo %} <span class="tag tag-quiet">Sample</span>{% endif %}</td>
                 <td data-label="Baze email">{{ student.email|default:"—" }}</td>
-                <td data-label="Student ID">{{ student.student_profile.student_number|default:"—" }}</td>
+                <td data-label="Student identification number">{{ student.student_profile.student_number|default:"—" }}</td>
                 <td data-label="Programme">{{ student.student_profile.programme|default:"—" }}</td>
                 <td data-label="Status">{% if student.student_profile.registration_status == "pending" %}Waiting for approval{% elif student.student_profile.registration_status == "rejected" %}Not approved{% elif student.is_active %}Active{% else %}Inactive{% endif %}</td>
               </tr>

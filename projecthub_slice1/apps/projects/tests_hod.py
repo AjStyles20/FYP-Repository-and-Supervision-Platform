@@ -1,4 +1,4 @@
-"""D-19: the HOD appoints the FYP coordinator, signs off, and keeps the convocation list."""
+"""D-19: the Head of Department appoints the final-year project coordinator, signs off, and keeps the convocation list."""
 
 from datetime import date
 
@@ -56,12 +56,12 @@ class HodResponsibilitiesTests(TestCase):
 
     def test_hod_appoints_and_removes_the_coordinator_with_an_audit_trail(self):
         page = self.client.get(reverse("department_staff"))
-        self.assertContains(page, "No FYP coordinator yet")
+        self.assertContains(page, "No final-year project coordinator yet")
 
         self.client.post(reverse("department_staff"), {"user_id": self.lecturer.pk, "action": "make_coordinator"})
         self.lecturer.refresh_from_db()
         self.assertEqual(self.lecturer.role, Role.COORDINATOR)
-        self.assertNotContains(self.client.get(reverse("department_staff")), "No FYP coordinator yet")
+        self.assertNotContains(self.client.get(reverse("department_staff")), "No final-year project coordinator yet")
 
         self.client.post(reverse("department_staff"), {"user_id": self.lecturer.pk, "action": "grant_allocation"})
         self.client.post(reverse("department_staff"), {"user_id": self.lecturer.pk, "action": "make_supervisor"})
@@ -111,7 +111,7 @@ class HodResponsibilitiesTests(TestCase):
         self.assertEqual(response["Content-Type"], "text/csv; charset=utf-8")
         self.assertIn('filename="convocation-list-2026.csv"', response["Content-Disposition"])
         lines = response.content.decode("utf-8-sig").splitlines()
-        self.assertEqual(lines[0], "Student name,Student ID,Programme,Project title,Supervisor,Signed off on,Graduation verified,Graduation year,Semester")
+        self.assertEqual(lines[0], "Student name,Student identification number,Programme,Project title,Supervisor,Signed off on,Graduation verified,Graduation year,Semester")
         self.assertEqual(len(lines), 2)
         self.assertTrue(lines[1].startswith("'=Cmd,"), lines[1])  # a formula-like name cannot run in Excel
         self.assertEqual(AuditEvent.objects.get(action="convocation.exported").details, {"year": "2026", "students": 1})

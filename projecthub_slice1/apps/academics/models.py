@@ -18,7 +18,7 @@ class QualificationLevel(models.TextChoices):
 
 class Faculty(models.Model):
     name = models.CharField(max_length=150, unique=True)
-    code = models.CharField(max_length=12, blank=True, default="", help_text="Code shown in dense lists, e.g. FOC.")
+    code = models.CharField(max_length=12, blank=True, default="", help_text="Code shown in dense lists, for example FOC.")
     is_demo = models.BooleanField(default=False)
 
     class Meta:
@@ -32,7 +32,7 @@ class Faculty(models.Model):
 class Department(models.Model):
     faculty = models.ForeignKey(Faculty, on_delete=models.PROTECT, related_name="departments")
     name = models.CharField(max_length=150)
-    code = models.CharField(max_length=12, blank=True, default="", help_text="Short code, e.g. CS.")
+    code = models.CharField(max_length=12, blank=True, default="", help_text="Short code, for example CS.")
     is_demo = models.BooleanField(default=False)
 
     class Meta:
@@ -44,7 +44,7 @@ class Department(models.Model):
 
     @property
     def head_of_department(self):
-        """The HOD is a role on a user in this department; it is not a stored pointer."""
+        """The Head of Department is a role on a user in this department; it is not a stored pointer."""
         return (
             self.users.filter(role="hod", is_active=True)
             .order_by("last_name", "first_name")
@@ -57,7 +57,7 @@ class Department(models.Model):
 
 
 class Programme(models.Model):
-    """A degree programme inside a department, e.g. Computer Science BSc.
+    """A degree programme inside a department, for example Computer Science BSc.
 
     `level` separates undergraduate projects (BSc/BA) from postgraduate dissertations
     (MSc/MA/PhD) so the repository can be browsed by award, as the department asked.
@@ -65,7 +65,7 @@ class Programme(models.Model):
 
     department = models.ForeignKey(Department, on_delete=models.PROTECT, related_name="programmes")
     name = models.CharField(max_length=150)
-    degree_type = models.CharField(max_length=20, help_text="Award abbreviation, e.g. BSc, BA, MSc, LLB.")
+    degree_type = models.CharField(max_length=20, help_text="Award abbreviation, for example BSc, BA, MSc, LLB.")
     level = models.CharField(
         max_length=20,
         choices=QualificationLevel.choices,

@@ -1,4 +1,4 @@
-"""Past work: a project that the HOD has signed off and archived.
+"""Past work: a project that the Head of Department has signed off and archived.
 
 An archived record is a snapshot. It keeps its own copy of the facts a reader needs even if the
 student account changes later: title, abstract, dates, award, the final supervisor, the earlier
@@ -22,7 +22,7 @@ class ArchivedProject(models.Model):
     keywords = models.CharField(max_length=255, blank=True, default="")
 
     year = models.PositiveSmallIntegerField(help_text="Archive year, used for the repository year filter.")
-    completed_on = models.DateField(null=True, blank=True, help_text="Date the HOD signed completion off.")
+    completed_on = models.DateField(null=True, blank=True, help_text="Date the Head of Department signed completion off.")
     defence_date = models.DateField(null=True, blank=True)
     semester = models.ForeignKey(
         "academics.Semester", on_delete=models.SET_NULL, null=True, blank=True, related_name="archived_projects",

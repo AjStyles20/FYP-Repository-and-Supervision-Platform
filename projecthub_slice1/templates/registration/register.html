@@ -4,7 +4,7 @@
 {% block content %}
 <section class="card narrow">
   <h1>Create a student account</h1>
-  <p class="muted">For current and past final-year students. Use your Baze email address and student ID. New accounts require administrator approval before sign-in.</p>
+  <p class="muted">For current and past final-year students. Use your Baze email address and student identification number. New accounts require administrator approval before sign-in.</p>
   <form method="post">
     {% csrf_token %}
     {{ form.non_field_errors }}

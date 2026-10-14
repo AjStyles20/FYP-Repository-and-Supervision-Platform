@@ -24,7 +24,7 @@ class ProjectAuthenticationForm(AuthenticationForm):
 
     def clean(self):
         # Everyone signs in with their Baze email, students and staff alike (D-41): lecturers have no
-        # student ID, and one way in is simpler. A student ID or an internal username no longer works:
+        # student identification number, and one way in is simpler. A student identification number or an internal username no longer works:
         # an identifier that is no account's email is turned into a blank, which no account matches.
         identifier = (self.cleaned_data.get("username") or "").strip()
         if identifier:
@@ -57,13 +57,13 @@ class ProjectAuthenticationForm(AuthenticationForm):
 class StudentRegistrationForm(forms.Form):
     STUDENT_STATUS_CHOICES = (
         (StudentProfile.Status.CURRENT, "Current final-year student"),
-        (StudentProfile.Status.FYP_COMPLETED, "Past final-year student (FYP completed)"),
+        (StudentProfile.Status.FYP_COMPLETED, "Past final-year student (final-year project completed)"),
     )
 
     first_name = forms.CharField(max_length=150, label="First name")
     last_name = forms.CharField(max_length=150, label="Last name")
     email = forms.EmailField(label="Baze email address")
-    student_number = forms.CharField(max_length=30, label="Student ID", help_text=settings.STUDENT_ID_HELP[0].upper() + settings.STUDENT_ID_HELP[1:] + ".")
+    student_number = forms.CharField(max_length=30, label="Student identification number", help_text=settings.STUDENT_ID_HELP[0].upper() + settings.STUDENT_ID_HELP[1:] + ".")
     programme = forms.ModelChoiceField(
         queryset=Programme.objects.none(),
         empty_label="Select your programme",
@@ -102,10 +102,10 @@ class StudentRegistrationForm(forms.Form):
         student_number = self.cleaned_data["student_number"].strip().upper()
         if not re.fullmatch(settings.STUDENT_ID_REGEX, student_number):
             raise ValidationError(
-                f"Enter your full student ID as it appears on your Baze ID card: {settings.STUDENT_ID_HELP}."
+                f"Enter your full student identification number as it appears on your Baze identity card: {settings.STUDENT_ID_HELP}."
             )
         if StudentProfile.objects.filter(student_number__iexact=student_number).exists():
-            raise ValidationError("An account already exists with this student ID.")
+            raise ValidationError("An account already exists with this student identification number.")
         return student_number
 
     def clean(self):
@@ -190,20 +190,20 @@ def move_sign_in_email(account, email, changes):
 
 
 def checked_student_id(value, profile=None):
-    """A student ID in the Baze format (upper-cased), not used by another student."""
+    """A student identification number in the Baze format (upper-cased), not used by another student."""
     student_number = (value or "").strip().upper()
     if not re.fullmatch(settings.STUDENT_ID_REGEX, student_number):
-        raise ValidationError(f"Enter the full student ID as it appears on the Baze ID card: {settings.STUDENT_ID_HELP}.")
+        raise ValidationError(f"Enter the full student identification number as it appears on the Baze identity card: {settings.STUDENT_ID_HELP}.")
     others = StudentProfile.objects.exclude(pk=profile.pk) if profile else StudentProfile.objects.all()
     if others.filter(student_number__iexact=student_number).exists():
-        raise ValidationError("Another student already has this student ID.")
+        raise ValidationError("Another student already has this student identification number.")
     return student_number
 
 
 class AddStudentForm(forms.Form):
     """An administrator or coordinator creates a student account (D-28).
 
-    Same checks as registration (Baze email, Baze student ID format, both unique). The account is
+    Same checks as registration (Baze email, Baze student identification number format, both unique). The account is
     approved and active at once, because the person creating it is the check; the student signs in
     with a temporary password and must choose their own. A coordinator may choose any programme of
     their faculty (D-29).
@@ -211,13 +211,13 @@ class AddStudentForm(forms.Form):
 
     STUDENT_STATUS_CHOICES = (
         (StudentProfile.Status.CURRENT, "Current final-year student"),
-        (StudentProfile.Status.FYP_COMPLETED, "Past final-year student (FYP completed)"),
+        (StudentProfile.Status.FYP_COMPLETED, "Past final-year student (final-year project completed)"),
     )
 
     first_name = forms.CharField(max_length=150, label="First name")
     last_name = forms.CharField(max_length=150, label="Last name")
     email = forms.EmailField(label="Baze email address", help_text="Also their sign-in.")
-    student_number = forms.CharField(max_length=30, label="Student ID", help_text="The full ID, like BU/23B/IT/7892.")
+    student_number = forms.CharField(max_length=30, label="Student identification number", help_text="The full identification number, like BU/23B/IT/7892.")
     programme = forms.ModelChoiceField(queryset=Programme.objects.none(), empty_label="Select a programme", label="Programme")
     student_status = forms.ChoiceField(choices=STUDENT_STATUS_CHOICES, label="Student status")
 
@@ -259,10 +259,10 @@ class AddStudentForm(forms.Form):
 
 
 class StudentEditForm(forms.Form):
-    """Admin-only: correct a student's name, Baze email (sign-in), student ID and programme.
+    """Admin-only: correct a student's name, Baze email (sign-in), student identification number and programme.
 
     The programme cannot change once the student has a project, because the project belongs to the
-    programme's department; graduation is recorded by the HOD at sign-off, not here (D-15).
+    programme's department; graduation is recorded by the Head of Department at sign-off, not here (D-15).
     """
 
     first_name = forms.CharField(max_length=150, label="First name")
@@ -271,7 +271,7 @@ class StudentEditForm(forms.Form):
         label="Baze email (sign-in)",
         help_text="Correct it here if it is wrong. From now on they sign in with the new address, and a notice is sent to it.",
     )
-    student_number = forms.CharField(max_length=30, label="Student ID", help_text="The full ID, like BU/23B/IT/7892.")
+    student_number = forms.CharField(max_length=30, label="Student identification number", help_text="The full identification number, like BU/23B/IT/7892.")
     programme = forms.ModelChoiceField(queryset=Programme.objects.none(), label="Programme")
 
     def __init__(self, *args, student, **kwargs):
@@ -334,7 +334,7 @@ def _check_new_baze_email(value):
 
 
 class StaffAccountForm(forms.Form):
-    """Admin-only: create a supervisor, coordinator, HOD or administrator account.
+    """Admin-only: create a supervisor, coordinator, Head of Department or administrator account.
 
     Staff roles are never chosen by the person themselves (student sign-up cannot set a role), so
     nobody can grant themselves staff access. The password is generated here, shown to the admin
@@ -392,7 +392,7 @@ class StaffAccountForm(forms.Form):
 class StaffEditForm(forms.Form):
     """Admin-only: change a staff member's name, Baze email, role, department, title and allocation permission.
 
-    The Baze email is the sign-in, so correcting it (a typo at creation, a new address from Baze ICT)
+    The Baze email is the sign-in, so correcting it (a typo at creation, a new address from Baze Information and Communication Technology)
     also moves the sign-in to the new address; it must be a Baze address no other account uses.
     Two guards stop an admin locking everyone out: you cannot remove your own administrator role,
     and the last active administrator cannot be given another role.

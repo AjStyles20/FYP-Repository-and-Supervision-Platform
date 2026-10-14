@@ -24,7 +24,7 @@ class NotificationKind(models.TextChoices):
 class Notification(models.Model):
     recipient = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="notifications")
     kind = models.CharField(max_length=40, choices=NotificationKind.choices)
-    object_type = models.CharField(max_length=100, help_text="Model label of the flagged record, e.g. projects.Project.")
+    object_type = models.CharField(max_length=100, help_text="Model label of the flagged record, for example projects.Project.")
     object_id = models.CharField(max_length=64)
     title = models.CharField(max_length=200)
     body = models.TextField(blank=True)

@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% load greeting %}
-{% block title %}HOD Portal · Baze Project Hub{% endblock %}
+{% block title %}Head of Department Portal · Baze Project Hub{% endblock %}
 {% block back %}{% endblock %}
 {% block content %}
 <section class="hero-band">
@@ -8,7 +8,7 @@
     <p class="hero-greeting">{% greeting user %}</p>
     <p class="eyebrow">Head of Department · Department leadership{% if department %} · {{ department }}{% endif %}</p>
     <h1>Department project oversight</h1>
-    <p>Sign off completed projects when students bring their final documents, keep the convocation list, and appoint the department's FYP coordinator.</p>
+    <p>Sign off completed projects when students bring their final documents, keep the convocation list, and appoint the department's final-year project coordinator.</p>
     <div class="hero-actions"><a class="btn btn-primary" href="{% url 'approvals' %}">Review sign-off queue</a><a class="btn btn-quiet" href="{% url 'repository' %}?section=past">Open project archive</a></div>
   </div>
 </section>
@@ -22,7 +22,7 @@
 
 <section class="grid-2">
   <div class="stack">
-    <div class="section-title"><div><p class="eyebrow">HOD review</p><h2>Completion sign-offs</h2></div><a href="{% url 'approvals' %}">Open approval register</a></div>
+    <div class="section-title"><div><p class="eyebrow">Head of Department review</p><h2>Completion sign-offs</h2></div><a href="{% url 'approvals' %}">Open approval register</a></div>
     {% for project in signoff_projects %}
       <article class="directory-item"><div class="directory-main"><span class="tag tag-live">Defended · sign-off needed</span><h3><a href="{% url 'project_workflow' project.pk %}">{{ project.title }}</a></h3><p class="muted">{{ project.student.get_full_name|default:project.student.username }} · {{ project.programme.award }}</p></div><div class="directory-counts"><span class="count-label">Final supervisor</span><strong>{{ project.supervisor.get_full_name|default:"Not assigned" }}</strong></div></article>
     {% empty %}
@@ -35,7 +35,7 @@
     <div class="card"><dl class="fact-list">
       {% for supervisor in supervisor_load %}<div><dt>{{ supervisor.get_full_name|default:supervisor.username }}</dt><dd>{{ supervisor.active_count }} active · {{ supervisor.approved_count }} approved · {{ supervisor.defended_count }} defended · {{ supervisor.past_count }} past</dd></div>{% empty %}<div><dt>No staff list</dt><dd>Department supervisors will appear here when available.</dd></div>{% endfor %}
     </dl></div>
-    <div class="card card-pad-sm"><div class="card-head"><h3>Department links</h3></div><ul class="plain-list"><li><a href="{% url 'convocation_list' %}">Convocation list</a></li><li><a href="{% url 'export_projects' %}">Download project list (CSV)</a></li><li><a href="{% url 'department_staff' %}">Department staff: FYP coordinator and assigning</a></li><li><a href="{% url 'academic_structure' %}">Academic programmes</a></li><li><a href="{% url 'repository' %}?section=current">Current student projects</a></li><li><a href="{% url 'repository' %}?section=past">Completed-project archive</a></li></ul></div>
+    <div class="card card-pad-sm"><div class="card-head"><h3>Department links</h3></div><ul class="plain-list"><li><a href="{% url 'convocation_list' %}">Convocation list</a></li><li><a href="{% url 'export_projects' %}">Download project list (CSV)</a></li><li><a href="{% url 'department_staff' %}">Department staff: Final-year project coordinator and assigning</a></li><li><a href="{% url 'academic_structure' %}">Academic programmes</a></li><li><a href="{% url 'repository' %}?section=current">Current student projects</a></li><li><a href="{% url 'repository' %}?section=past">Completed-project archive</a></li></ul></div>
   </div>
 </section>
 {% endblock %}

@@ -7,14 +7,14 @@
 <section class="card narrow">
   <h1>Log in</h1>
   <p class="muted">Use your Baze email address, students and staff alike.</p>
-  {% if form.errors %}<p class="error">{% if form.status_message %}{{ form.status_message }}{% else %}The email or password is incorrect, or the account is awaiting approval. Log in with your full Baze email address (not your name or student ID); the password is case-sensitive.{% endif %}</p>{% endif %}
+  {% if form.errors %}<p class="error">{% if form.status_message %}{{ form.status_message }}{% else %}The email or password is incorrect, or the account is awaiting approval. Log in with your full Baze email address (not your name or student identification number); the password is case-sensitive.{% endif %}</p>{% endif %}
   <form method="post">{% csrf_token %}
     <label class="field"><span class="field-label">{{ form.username.label }}</span>{{ form.username }}</label>
     <label class="field"><span class="field-label">{{ form.password.label }}</span>{{ form.password }}</label>
     <input type="hidden" name="next" value="{{ next }}">
     <button type="submit" class="btn btn-primary">Log in</button>
   </form>
-  {% if self_registration_open %}<p>New student or past final-year student? <a href="{% url 'register_student' %}">Create an account</a>.</p>{% else %}<p class="muted"><strong>No account yet?</strong> Students: see your FYP coordinator. Staff: contact the system administrator.</p>{% endif %}
+  {% if self_registration_open %}<p>New student or past final-year student? <a href="{% url 'register_student' %}">Create an account</a>.</p>{% else %}<p class="muted"><strong>No account yet?</strong> Students: see your final-year project coordinator. Staff: contact the system administrator.</p>{% endif %}
   <p class="muted"><a href="{% url 'home' %}">What is Baze Project Hub?</a></p>
 </section>
 {% endblock %}

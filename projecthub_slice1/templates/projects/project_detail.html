@@ -75,7 +75,7 @@
       <div><dt>Department</dt><dd>{{ project.department.name }}</dd></div>
       <div><dt>Programme</dt><dd>{{ project.programme }}</dd></div>
       {% if can_see_student_id and student_profile %}
-        <div><dt>Student ID</dt><dd>{{ student_profile.student_number }}</dd></div>
+        <div><dt>Student identification number</dt><dd>{{ student_profile.student_number }}</dd></div>
       {% endif %}
       <div><dt>{% if is_past %}Final supervisor{% else %}Supervisor{% endif %}</dt><dd>{{ project.supervisor.get_full_name|default:"Not assigned" }}</dd></div>
       {% if previous_supervisors %}

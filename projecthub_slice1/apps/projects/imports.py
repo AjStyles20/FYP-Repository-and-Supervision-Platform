@@ -75,7 +75,7 @@ def _supervisor(username, department, label):
                 f'More than one account matches "{username}" ({label}).')
     if not can_supervise_in(user, department.pk, require_active=False):
         raise ValidationError(
-            f'{label.capitalize()} "{username}" must be a supervisor, coordinator or HOD in {department.name}.'
+            f'{label.capitalize()} "{username}" must be a supervisor, coordinator or Head of Department in {department.name}.'
         )
     return user
 

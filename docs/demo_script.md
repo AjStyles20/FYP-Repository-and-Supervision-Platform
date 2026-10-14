@@ -1,6 +1,6 @@
 # Demo script: 7 minutes, one role per step
 
-This walkthrough follows one department through a term. Each step is one role, about one minute. Every click below was checked against the seeded data with a scripted run of the same URLs; all 42 checks passed.
+This walkthrough follows one department through a term. Each step is one role, about one minute. Every click below was checked against the seeded data with a scripted run of the same web addresses; all 42 checks passed.
 
 All demo accounts use the password **`ChangeMe123!`** and log in with their **Baze email** (D-41): drop `demo.` and add `@bazeuniversity.edu.ng`. So `demo.adaeze` logs in as `adaeze@bazeuniversity.edu.ng`, and `demo.se.coordinator` as `se.coordinator@bazeuniversity.edu.ng`. The steps below name accounts by their short `demo.` name.
 
@@ -22,11 +22,11 @@ From `projecthub_slice1/`, in PowerShell:
 
 **Why two admins:** demo accounts are never written to the audit log, by design, so that test clicks don't pollute the real history. `panel.admin` is a real account, which is how step 7 can show a genuine audit entry.
 
-**Reset between rehearsals:** steps 2, 3, 5 and 7 change data. Run `purge_demo` then `seed_demo` again. Tolu Ade (step 7) is a real account, so `purge_demo` leaves it: before the next rehearsal, deactivate Tolu from System administration → Student accounts, or use a different student ID and email each time.
+**Reset between rehearsals:** steps 2, 3, 5 and 7 change data. Run `purge_demo` then `seed_demo` again. Tolu Ade (step 7) is a real account, so `purge_demo` leaves it: before the next rehearsal, deactivate Tolu from System administration → Student accounts, or use a different student identification number and email each time.
 
 **What the seed contains:**
 - One faculty with two departments, Computer Science and Software Engineering.
-- In each department, a coordinator, an HOD and three supervisors, one per approval method:
+- In each department, a coordinator, a Head of Department and three supervisors, one per approval method:
 
   | Approval method | Computer Science | Software Engineering |
   |---|---|---|
@@ -53,7 +53,7 @@ From `projecthub_slice1/`, in PowerShell:
 6. **Say:** "The form itself is replaced when a student resubmits, but this list is append-only. The rejection and its reason stay on record."
 
 **If it breaks:**
-- If login by ID fails, use `demo.adaeze`.
+- If login by identification number fails, use `demo.adaeze`.
 - If the page errors, run `manage.py test apps.accounts.tests.SeedAndPurgeTests.test_seed_includes_a_visible_append_only_decision_history` and show that it passes.
 
 ## Step 2 (1:00–2:00): Supervisor, `demo.danjuma`: accept a proposal under his own rules
@@ -76,10 +76,10 @@ From `projecthub_slice1/`, in PowerShell:
 
 1. Log in as `demo.coordinator`.
 2. Click **Approval register**. Kemi's project now shows "Supervisor accepted". Click **Review project workflow**.
-3. Enter a note (e.g. "Filed in the register"), keep today's date, then click **Save workflow step**. The stage changes to **Approved by the department**.
+3. Enter a note (for example "Filed in the register"), keep today's date, then click **Save workflow step**. The stage changes to **Approved by the department**.
 4. Click **Student allocation**. Find **Lecture Attendance with QR Codes** (Musa Garba, "Unassigned").
 5. Choose **K. Danjuma**, give the reason "Topic fits Mr Danjuma", then click **Save assignment**. The card shows the new supervisor and the change is kept in the history.
-6. **Say:** "A coordinator works across their faculty; a supervisor or HOD given allocation rights stays within their department. The system enforces one current supervisor per project in the database, on MySQL as well."
+6. **Say:** "A coordinator works across their faculty; a supervisor or Head of Department given allocation rights stays within their department. The system enforces one current supervisor per project in the database, on MySQL as well."
 
 **If it breaks:**
 - If Kemi isn't listed, use **Accessibility Checker for Course Pages**. It is in Software Engineering, so log in as `demo.se.coordinator`.
@@ -94,13 +94,13 @@ From `projecthub_slice1/`, in PowerShell:
    - what was discussed and the **Corrective action**, in the supervisor's words;
    - the student's **dispute**: "I sent the survey design by email…";
    - the record's **Version history**.
-5. **Say:** "Meeting records are visible only to the student, their supervisor, and the department's coordinator and HOD (R-33). Another supervisor in the same department gets a 'Not allowed' page."
+5. **Say:** "Meeting records are visible only to the student, their supervisor, and the department's coordinator and Head of Department (R-33). Another supervisor in the same department gets a 'Not allowed' page."
 
 **If it breaks:**
 - If the meeting log is empty, the seed didn't run its supervision records. Reseed.
-- To prove the privacy rule instead, log in as `demo.danjuma`, paste the meeting record's URL, and show the 403 page.
+- To prove the privacy rule instead, log in as `demo.danjuma`, paste the meeting record's web address, and show the 403 page.
 
-## Step 5 (4:00–5:00): HOD, `demo.hod`: sign off and archive
+## Step 5 (4:00–5:00): Head of Department, `demo.hod`: sign off and archive
 
 1. Log in as `demo.hod`.
 2. The portal's sign-off queue lists **Cafeteria Queue Predictor** (Ngozi Chukwu, "Defended"). Click it.
@@ -110,7 +110,7 @@ From `projecthub_slice1/`, in PowerShell:
    - **Leave "Graduation verified" unticked.**
    - Click **Save workflow step**.
 4. You land on the archived record. Point at **Documented gap** and at **Graduation: Not yet verified (project completed)**.
-5. **Say:** "Only the HOD can archive. A sign-off needs a documented gap or an explicit 'no gap' tick. Finishing the project is not the same as graduating, so graduation is shown separately, and the project is in the repository straight away."
+5. **Say:** "Only the Head of Department can archive. A sign-off needs a documented gap or an explicit 'no gap' tick. Finishing the project is not the same as graduating, so graduation is shown separately, and the project is in the repository straight away."
 
 **If it breaks:**
 - If the queue is empty (Ngozi was already signed off), use **Requirements Traceability Tool** as `demo.se.hod`.
@@ -134,7 +134,7 @@ From `projecthub_slice1/`, in PowerShell:
 ## Step 7 (6:00–7:00): Administrator, `panel.admin`: add a student, read the audit log
 
 1. Log in as `panel.admin@bazeuniversity.edu.ng`, the real admin from the setup.
-2. Click **System administration** → **Add student account**. Enter Tolu Ade, `tolu.ade@bazeuniversity.edu.ng`, student ID `BU/23A/CS/5001`, programme "Computer Science BSc", status "Current final-year student". Click **Create student account**; a temporary password is shown once.
+2. Click **System administration** → **Add student account**. Enter Tolu Ade, `tolu.ade@bazeuniversity.edu.ng`, student identification number `BU/23A/CS/5001`, programme "Computer Science Bachelor of Science", status "Current final-year student". Click **Create student account**; a temporary password is shown once.
 3. **Say:** "Students can't create their own accounts. The coordinator or the administrator adds each final-year student after checking they're ready, so only the right students get in. The student must choose their own password at first sign-in."
 4. Click **Audit log**. The newest entry is "Student account created", with who did it and when.
 5. **Say:**
@@ -143,14 +143,14 @@ From `projecthub_slice1/`, in PowerShell:
    - Real data replaces the demo with one command, `purge_demo`, plus a CSV import of past projects."
 
 **If it breaks:**
-- If Tolu already exists from a rehearsal, use another ID and email (e.g. `BU/23A/CS/5002`, `tolu.ade2@bazeuniversity.edu.ng`).
+- If Tolu already exists from a rehearsal, use another identification number and email (for example `BU/23A/CS/5002`, `tolu.ade2@bazeuniversity.edu.ng`).
 - If `panel.admin` doesn't exist, use `demo.admin`. Adding the student works, but explain that it won't appear in the audit log because demo accounts are excluded.
 
 ---
 
 ## If the panel asks for more (not timed)
 
-- **The coordinator uploads the final report:** as `demo.coordinator`, open a Computer Science project that is in progress, submitted or defended, then **Project workflow → Upload final report**. The file is listed under **Project files** with the coordinator's name, and the HOD's sign-off still archives it.
+- **The coordinator uploads the final report:** as `demo.coordinator`, open a Computer Science project that is in progress, submitted or defended, then **Project workflow → Upload final report**. The file is listed under **Project files** with the coordinator's name, and the Head of Department's sign-off still archives it.
 - **Semesters (26A, 26B, 26C):** the seed puts the running projects in 26A and 26B. As `demo.coordinator`, open a project's workflow page, type `26C` in **Semester** and click **Save semester**: 26C is added on first use. Then **Deadlines → Add a deadline** with semester `26C`: it appears on that project and nowhere else. In **Running topics**, type `26A` in **Semester** to filter.
 - **Searching by year:** in the repository, click **Year**: a year grid opens, with years that have projects clickable.
 
@@ -158,11 +158,11 @@ From `projecthub_slice1/`, in PowerShell:
 
 | Step | Role | Account | Minutes |
 |---|---|---|---|
-| 1 | Student | `demo.adaeze` (ID `BU/22A/CS/4041`) | 0:00–1:00 |
+| 1 | Student | `demo.adaeze` (identification number `BU/22A/CS/4041`) | 0:00–1:00 |
 | 2 | Supervisor | `demo.danjuma` | 1:00–2:00 |
 | 3 | Coordinator | `demo.coordinator` | 2:00–3:00 |
 | 4 | Supervisor | `demo.okoro` | 3:00–4:00 |
-| 5 | HOD | `demo.hod` | 4:00–5:00 |
+| 5 | Head of Department | `demo.hod` | 4:00–5:00 |
 | 6 | Student | `chinedu@bazeuniversity.edu.ng` | 5:00–6:00 |
 | 7 | Administrator | `panel.admin` | 6:00–7:00 |
 

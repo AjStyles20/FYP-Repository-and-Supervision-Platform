@@ -13,11 +13,11 @@ The system is not a public internet repository. Project discovery is available t
 
 ## Product principles
 
-1. **Discoverability with privacy:** project topics and approved project summaries can be found across Baze by signed-in users. Student IDs remain staff-only. Contact details (personal email, phone) are opt-in per detail: each person chooses who sees each one (D-21).
-2. **One academic hierarchy:** Faculty → Department → Programme → Qualification/award (for example BSc, BA, MSc or MA) → Project.
+1. **Discoverability with privacy:** project topics and approved project summaries can be found across Baze by signed-in users. Student identification numbers remain staff-only. Contact details (personal email, phone) are opt-in per detail: each person chooses who sees each one (D-21).
+2. **One academic hierarchy:** Faculty → Department → Programme → Qualification/award (for example Bachelor of Science, Bachelor of Arts, Master of Science or Master of Arts) → Project.
 3. **Pilot narrowly, expand by configuration:** launch with the author's faculty and department; add other faculties, departments, programmes and awards as academic data, not new application branches.
 4. **Keep evidence scoped:** project metadata can be discoverable across Baze, but individual meeting discussions and corrective-action notes are shared only with the student, assigned supervisor and authorized academic staff.
-5. **Use explicit decisions for consequential actions:** role-checked approvals, defence outcomes, completion and HOD archive sign-off are recorded with an actor, time and history.
+5. **Use explicit decisions for consequential actions:** role-checked approvals, defence outcomes, completion and Head of Department archive sign-off are recorded with an actor, time and history.
 6. **Do not claim external verification:** graduation status is recorded only after an authorized person confirms it; there is no assumed connection to Baze's student-record system.
 7. **Build an accessible, light interface:** responsive server-rendered pages, clear hierarchy, readable tables/cards, and minimal client-side JavaScript.
 
@@ -25,8 +25,8 @@ The system is not a public internet repository. Project discovery is available t
 
 ### Public entry (unauthenticated)
 
-- **Sign in:** Baze email, or a student's full student ID (like `BU/23B/IT/7892`).
-- **Student accounts:** added by the FYP coordinator (any programme of their faculty) or the administrator, with Baze email, student ID, programme/award and status; the student sets their own password at first sign-in (D-28). Public self-registration is off.
+- **Sign in:** Baze email, or a student's full student identification number (like `BU/23B/IT/7892`).
+- **Student accounts:** added by the final-year project coordinator (any programme of their faculty) or the administrator, with Baze email, student identification number, programme/award and status; the student sets their own password at first sign-in (D-28). Public self-registration is off.
 - Staff and administrator accounts are created or provisioned by an administrator, never selected through public registration.
 
 ### Authenticated application
@@ -35,11 +35,11 @@ The system is not a public internet repository. Project discovery is available t
    - Student: own project, current stage, next action, supervisor, upcoming meetings and notices.
    - Supervisor: supervisee counts, pending proposals, upcoming meetings and recent project activity.
    - Coordinator: department assignment and approval queues, supervisor capacity summaries.
-   - HOD: department project completion and sign-off queue.
+   - Head of Department: department project completion and sign-off queue.
    - Admin: account approvals and academic-structure administration.
 2. **Repository**
    - Two primary views: **Past students** and **Current students**.
-   - Search by project title/topic, student name and supervisor; student ID search is staff-only.
+   - Search by project title/topic, student name and supervisor; student identification number search is staff-only.
    - Cascading filters: faculty → department → programme/award → year.
    - A supervisor search result can open that supervisor's current and past project list.
 3. **Project details**
@@ -55,12 +55,12 @@ The system is not a public internet repository. Project discovery is available t
    - Supervisor can record meeting details, publish notices/resources, and schedule meetings.
    - Meeting discussions/corrections remain visible only to the student and authorized staff.
 6. **Coordinator Workspace**
-   - Assign/reassign students and supervisors within the department; keep assignment history. Assignment authority is granted independently of job title, so a supervisor, coordinator or HOD may be delegated this responsibility. The initial project-assignment workspace is implemented; student proposal intake and further workflow actions remain future slices.
+   - Assign/reassign students and supervisors within the department; keep assignment history. Assignment authority is granted independently of job title, so a supervisor, coordinator or Head of Department may be delegated this responsibility. The initial project-assignment workspace is implemented; student proposal intake and further workflow actions remain future slices.
    - Supervisor workload and counters (current, approved, defended).
    - Digital approval-form queue and approval/defence recording.
-7. **HOD Workspace**
+7. **Head of Department Workspace**
    - Completion review and final sign-off.
-   - Archive is performed by the HOD only after project requirements are confirmed and the required gap and documents are recorded.
+   - Archive is performed by the Head of Department only after project requirements are confirmed and the required gap and documents are recorded.
 8. **Project Guide**
    - Plain-language stages from idea to archive, department process information and downloadable official PDFs.
 9. **Admin**
@@ -70,11 +70,11 @@ The system is not a public internet repository. Project discovery is available t
 
 The repository's current/past sections are derived views of project and student lifecycle state, not separate duplicate project records.
 
-- **Current:** projects that have not passed authorized completion and HOD archive.
-- **Past:** completed projects archived by the HOD, with approved metadata and files.
-- A project is not archived merely because a defence was recorded. The HOD records the required sign-off after confirming the department's completion conditions.
-- When the HOD records FYP completion and sign-off, the project is automatically moved from Current to Past.
-- Project completion and student graduation are separate facts. The HOD verifies graduation separately; graduation year must not be inferred from project completion or generated automatically without that confirmation.
+- **Current:** projects that have not passed authorized completion and Head of Department archive.
+- **Past:** completed projects archived by the Head of Department, with approved metadata and files.
+- A project is not archived merely because a defence was recorded. The Head of Department records the required sign-off after confirming the department's completion conditions.
+- When the Head of Department records final-year project completion and sign-off, the project is automatically moved from Current to Past.
+- Project completion and student graduation are separate facts. The Head of Department verifies graduation separately; graduation year must not be inferred from project completion or generated automatically without that confirmation.
 - A project can be listed as past work while the student's university graduation status remains unverified; the record must label these states accurately.
 
 ## Supervisor history and meeting privacy
@@ -111,7 +111,7 @@ On Past students, the detail page adds the documented gap, final/previous superv
 
 ### Role workspace sketch
 
-Each role lands on a focused work queue, not the same generic dashboard: students see their next project action; supervisors see advisees and meeting/notice tasks; coordinators see assignments and approval forms; HODs see completion sign-offs; admins see pending account reviews and academic data tools.
+Each role lands on a focused work queue, not the same generic dashboard: students see their next project action; supervisors see advisees and meeting/notice tasks; coordinators see assignments and approval forms; Heads of Department see completion sign-offs; admins see pending account reviews and academic data tools.
 
 ## Delivery sequence
 
@@ -123,11 +123,11 @@ Each role lands on a focused work queue, not the same generic dashboard: student
 
 - Searchable Current/Past views with faculty/department/programme/year filters.
 - Project detail pages with correct role-aware field visibility.
-- Staff-only student ID search; contact details shown only as their owner chose.
+- Staff-only student identification number search; contact details shown only as their owner chose.
 - Project document metadata and permission-checked downloads with per-file Baze-user/staff visibility.
 - Pilot academic data only for the author's faculty/department; structure stays reusable.
 
-Current implementation status: the authenticated repository, search/filter views, project detail pages, download controls, demo repository data, and role-aware ID/contact visibility are implemented. Uploaded files are administered through Django Admin and downloads pass through the authenticated application route; do not expose the media directory as public static files. Public-facing document upload, coordinator/supervisor assignment history entry, and HOD archive actions are separate workflow slices.
+Current implementation status: the authenticated repository, search/filter views, project detail pages, download controls, demo repository data, and role-aware identification number/contact visibility are implemented. Uploaded files are administered through Django Admin and downloads pass through the authenticated application route; do not expose the media directory as public static files. Public-facing document upload, coordinator/supervisor assignment history entry, and Head of Department archive actions are separate workflow slices.
 
 ### Next slice: student/supervisor workspaces
 
@@ -139,13 +139,13 @@ Current implementation status: the authenticated repository, search/filter views
 
 - Assignments with history and capacity counters.
 - Digital approval form and department-specific policy configuration.
-- Approval, submission, defence, completion, and HOD-only archive transitions.
+- Approval, submission, defence, completion, and Head of Department-only archive transitions.
 - Archived record publication in Past students.
 
 ### Later operational capabilities
 
 - Official guide PDFs, richer audit tools, CSV import/export and department-by-department onboarding.
-- Similar-topic recommendations and other AI assistance only after core search and workflow are reliable and the labelled evaluation data can be created ethically.
+- Similar-topic recommendations and other artificial intelligence assistance only after core search and workflow are reliable and the labelled evaluation data can be created ethically.
 
 ## Decisions to confirm with the department
 

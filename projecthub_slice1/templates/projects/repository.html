@@ -25,7 +25,7 @@
   <div class="search-field">
     <label for="repository-search">Search projects</label>
     <input id="repository-search" name="q" type="search" value="{{ query }}"
-           placeholder="Try a topic, student, supervisor{% if can_see_student_id %} or student ID{% endif %}">
+           placeholder="Try a topic, student, supervisor{% if can_see_student_id %} or student identification number{% endif %}">
   </div>
   <div>
     <label for="faculty-filter">Faculty</label>
@@ -71,7 +71,7 @@
   </div>
   <div>
     <label for="semester-filter">Semester</label>
-    <input id="semester-filter" name="semester" type="text" value="{{ semester }}" placeholder="All semesters, or e.g. 26A"
+    <input id="semester-filter" name="semester" type="text" value="{{ semester }}" placeholder="All semesters, or for example 26A"
            list="semester-codes" autocomplete="off" autocapitalize="characters" maxlength="8"{% if semester_invalid %} aria-invalid="true" aria-describedby="semester-error"{% endif %}>
     {% semester_codes %}
     {% if semester_invalid %}<small id="semester-error" class="error">Type the semester as two digits and A, B or C, like 26A.</small>{% endif %}

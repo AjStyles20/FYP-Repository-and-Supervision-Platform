@@ -33,7 +33,7 @@ def media_type(name):
 
 
 def _looks_like(head, kind, extension):
-    """Check the first bytes, so a renamed file (e.g. a script called photo.png) is refused."""
+    """Check the first bytes, so a renamed file (for example a script called photo.png) is refused."""
     if kind == "image":
         if extension in ("jpg", "jpeg"):
             return head.startswith(b"\xff\xd8\xff")
@@ -83,7 +83,7 @@ class ProjectMedia(models.Model):
         ArchivedProject, on_delete=models.CASCADE, null=True, blank=True, related_name="media"
     )
     kind = models.CharField(max_length=10, choices=Kind.choices)
-    caption = models.CharField(max_length=180, help_text="A short description, e.g. \"Login screen\".")
+    caption = models.CharField(max_length=180, help_text="A short description, for example \"Login screen\".")
     file = models.FileField(upload_to="project_media/%Y/%m/", blank=True)
     video_url = models.URLField(blank=True, help_text="A YouTube, Google Drive or Vimeo link, instead of an upload.")
     visibility = models.CharField(

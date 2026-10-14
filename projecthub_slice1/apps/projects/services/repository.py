@@ -68,7 +68,7 @@ def current_projects(filters, can_see_student_id=False):
 
 
 def past_projects(filters, can_see_student_id=False):
-    # Every archived (HOD signed-off) project is listed. Graduation is a separate fact on the
+    # Every archived (Head of Department signed-off) project is listed. Graduation is a separate fact on the
     # student profile (R-16) and is shown on the record, but it never hides the project.
     queryset = ArchivedProject.objects.select_related(*CURRENT_SELECT_RELATED).prefetch_related("previous_supervisors")
     queryset = _apply_academic_filters(queryset, filters)
@@ -120,6 +120,6 @@ def _apply_search(queryset, query, fields, can_see_student_id):
     for field in fields:
         match |= Q(**{f"{field}__icontains": query})
     if can_see_student_id:
-        # Student IDs stay staff-only: a student searching their own ID finds nothing.
+        # Student identification numbers stay staff-only: a student searching their own identification number finds nothing.
         match |= Q(student__student_profile__student_number__icontains=query)
     return queryset.filter(match).distinct()

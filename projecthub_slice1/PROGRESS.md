@@ -7,21 +7,21 @@
 ### Accounts and access
 - Django 5.2 project, settings read from environment or `.env`
 - MySQL connection (utf8mb4); SQLite for the tests, the demo and a quick tryout
-- Custom user model with roles: student, supervisor, coordinator, HOD, admin
+- Custom user model with roles: student, supervisor, coordinator, Head of Department, admin
 - Student and supervisor profiles (student number, programme, student status)
-- Student accounts are added by the administrator or the department's coordinator (D-28), with Baze email and a full student ID in the Baze format (`BU/23B/IT/7892`: year, batch A-C, department code, number; `STUDENT_ID_REGEX`); active at once with a temporary password. Self-registration with administrator approval exists but is switched off (`STUDENT_SELF_REGISTRATION`)
+- Student accounts are added by the administrator or the department's coordinator (D-28), with Baze email and a full student identification number in the Baze format (`BU/23B/IT/7892`: year, batch A-C, department code, number; `STUDENT_ID_REGEX`); active at once with a temporary password. Self-registration with administrator approval exists but is switched off (`STUDENT_SELF_REGISTRATION`)
 - Decision email to the student on approval or rejection (with the reason, if given), and an "Account approved" alert waiting at first sign-in
 - Registration status page behind a signed, expiring link that updates itself every 30 seconds, for when self-registration is on (`docs/explain/registration-status.md`)
-- Log in with the Baze email only, for students and staff alike (D-41); the student ID and internal usernames no longer sign in; superusers receive the application administrator role; an eye button shows or hides any password field
+- Log in with the Baze email only, for students and staff alike (D-41); the student identification number and internal usernames no longer sign in; superusers receive the application administrator role; an eye button shows or hides any password field
 - Administrator-created staff accounts with a one-time temporary password and a forced password change at first sign-in; administrators can correct a staff member's Baze email (their own too), which moves the sign-in and is audited
-- Student accounts in Admin tools: search by name, Baze email or student ID; correct name, Baze email, student ID and programme (not once a project exists); reset a forgotten password; deactivate or reactivate (never bypassing approval); all audited
+- Student accounts in Admin tools: search by name, Baze email or student identification number; correct name, Baze email, student identification number and programme (not once a project exists); reset a forgotten password; deactivate or reactivate (never bypassing approval); all audited
 - **My details** (`/account/contact/`) for every account: personal email and phone, each with its own visibility (only me, staff only, all signed-in users); shown on project pages for the student and the supervisor; current students without a personal email are reminded to add one
-- The HOD appoints the FYP coordinator and the staff allowed to assign supervisors (D-19)
+- The Head of Department appoints the final-year project coordinator and the staff allowed to assign supervisors (D-19)
 - Login and logout (logout is POST only), role-based dashboard
 - Logged-out welcome page (`/`): live totals (archived and running projects, academic staff, faculties; real rows only, sample rows only on a demo-only database), how a project moves through the hub, and a tile per faculty; visitors' header shows Home, How it works, Faculties, Past research and one highlighted **Log in**; signing out lands on the welcome page (D-39)
 - The Baze University crest is the header brand on every page (`static/img/baze-logo.png`, "BU" if the file is missing); the login form sits on the left over a background picture
 - Glass look by default (`UI_THEME=glass`), with the classic look one setting away (D-35)
-- Separate portals and role-aware navigation for current students, alumni, supervisors, coordinators, HODs and system administrators
+- Separate portals and role-aware navigation for current students, alumni, supervisors, coordinators, Heads of Department and system administrators
 - `role_required` permission helper (deny by default)
 
 ### Academic structure and repository
@@ -36,14 +36,14 @@
 
 ### Project workflow and supervision
 - The proposal shows only the fields the supervisor's method needs, can be saved as a draft, opens with what was saved, and stays editable until the supervisor decides (D-36)
-- Student project creation and a role-checked proposal-to-HOD-archive workflow, with per-supervisor approval criteria, decision snapshots and status history
+- Student project creation and a role-checked proposal-to-Head of Department-archive workflow, with per-supervisor approval criteria, decision snapshots and status history
 - Students upload proposal and final report files; the project cannot be submitted until a final report is present
-- The department's coordinator can also upload the final document for a project in their department (in progress, submitted or defended), from "Upload final report" on the workflow page. The file is recorded under the coordinator and audited; the HOD's sign-off still archives the project and moves its files
+- The department's coordinator can also upload the final document for a project in their department (in progress, submitted or defended), from "Upload final report" on the workflow page. The file is recorded under the coordinator and audited; the Head of Department's sign-off still archives the project and moves its files
 - Staff who may open a running project's files see them listed on its workflow page, newest first, with type, uploader and date
 - Screenshots (up to 6) and demo videos (up to 2, upload or YouTube/Drive/Vimeo link) on running and archived projects, content-checked and permission-served; they move to the archive at sign-off (D-30)
-- HOD sign-off, archive and convocation list (printable and CSV); ticking "Graduation verified" needs the graduation year (D-40)
+- Head of Department sign-off, archive and convocation list (printable and CSV); ticking "Graduation verified" needs the graduation year (D-40)
 - Semesters typed by hand (26A, 26B, 26C): the coordinator (or an admin) types a project's semester at allocation or on its workflow page, and a new code is added the first time it is used (checked: two digits and A, B or C; "26 a" becomes 26A); **Semesters** is for noting dates or correcting a code; search and the convocation list take a typed semester, with the codes in use as suggestions; faculty deadlines can be tied to a semester; the archive keeps the semester; convocation list and CSVs show it; older records stay "Not set" until someone fills them in (D-38)
-- Project list CSV for coordinators (faculty), HODs (department) and administrators (all), audited (D-34)
+- Project list CSV for coordinators (faculty), Heads of Department (department) and administrators (all), audited (D-34)
 - Student allocation lists students who have no supervisor yet (a coordinator sees and allocates across their whole faculty, D-29); allocating creates their project record ("Topic to be agreed"). Supervisors are offered least busy first with their load; a change of supervisor needs a reason (D-27)
 - Department-scoped supervisor assignment and reassignment for individually authorised staff, with a history recording who changed it, when, and why; supervisor workload counts in the assignment workspace
 - Staff supervision history shows each staff member's current supervisees, prior assignments and archived supervisees; student-only My Project is hidden and denied to staff
@@ -51,7 +51,7 @@
 - Weekly supervisor availability windows; students request a meeting in a window and the supervisor accepts (it becomes a scheduled meeting) or declines with a reason; both are alerted (D-32)
 - Department/project notices with first-seen and acknowledgement timestamps (the author is not asked to acknowledge their own notice); shared supervisor resources with permission-checked downloads
 - Faculty deadlines set by the coordinator become milestones on every running project; supervisors add per-student milestones and mark them done; students are reminded three days before (D-33)
-- Supervisor-provided documents on the Project guide: the department's FYP report instructions and template (PDF and Word), downloadable by every signed-in student and staff member, never by the public
+- Supervisor-provided documents on the Project guide: the department's final-year project report instructions and template (PDF and Word), downloadable by every signed-in student and staff member, never by the public
 - Project health score with reasons, shown only to the roles allowed to see it (`docs/explain/health-score.md`)
 
 ### Alerts, automation and live counters
@@ -115,7 +115,7 @@ For the demo, run `.\run_demo.ps1` from the repository root instead. It uses its
 ### Open questions for the supervisor (from `docs/decisions.md` section C)
 - Q-01: what "make it unique" means, with examples.
 - Q-02: whether the project approval form is signed, and whether the title must be fixed first.
-- Q-04: whether student names, IDs and contact details appear in the repository, and whether consent is needed. Built meanwhile as the author's interim answer (D-21): IDs staff-only, each contact detail opt-in.
+- Q-04: whether student names, identification numbers and contact details appear in the repository, and whether consent is needed. Built meanwhile as the author's interim answer (D-21): Identification numbers staff-only, each contact detail opt-in.
 - Q-05: whether Baze already has a repository or supervision tool.
 - Q-06: whether MySQL/Workbench is required for all projects, and other written defence requirements.
 - Q-07: the department's exact approval chain (who signs, in which order). Confirm before hard-coding approval policy.

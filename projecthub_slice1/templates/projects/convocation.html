@@ -10,7 +10,7 @@
 <section class="card no-print">
   <form method="get" class="filter-row">
     <div><label for="year">Sign-off year</label><select id="year" name="year"><option value="">All years</option>{% for option in years %}<option value="{{ option }}"{% if option|stringformat:"d" == year %} selected{% endif %}>{{ option }}</option>{% endfor %}</select></div>
-    <div><label for="semester">Semester</label><input id="semester" name="semester" type="text" value="{{ semester }}" placeholder="All semesters, or e.g. 26A" list="semester-codes" autocomplete="off" autocapitalize="characters" maxlength="8">{% semester_codes %}{% if semester_invalid %}<small class="error">Type the semester as two digits and A, B or C, like 26A.</small>{% endif %}</div>
+    <div><label for="semester">Semester</label><input id="semester" name="semester" type="text" value="{{ semester }}" placeholder="All semesters, or for example 26A" list="semester-codes" autocomplete="off" autocapitalize="characters" maxlength="8">{% semester_codes %}{% if semester_invalid %}<small class="error">Type the semester as two digits and A, B or C, like 26A.</small>{% endif %}</div>
     <button type="submit">Show</button>
   </form>
   <div class="actions">
@@ -23,12 +23,12 @@
   {% if rows %}
     <div class="table-wrap">
       <table>
-        <thead><tr><th>Student</th><th>Student ID</th><th>Programme</th><th>Project</th><th>Supervisor</th><th>Signed off</th><th>Graduation</th><th>Semester</th></tr></thead>
+        <thead><tr><th>Student</th><th>Student identification number</th><th>Programme</th><th>Project</th><th>Supervisor</th><th>Signed off</th><th>Graduation</th><th>Semester</th></tr></thead>
         <tbody>
           {% for row in rows %}
             <tr>
               <td data-label="Student">{{ row.student_name }}</td>
-              <td data-label="Student ID">{{ row.student_number|default:"—" }}</td>
+              <td data-label="Student identification number">{{ row.student_number|default:"—" }}</td>
               <td data-label="Programme">{{ row.programme }}</td>
               <td data-label="Project">{{ row.title }}</td>
               <td data-label="Supervisor">{{ row.supervisor|default:"—" }}</td>

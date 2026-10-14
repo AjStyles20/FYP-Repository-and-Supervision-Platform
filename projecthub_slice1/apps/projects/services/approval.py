@@ -1,4 +1,4 @@
-"""The FYP approval form workflow.
+"""The final-year project approval form workflow.
 
 The department's paper process, as three steps:
 

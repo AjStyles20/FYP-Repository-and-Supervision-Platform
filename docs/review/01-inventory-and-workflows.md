@@ -7,7 +7,7 @@ Branch `repo-review`, based on `slice2-workflow` at `aea2fac`. Review date 2026-
 - **VERIFIED** means I ran the command or read the code at the cited line. **INFERRED** means it is my reasoning from what I read, not something I executed.
 - Paths are relative to `projecthub_slice1/` unless they start with the repository root (`/`).
 - I did not rely on `README.md`, `PROGRESS.md`, `docs/*` or commit messages for any claim about behaviour. The docs are quoted only where this review compares them with the code.
-- Commands used (read-only): `git log --all`, `git for-each-ref`, `git fsck --unreachable --no-reflogs`, `git ls-tree`, `grep`, and a Python script that walks Django's URL resolver (`get_resolver()`), lists `apps.get_models()` and does nothing else.
+- Commands used (read-only): `git log --all`, `git for-each-ref`, `git fsck --unreachable --no-reflogs`, `git ls-tree`, `grep`, and a Python script that walks Django's web address resolver (`get_resolver()`), lists `apps.get_models()` and does nothing else.
 
 ---
 
@@ -21,7 +21,7 @@ Branch `repo-review`, based on `slice2-workflow` at `aea2fac`. Review date 2026-
 | `apps.accounts` | Custom `User` with `role`, student and supervisor profiles, login, registration, portals, admin tools, audit page view | The audit *page* lives here (`accounts/views.py:288`), the audit *model* in `apps.audit` |
 | `apps.projects` | Projects, approval form, workflow, assignment, archive, repository, documents, CSV import | Largest app; `views.py` is 601 lines |
 | `apps.supervision` | Meetings, notices, shared resources, availability, approval policy page | Two models never used by any view (see 1.8) |
-| `apps.audit` | `AuditEvent` model and `log_event()` service | No URLs of its own |
+| `apps.audit` | `AuditEvent` model and `log_event()` service | No web addresses of its own |
 
 ### 1.2 Models (VERIFIED by reading each file and by `apps.get_models()`)
 
@@ -52,11 +52,11 @@ Branch `repo-review`, based on `slice2-workflow` at `aea2fac`. Review date 2026-
 | `supervision.SharedResource` | `apps/supervision/models/resource.py:15` | yes | **Two fields for one idea**: `project` FK (`:21`) and `projects` M2M (`:29`). The view always sets `project=None` (`supervision/views.py:274`). `link_href` (`:79`) is unused and would point at `/media/...`, which is not served |
 | `audit.AuditEvent` | `apps/audit/models.py:13` | yes | |
 
-### 1.3 URLs and views (VERIFIED with a script over `get_resolver()`, then by reading each view)
+### 1.3 web addresses and views (VERIFIED with a script over `get_resolver()`, then by reading each view)
 
 "Guard" is the first permission check on the view. "Object check" is any later check that ties the object to the user.
 
-| URL | Name | View (file:line) | Guard | Object check |
+| Web address | Name | View (file:line) | Guard | Object check |
 |---|---|---|---|---|
 | `/` | `home` | `accounts/views.py:23` | none (redirects) | — |
 | `/login/` | `login` | `accounts/views.py:27` (`ProjectLoginView`) | public | — |
@@ -71,7 +71,7 @@ Branch `repo-review`, based on `slice2-workflow` at `aea2fac`. Review date 2026-
 | `/academics/` | `academic_structure` | `academics/views.py:9` | staff roles | — |
 | `/projects/repository/` | `repository` | `projects/views.py:84` | all 5 roles | — |
 | `/projects/running-topics/` | `running_topics` | `projects/views.py:94` | all 5 roles | — |
-| `/projects/repository/current/<id>/` | `current_project_detail` | `projects/views.py:101` | all 5 roles | **none**: any signed-in user, including any student, can open any current project by ID (`:103-109`) |
+| `/projects/repository/current/<id>/` | `current_project_detail` | `projects/views.py:101` | all 5 roles | **none**: any signed-in user, including any student, can open any current project by identification number (`:103-109`) |
 | `/projects/repository/past/<id>/` | `past_project_detail` | `projects/views.py:123` | all 5 roles | only graduated students' archives (`:130`) |
 | `/projects/documents/<id>/download/` | `download_project_document` | `projects/views.py:151` | all 5 roles | see workflow 3.12 |
 | `/projects/my-project/` | `my_project` | `projects/views.py:187` | all 5 roles, then student only (`:189`) | own project |
@@ -80,7 +80,7 @@ Branch `repo-review`, based on `slice2-workflow` at `aea2fac`. Review date 2026-
 | `/projects/workflow/<id>/` | `project_workflow` | `projects/views.py:233` | all 5 roles | role/department/ownership (`:238-248`) |
 | `/projects/supervision/` | `supervision` | `projects/views.py:333` | staff roles | POST only for role SUPERVISOR (`:357`, `:370`) |
 | `/projects/supervision/assignments/` | `supervisor_assignments` | `projects/views.py:476` | staff roles + `can_assign_supervisors` (`:478`) | own department (`:483-486`) |
-| `/projects/approvals/` | `approvals` | `projects/views.py:457` | COORDINATOR, HOD, ADMIN | own department unless admin |
+| `/projects/approvals/` | `approvals` | `projects/views.py:457` | COORDINATOR, Head of Department, ADMIN | own department unless admin |
 | `/projects/guidelines/` | `guidelines` | `projects/views.py:546` | all 5 roles | query scoping |
 | `/projects/admin/import-projects/` | `import_projects` | `projects/views.py:569` | `role_required(ADMIN)` | — |
 | `/supervision/projects/<id>/meetings/` | `project_meetings` | `supervision/views.py:77` | `login_required` | `_project_access` (`:45-50`) |
@@ -89,8 +89,8 @@ Branch `repo-review`, based on `slice2-workflow` at `aea2fac`. Review date 2026-
 | `/supervision/announcements/` | `announcements` | `supervision/views.py:182` | `login_required` | query scoping; posting only for role SUPERVISOR (`:209`) |
 | `/supervision/resources/<id>/download/` | `download_shared_resource` | `supervision/views.py:301` | `login_required` | role checks (`:306-321`) |
 | `/supervision/resources/<id>/edit/` | `edit_shared_resource` | `supervision/views.py:283` | `role_required(SUPERVISOR)` | `author=request.user` |
-| `/supervision/availability/` | `supervisor_availability` | `supervision/views.py:325` | SUPERVISOR, COORDINATOR, HOD | own slots |
-| `/supervision/approval-policy/` | `approval_policy` | `supervision/views.py:353` | SUPERVISOR, COORDINATOR, HOD | own profile |
+| `/supervision/availability/` | `supervisor_availability` | `supervision/views.py:325` | SUPERVISOR, COORDINATOR, Head of Department | own slots |
+| `/supervision/approval-policy/` | `approval_policy` | `supervision/views.py:353` | SUPERVISOR, COORDINATOR, Head of Department | own profile |
 | `/supervision/projects/<id>/request-meeting/` | `request_meeting` | `supervision/views.py:348` | `login_required` | **always 403**: dead endpoint |
 | `/admin/` | Django admin | `config/urls.py:5` | Django `is_staff` | — |
 
@@ -131,7 +131,7 @@ All 31 templates extend `base.html`. Rendered by a view: `403.html`, `academics/
 |---|---|---|
 | `SupervisionLogEntry` model | referenced only in `models/log.py`, `models/__init__.py`, `admin.py` | VERIFIED unused by views |
 | `MeetingRequest` model, `MeetingRequestForm`, `request_meeting` view and template | view raises 403 unconditionally (`supervision/views.py:350`) | VERIFIED dead feature |
-| `SharedResource.project` FK vs `SharedResource.projects` M2M | `resource.py:21`, `:29`; view forces `project=None` (`views.py:274`) | VERIFIED duplicate concept |
+| `SharedResource.project` FK versus `SharedResource.projects` M2M | `resource.py:21`, `:29`; view forces `project=None` (`views.py:274`) | VERIFIED duplicate concept |
 | `SharedResource.link_href` | no references | VERIFIED unused |
 | `templates/dashboard.html`, `static/js/reveal.js` | no references | VERIFIED unused |
 | `settings.REPOSITORY_PAGE_SIZE`, `PUBLIC_REPOSITORY`, `SITE_NAME` | defined at `config/settings.py:126-132`, read nowhere | VERIFIED unused, so **the repository has no pagination** |
@@ -141,7 +141,7 @@ All 31 templates extend `base.html`. Rendered by a view: `403.html`, `academics/
 | `Project.continuation_link` | no form sets it (`ProjectStartForm`, `forms.py:59-62`); only copied on archive (`lifecycle.py`) | VERIFIED always blank in practice (INFERRED: unless set in admin) |
 | `project_workflow` local variable `action` | assigned at `projects/views.py:259`, never used | VERIFIED dead code |
 | `docs/database_schema.sql` | 19 tables with names (`project_status_history`, `project_approvals`, `approval_policies`, `meeting_records`, `notices`, `audit_log`…) that match **none** of the 24 Django tables (`projects_projectstatusevent`, `audit_auditevent`…) | VERIFIED. The file says Django is the source of truth (`:6-8`), but anyone drawing the ER diagram from it will draw a different database |
-| Approval policy stored on `SupervisorProfile`, not in a separate policy table | `accounts/models.py:95-105` vs `docs/implementation_plan.md` §6 | VERIFIED difference |
+| Approval policy stored on `SupervisorProfile`, not in a separate policy table | `accounts/models.py:95-105` Versus `docs/implementation_plan.md` §6 | VERIFIED difference |
 | Untracked leftovers in the working copy | `.live_demo_server*.{log,err}`, `.portal_demo*.{log,err}`, `.live_demo.sqlite3`, `db.sqlite3`, `_probe.txt`, `_run_tests.cmd`, two empty files named `baze_projecthub`, `.test-tmp/` with 3 empty temp folders | VERIFIED present, untracked, not in git |
 
 ---
@@ -189,9 +189,9 @@ Refs (VERIFIED, `git for-each-ref`): `refs/heads/{main,slice2-workflow,repo-revi
 2. `StudentRegistrationForm` (`accounts/forms.py:36`) checks:
    - the email ends in `@bazeuniversity.edu.ng` (`:72`);
    - the email or username is not already used, case-insensitively (`:74-77`);
-   - the student ID is not taken (`:82`);
+   - the student identification number is not taken (`:82`);
    - the passwords match and pass Django's password validators (`:86-103`).
-3. `save()` (`:105-125`), in one transaction, creates a `User` with `role=STUDENT`, `is_active=False` and `department` from the programme, plus a `StudentProfile` with `registration_status=PENDING`. **The student picks their own status**, "current" or "FYP completed" (`:37-40`, `:122`).
+3. `save()` (`:105-125`), in one transaction, creates a `User` with `role=STUDENT`, `is_active=False` and `department` from the programme, plus a `StudentProfile` with `registration_status=PENDING`. **The student picks their own status**, "current" or "Final-year project completed" (`:37-40`, `:122`).
 4. An admin opens `/admin-tools/` (`accounts/views.py:244`), which lists non-demo PENDING students, and POSTs approve or reject to `review_student_registration` (`:258`). Approving sets APPROVED and `is_active=True`; rejecting sets REJECTED and `is_active=False` (`:274-282`).
 - **Roles:** anyone registers; ADMIN reviews.
 - **Audited:** only the review (`account.registration_approve|reject`, `:283`). The registration itself is not.
@@ -220,14 +220,14 @@ Refs (VERIFIED, `git for-each-ref`): `refs/heads/{main,slice2-workflow,repo-revi
 ### 3.4 Supervisor assignment
 
 Three code paths, all calling `assign_project_supervisor` (`services/assignment.py:20`). That function locks the project, refuses archived projects and staff who are outside the department or inactive, closes the open assignment row and opens a new one, and audits `project.supervisor_assigned`.
-1. **Allocation board:** `/projects/supervision/assignments/` (`projects/views.py:476`). Any staff role (SUPERVISOR, COORDINATOR, HOD, **ADMIN**) with `can_assign_supervisors=True`, limited to their own department.
+1. **Allocation board:** `/projects/supervision/assignments/` (`projects/views.py:476`). Any staff role (SUPERVISOR, COORDINATOR, Head of Department, **ADMIN**) with `can_assign_supervisors=True`, limited to their own department.
 2. **Supervisor self-service:** on `/projects/supervision/` (`projects/views.py:333`), role SUPERVISOR can add **any unassigned project in their department** to their own roster (`:360-391`), or remove a student (`:398-414`, `unassign_project_supervisor`, audited `project.supervisor_unassigned`). The student gets a notice. `is_accepting_students` is not checked.
 3. **`seed_demo`** (`seed_demo.py:152`).
 - **Stored:** `ProjectSupervisorAssignment` rows (one current per project, enforced by the database since `033a75f`) and `Project.supervisor`.
 
 ### 3.5 Supervisor decision (approval form)
 
-On the workflow page, a SUPERVISOR, COORDINATOR or HOD **who is the assigned supervisor**, at stage PROPOSED, gets `SupervisorDecisionForm` (`projects/views.py:277-289`). `record_supervisor_decision` (`services/approval.py:76`):
+On the workflow page, a SUPERVISOR, COORDINATOR or Head of Department **who is the assigned supervisor**, at stage PROPOSED, gets `SupervisorDecisionForm` (`projects/views.py:277-289`). `record_supervisor_decision` (`services/approval.py:76`):
 1. refuses anyone except the assigned supervisor, stages other than PROPOSED, and an already-signed form;
 2. checks the evidence that the supervisor's **current** method requires: literature review and research gap, or working-project text;
 3. snapshots the method and criteria, saves the decision, appends a `ProjectApprovalDecision` and audits `project.supervisor_decision`;
@@ -251,21 +251,21 @@ At IN_PROGRESS the student gets `StageActionForm` (`projects/views.py:302-307`).
 
 At SUBMITTED, any department COORDINATOR (`projects/views.py:308-313`), then `record_transition` → DEFENDED, which sets `defence_date`. There is no "corrections required" loop, although the plan has one (`implementation_plan.md` §5) (VERIFIED: no such stage in `ProjectStage`, `models/project.py:13-22`).
 
-### 3.10 HOD sign-off and archive
+### 3.10 Head of Department sign-off and archive
 
-At DEFENDED, an HOD in the department gets `CompletionForm` (`projects/views.py:314-319`). `sign_off_completion` (`lifecycle.py:95`):
+At DEFENDED, a Head of Department in the department gets `CompletionForm` (`projects/views.py:314-319`). `sign_off_completion` (`lifecycle.py:95`):
 1. requires a gap summary or the "no gap" box, and not both (since `b74517f`);
-2. checks the stage and the HOD's department;
+2. checks the stage and the Head of Department's department;
 3. writes `ProjectCompletion`, then `_archive_project` (`:145`), which:
    - creates `ArchivedProject`;
    - copies the previous supervisors (ended assignment rows);
    - moves documents from the project to the archive;
    - sets `archived=True` and stage COMPLETED;
    - writes the final status event;
-4. updates the student: GRADUATED only if the HOD ticks "graduation verified", otherwise FYP_COMPLETED (`:186-198`);
+4. updates the student: GRADUATED only if the Head of Department ticks "graduation verified", otherwise FYP_COMPLETED (`:186-198`);
 5. audits `project.archived`. **The archived project's `is_demo` decides whether this is skipped.**
 
-**Important gap (VERIFIED):** graduation can only be set at sign-off (`lifecycle.py:190`), in the Django admin, or by `seed_demo`. The past repository and past-project pages show **only graduated students' archives** (`services/repository.py:68`, `projects/views.py:130`, `:156`). A project signed off without "graduation verified" therefore disappears from the repository with no screen to fix it. The HOD portal *counts* "graduation checks pending" (`accounts/views.py:212-214`) but offers no action.
+**Important gap (VERIFIED):** graduation can only be set at sign-off (`lifecycle.py:190`), in the Django admin, or by `seed_demo`. The past repository and past-project pages show **only graduated students' archives** (`services/repository.py:68`, `projects/views.py:130`, `:156`). A project signed off without "graduation verified" therefore disappears from the repository with no screen to fix it. The Head of Department portal *counts* "graduation checks pending" (`accounts/views.py:212-214`) but offers no action.
 
 ### 3.11 Repository search and filters
 
@@ -297,11 +297,11 @@ At DEFENDED, an HOD in the department gets `CompletionForm` (`projects/views.py:
 ### 3.13 Meetings, notices, resources (supervision app)
 
 - **Meetings:**
-  - Scheduled by the assigned supervisor (`supervision/views.py:77`), with a clash check over that supervisor's scheduled meetings. Visible to the student and to **any SUPERVISOR, COORDINATOR or HOD in the project's department** (`_project_access`, `:45-50`), including the discussion notes.
+  - Scheduled by the assigned supervisor (`supervision/views.py:77`), with a clash check over that supervisor's scheduled meetings. Visible to the student and to **any SUPERVISOR, COORDINATOR or Head of the project's department** (`_project_access`, `:45-50`), including the discussion notes.
   - Edits create a `MeetingRecordEdit` and reset both confirmations (`:57-74`).
   - The student confirms or disputes, and the supervisor confirms (`:126-147`).
 - **Notices:**
-  - Only role **SUPERVISOR** can post (`:209`). A coordinator or HOD who supervises cannot.
+  - Only role **SUPERVISOR** can post (`:209`). A coordinator or Head of Department who supervises cannot.
   - Opening the notices page **creates an acknowledgement row with `seen_at` for every visible notice** (`:201-207`). For an admin that is every notice in the system.
 - **Shared resources:** the form offers "Send to supervisees" (`supervision/forms.py:45-49`), but the save **always sets `department = author.department` and `project=None`** (`views.py:274-275`). Download access for students includes "`project_id is None` and same department" (`:313-315`), and so does the guidelines list (`projects/views.py:556`). So **every current student in the department can see and download every resource, whoever it was "sent to"** (VERIFIED by reading. INFERRED as unintended, because the form's help text says "Only your assigned students are listed").
 - **Availability:** supervisors publish weekly slots and students are notified. Students **cannot book** (dead `request_meeting`).
@@ -331,21 +331,21 @@ There are no backward transitions (no corrections loop, no withdrawal) and no ca
 | Capability | Plan | Code (VERIFIED at cited lines) | Difference |
 |---|---|---|---|
 | Browse repository | all 5 | all 5 (`REPOSITORY_ROLES`, `projects/views.py:27`) | Same. But past work appears only once the student is GRADUATED, which the plan doesn't say |
-| See student ID | staff ✔, student ✘ | staff roles in search and project detail (`repository.py:119`, `project_detail.html:63-64`, `supervision.html:30`); admin tools list | Same |
+| See student identification number | staff ✔, student ✘ | staff roles in search and project detail (`repository.py:119`, `project_detail.html:63-64`, `supervision.html:30`); admin tools list | Same |
 | See contact | consent only, admin ✔ | consent only for **everyone, admin included** (`project_detail.html:77-80`) | Admin can't see unconsented contact. Stricter than the plan |
 | Propose project | student (own) | student (own) (`views.py:201`, `:262`) | Same |
-| Accept idea / mark started | supervisor (own students) | **any of SUPERVISOR, COORDINATOR, HOD who is the assigned supervisor** (`views.py:277`, `:296`; `lifecycle.py:36-38`) | Broader: coordinators and HODs can supervise |
+| Accept idea / mark started | supervisor (own students) | **any of SUPERVISOR, COORDINATOR, Head of Department who is the assigned supervisor** (`views.py:277`, `:296`; `lifecycle.py:36-38`) | Broader: coordinators and Heads of Department can supervise |
 | Record approval / defence | coordinator | coordinator in the project's department (`views.py:290`, `:308`; `approval.py:126`; `lifecycle.py:37`, `:40`) | Same (since `aea2fac`) |
 | Assign or change supervisor | coordinator | **any staff role incl. ADMIN with `can_assign_supervisors`** (`views.py:476-479`), **plus any SUPERVISOR self-assigning unassigned students** (`views.py:360-391`) | Broader in two ways |
-| Sign off and archive | HOD only | HOD in the department (`lifecycle.py` sign-off checks) | Same |
+| Sign off and archive | Head of Department only | Head of Department in the department (`lifecycle.py` sign-off checks) | Same |
 | Submit final project | student (own) | student (own), REPORT required | Same, with an extra rule |
 | Log meeting | supervisor | assigned supervisor of any supervising role (`supervision/views.py:82`, `:53-54`) | Broader |
-| Post notice | supervisor | **role SUPERVISOR only** (`supervision/views.py:209`) | Narrower than "log meeting": a coordinator or HOD who supervises can log meetings but cannot post notices |
-| View meeting records | own | student (own) **and any SUPERVISOR, COORDINATOR or HOD in the department** (`_project_access`) and admin | Broader |
+| Post notice | supervisor | **role SUPERVISOR only** (`supervision/views.py:209`) | Narrower than "log meeting": a coordinator or Head of Department who supervises can log meetings but cannot post notices |
+| View meeting records | own | student (own) **and any SUPERVISOR, COORDINATOR or Head of Department in the department** (`_project_access`) and admin | Broader |
 | Edit own entry (versioned) | all 5 | supervisor edits meeting records (versioned). Students can only confirm or dispute and comment. Proposal resubmission overwrites the form, with decision history kept separately | Students can't edit entries |
 | View audit log | admin | admin (`accounts/views.py:288`) | Same |
-| Demo data / CSV import | admin | CSV import: admin (`views.py:569`). Demo data: command line only | No UI for demo data |
-| Workflow evidence (§5/§7) | status history, approval rows and audit per transition; file hash; corrections loop; DB user without UPDATE/DELETE on audit | status events, approval decision rows (supervisor and coordinator steps only) and audit (non-demo); **no file hash; no corrections loop; DB privileges not restricted** (`.env` user has ALL on the schema, VERIFIED in this session with `SHOW GRANTS`); triggers present (`audit/migrations/0003`) | Partly implemented |
+| Demo data / CSV import | admin | CSV import: admin (`views.py:569`). Demo data: command line only | No user interface for demo data |
+| Workflow evidence (§5/§7) | status history, approval rows and audit per transition; file hash; corrections loop; database user without UPDATE/DELETE on audit | status events, approval decision rows (supervisor and coordinator steps only) and audit (non-demo); **no file hash; no corrections loop; database privileges not restricted** (`.env` user has ALL on the schema, VERIFIED in this session with `SHOW GRANTS`); triggers present (`audit/migrations/0003`) | Partly implemented |
 
 ---
 
@@ -388,7 +388,7 @@ erDiagram
 Key rules held by the database (VERIFIED):
 - `ProjectDocument` belongs to exactly one parent (CHECK, `models/document.py:80-88`).
 - One current supervisor per project (UNIQUE `(project, is_current)` plus a CHECK, `models/assignment.py`).
-- `SharedResource` must have a URL or a file (CHECK, `resource.py:60-65`).
+- `SharedResource` must have a web address or a file (CHECK, `resource.py:60-65`).
 - Department names are unique per faculty, and programmes unique per department, name and degree type.
 - One acknowledgement per (notice, user).
 - Audit UPDATE and DELETE are blocked by triggers (`audit/migrations/0003`).

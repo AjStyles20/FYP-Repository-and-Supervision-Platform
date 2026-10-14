@@ -114,7 +114,7 @@ class AuditAppendOnlyTests(TestCase):
         self.assertEqual(AuditEvent.objects.count(), 1)
 
     def test_audit_page_shows_events_without_an_actor(self):
-        # e.g. an assignment made by a management command, with assigned_by=None
+        # For example an assignment made by a management command, with assigned_by=None
         log_event(actor=None, action="test.system", summary="System action")
         self.client.force_login(self.actor)
 

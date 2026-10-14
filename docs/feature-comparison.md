@@ -1,6 +1,6 @@
-# Feature comparison: what an FYP management system is expected to do
+# Feature comparison: what a final-year project management system is expected to do
 
-The features an FYP (final-year project) management system is usually expected to have, and how Baze Project Hub covers each one. Use it for the report's requirements and comparison sections, and to agree the remaining gaps with the supervisor (`docs/decisions.md`, section C).
+The features a final-year project (final-year project) management system is usually expected to have, and how Baze Project Hub covers each one. Use it for the report's requirements and comparison sections, and to agree the remaining gaps with the supervisor (`docs/decisions.md`, section C).
 
 **Legend:** ✔ built · ◐ partly built · ✘ not built. Last checked 2026-10-12.
 
@@ -8,9 +8,9 @@ The features an FYP (final-year project) management system is usually expected t
 
 | Feature | Status | In this system |
 |---|---|---|
-| Roles (student, supervisor, coordinator, HOD, administrator) with permission checks | ✔ | Every page is checked on the server, not by hiding links |
+| Roles (student, supervisor, coordinator, Head of Department, administrator) with permission checks | ✔ | Every page is checked on the server, not by hiding links |
 | Controlled student onboarding | ✔ | The coordinator (any programme of their faculty) or the administrator adds each student (D-28) |
-| Fixing account mistakes | ✔ | The administrator corrects names, Baze email, student ID and programme, and resets passwords (D-25, D-26) |
+| Fixing account mistakes | ✔ | The administrator corrects names, Baze email, student identification number and programme, and resets passwords (D-25, D-26) |
 | Profiles and contact details | ✔ | My details: personal email and phone, each with its own visibility (D-21) |
 
 ## 2. Topics and approval
@@ -18,7 +18,7 @@ The features an FYP (final-year project) management system is usually expected t
 | Feature | Status | In this system |
 |---|---|---|
 | Student proposes a topic | ✔ | Proposal form on the project workflow |
-| Approval workflow (supervisor → coordinator → HOD) | ✔ | Every decision kept in an append-only history |
+| Approval workflow (supervisor → coordinator → Head of Department) | ✔ | Every decision kept in an append-only history |
 | Supervisor-specific approval criteria | ✔ | Topic only, literature review, or working demonstration |
 | Duplicate / similar-topic check | ✔ | Word-overlap checker against the archive |
 | Topic bank (supervisors post topics, students choose) | ✘ | Not built |
@@ -40,10 +40,10 @@ The features an FYP (final-year project) management system is usually expected t
 |---|---|---|
 | Document upload (proposal, final report) | ✔ | Permission-checked downloads |
 | Screenshots and demo videos | ✔ | Images, uploaded videos or video links (D-30) |
-| Deadlines for the whole cohort (e.g. "Chapter 1 due 15 March") | ✔ | Faculty deadlines become milestones on every project; reminders three days before (D-33) |
+| Deadlines for the whole cohort (for example "Chapter 1 due 15 March") | ✔ | Faculty deadlines become milestones on every project; reminders three days before (D-33) |
 | Per-student milestones | ✔ | The supervisor adds them and marks them done |
 | Supervisor feedback on a submission (comments on a chapter) | ✘ | Only through meeting records |
-| Plagiarism check (e.g. Turnitin) | ✘ | Usually a separate university system |
+| Plagiarism check (for example Turnitin) | ✘ | Usually a separate university system |
 
 ## 5. Defence and assessment
 
@@ -53,7 +53,7 @@ The features an FYP (final-year project) management system is usually expected t
 | Defence scheduling (dates, rooms, panels) | ✘ | Not built |
 | Marking and grading (rubrics, examiner scores, final grade) | ✘ | Not built |
 | Corrections after the defence | ✘ | Known limit; depends on Q-10 |
-| HOD sign-off and archive | ✔ | Moves files and media into the archive |
+| Head of Department sign-off and archive | ✔ | Moves files and media into the archive |
 
 ## 6. Communication
 
@@ -70,7 +70,7 @@ The features an FYP (final-year project) management system is usually expected t
 | Searchable archive of past projects, with documented gaps | ✔ | Signed-in Baze users only |
 | Import of historic projects | ✔ | All-or-nothing CSV import (D-23) |
 | Audit trail | ✔ | Append-only, protected by database triggers |
-| Reports and exports | ✔ | Project list CSV (coordinator, HOD, administrator) and the convocation list CSV |
+| Reports and exports | ✔ | Project list CSV (coordinator, Head of Department, administrator) and the convocation list CSV |
 
 ## Remaining gaps to agree with the supervisor
 

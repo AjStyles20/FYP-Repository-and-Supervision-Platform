@@ -1,8 +1,8 @@
-"""The FYP approval form and the HOD completion sign-off.
+"""The final-year project approval form and the Head of Department completion sign-off.
 
 The department's paper process is: the student agrees a topic with a supervisor, the supervisor
 fills in and signs the approval form, and the student takes it to the member of staff who logs
-approved projects. This model is that form, plus the completion sign-off the HOD records at the
+approved projects. This model is that form, plus the completion sign-off the Head of Department records at the
 end (D-08, D-15).
 """
 
@@ -76,7 +76,7 @@ class ProjectApprovalForm(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        verbose_name = "FYP approval form"
+        verbose_name = "Final-year project approval form"
 
     def __str__(self):
         return f"Approval form · {self.project.title}"
@@ -161,7 +161,7 @@ class ProjectApprovalDecision(models.Model):
 
 
 class ProjectCompletion(models.Model):
-    """The HOD's completion sign-off. Archiving follows from this, not from the defence."""
+    """The Head of Department's completion sign-off. Archiving follows from this, not from the defence."""
 
     project = models.OneToOneField(Project, on_delete=models.CASCADE, related_name="completion")
     hod = models.ForeignKey(

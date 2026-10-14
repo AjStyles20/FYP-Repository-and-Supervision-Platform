@@ -24,11 +24,11 @@
 {% if not user.personal_email %}<p class="form-note">Add a personal email in <a href="{% url 'my_contact' %}">My details</a> so people can still reach you after you graduate, when your Baze email may close.</p>{% endif %}
 
 {% if is_project_complete %}
-  <div class="form-note"><strong>FYP complete.</strong> Your project has been signed off and is listed in the completed project repository. Graduation is recorded separately by the department.</div>
+  <div class="form-note"><strong>Final-year project complete.</strong> Your project has been signed off and is listed in the completed project repository. Graduation is recorded separately by the department.</div>
 {% endif %}
 
 <section class="bento" aria-label="Student project overview">
-  <div class="bento-cell"><span class="bento-label">Project status</span><strong class="bento-value bento-value-small">{% if project %}{{ project.get_stage_display }}{% elif is_project_complete %}FYP complete{% else %}Not started{% endif %}</strong></div>
+  <div class="bento-cell"><span class="bento-label">Project status</span><strong class="bento-value bento-value-small">{% if project %}{{ project.get_stage_display }}{% elif is_project_complete %}Final-year project complete{% else %}Not started{% endif %}</strong></div>
   <div class="bento-cell"><span class="bento-label">Supervisor</span><strong class="bento-value bento-value-small">{% if project and project.supervisor %}{{ project.supervisor.get_full_name|default:project.supervisor.username }}{% else %}To be assigned{% endif %}</strong></div>
   <div class="bento-cell"><span class="bento-label">Next meeting</span><strong class="bento-value bento-value-small">{% if upcoming_meeting %}{{ upcoming_meeting.scheduled_for|date:"j M" }}{% else %}Not scheduled{% endif %}</strong></div>
   <div class="bento-cell"><span class="bento-label">Unread updates</span><strong class="bento-value">{{ unread_notice_count }}</strong></div>
@@ -81,7 +81,7 @@
       {% for resource in student_resources %}<article class="resource-preview"><h3>{{ resource.title }}</h3>{% if resource.description %}<p>{{ resource.description|truncatewords:24 }}</p>{% endif %}<small class="muted">Shared by {{ resource.author.get_full_name|default:resource.author.username }} · Updated {{ resource.updated_at|date:"j M Y, H:i" }}</small><p>{% if resource.file %}<a href="{% url 'download_shared_resource' resource.pk %}">Download resource</a>{% elif resource.url %}<a href="{{ resource.url }}" target="_blank" rel="noopener">Open resource</a>{% endif %}</p></article>{% empty %}<p class="muted">Your supervisor’s shared material will appear here when available.</p>{% endfor %}
     </section>
 
-    <div class="card card-pad-sm"><h2>Find project work</h2><ul class="plain-list"><li><a href="{% url 'running_topics' %}">Search running student topics</a></li><li><a href="{% url 'repository' %}">Browse completed projects</a></li><li><a href="{% url 'guidelines' %}">Read the FYP guide and process</a></li></ul></div>
+    <div class="card card-pad-sm"><h2>Find project work</h2><ul class="plain-list"><li><a href="{% url 'running_topics' %}">Search running student topics</a></li><li><a href="{% url 'repository' %}">Browse completed projects</a></li><li><a href="{% url 'guidelines' %}">Read the final-year project guide and process</a></li></ul></div>
   </div>
 </section>
 {% endblock %}

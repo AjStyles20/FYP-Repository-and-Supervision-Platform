@@ -4,15 +4,15 @@
 
 **Legend:** `[x]` done · `[~]` in progress · `[ ]` not started · `[?]` needs an answer or verification · `[!]` risk
 
-Requirement IDs (R-xx, N-xx) refer to `requirements.md`. Question IDs (Q-xx) refer to `decisions.md`.
+Requirement identification numbers (R-xx, N-xx) refer to `requirements.md`. Question identification numbers (Q-xx) refer to `decisions.md`.
 
 ---
 
 ## Phase 0 — Confirm (do this first)
 
-- [x] Choose the project direction (FYP repository + supervision platform)
+- [x] Choose the project direction (final-year project repository + supervision platform)
 - [x] Get the supervisor's verbal go-ahead
-- [x] Decide: HOD alone signs off and archives
+- [x] Decide: Head of Department alone signs off and archives
 - [x] Decide: demo data now, real data loaded by the school later
 - [ ] `[!]` Get the project approval form signed
 - [ ] `[?]` Ask the supervisor the open questions Q-01 to Q-11
@@ -35,7 +35,7 @@ Requirement IDs (R-xx, N-xx) refer to `requirements.md`. Question IDs (Q-xx) ref
 - [ ] Use-case diagram (five actors)
 - [ ] Activity diagram: proposal → archive
 - [ ] Activity diagram: meeting request → record → confirmation
-- [ ] Sequence diagram: HOD sign-off and automatic archive
+- [ ] Sequence diagram: Head of Department sign-off and automatic archive
 - [ ] State diagram for project status
 - [ ] Access-control matrix (start from `implementation_plan.md` §4)
 - [ ] Page map and wireframes (start from the agreed project workflow)
@@ -59,10 +59,10 @@ Requirement IDs (R-xx, N-xx) refer to `requirements.md`. Question IDs (Q-xx) ref
 - [x] Project, document and status-history models
 - [x] Past / Current tabs; Faculty → Department → Programme filters (R-01, R-02)
 - [x] Project detail page with the past-project fields (R-03)
-- [x] Staff-only student ID; contact details opt-in per detail, edited by their owner under My details (R-04, R-05, D-21)
-- [x] Baze student ID format and sign-in with Baze email or full student ID (D-20)
+- [x] Staff-only student identification number; contact details opt-in per detail, edited by their owner under My details (R-04, R-05, D-21)
+- [x] Baze student identification number format and sign-in with Baze email or full student identification number (D-20)
 - [x] Show/hide (eye) button on password fields
-- [x] Search by topic, supervisor, student name and staff-only student ID (R-06)
+- [x] Search by topic, supervisor, student name and staff-only student identification number (R-06)
 - [x] File upload and permission-checked download (R-07)
 - [x] CSV import with a rejected-rows report; purge demo (R-10)
 - [ ] Tests: visibility rules, search results, file access
@@ -74,7 +74,7 @@ Requirement IDs (R-xx, N-xx) refer to `requirements.md`. Question IDs (Q-xx) ref
 - [x] Student project start and role-checked status transitions with event history (R-11, R-12, R-17)
 - [x] Coordinator screen: assign and change supervisors with history (R-18)
 - [x] Supervisor counters and history page (R-19, R-20)
-- [x] HOD sign-off: capture gap, archive, appear in past students (R-15)
+- [x] Head of Department sign-off: capture gap, archive, appear in past students (R-15)
 - [x] Separate student status from project status (R-16)
 - [ ] Tests: every allowed transition, every refused transition, supervisor change, single current supervisor
 
@@ -101,7 +101,7 @@ Requirement IDs (R-xx, N-xx) refer to `requirements.md`. Question IDs (Q-xx) ref
 - [ ] Back up the database and media; do one test restore
 - [ ] Usability test with a few students and one or two lecturers; record results
 
-## Phase H — Optional AI module (only after Phase G)
+## Phase H — Optional artificial intelligence module (only after Phase G)
 
 - [ ] Create a labelled set of project pairs (similar / not similar); second person labels a sample
 - [ ] Baseline: TF-IDF + cosine similarity

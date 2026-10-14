@@ -192,7 +192,7 @@ class SupervisorStudentWorkflowTests(TestCase):
         })
         resource = SharedResource.objects.get(title="Chapter one template")
         self.assertEqual(resource.department, self.department)
-        # A department-wide resource with no targets (e.g. added in the admin) reaches no student.
+        # A department-wide resource with no targets (for example added in the admin) reaches no student.
         untargeted = SharedResource.objects.create(
             author=self.supervisor, department=self.department, title="Untargeted department file",
             file=SimpleUploadedFile("dept.pdf", b"dept"),
@@ -244,7 +244,7 @@ class SupervisorStudentWorkflowTests(TestCase):
             "department coordinator": User.objects.create(
                 username="r33.coordinator", role=Role.COORDINATOR, department=self.department
             ),
-            "department HOD": User.objects.create(username="r33.hod", role=Role.HOD, department=self.department),
+            "department Head of Department": User.objects.create(username="r33.hod", role=Role.HOD, department=self.department),
         }
         refused = {
             "another student": self.second_student,
@@ -254,7 +254,7 @@ class SupervisorStudentWorkflowTests(TestCase):
             "coordinator of another department": User.objects.create(
                 username="r33.outside", role=Role.COORDINATOR, department=other_department
             ),
-            "HOD of another department": User.objects.create(
+            "Head of another department": User.objects.create(
                 username="r33.outside.hod", role=Role.HOD, department=other_department
             ),
             "coordinator with no department": User.objects.create(username="r33.nodept", role=Role.COORDINATOR),

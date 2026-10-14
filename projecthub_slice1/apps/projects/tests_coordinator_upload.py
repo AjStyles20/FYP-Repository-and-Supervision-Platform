@@ -1,4 +1,4 @@
-"""The department's coordinator may upload the final document; the HOD's sign-off still archives it."""
+"""The department's coordinator may upload the final document; the Head of Department's sign-off still archives it."""
 
 import shutil
 import tempfile

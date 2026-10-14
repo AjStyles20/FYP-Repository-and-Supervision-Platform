@@ -1,4 +1,4 @@
-# Review 02 — Admin portal and UI questions
+# Review 02 — Admin portal and user interface questions
 
 Branch `repo-review` at `9a2cb97`. Review date 2026-10-08. Read-only: no code, template, migration or test was changed to write this.
 
@@ -28,7 +28,7 @@ They are shown on `templates/portals/admin.html:14-17`.
 
 - `seed_demo` creates every user with `is_demo=True` (`apps/accounts/management/commands/seed_demo.py:256`). The three user counters filter `is_demo=False`, so on a database that holds only demo data they are 0. That is intended: the counters describe real accounts only.
 - The admin accounts themselves (role `admin`) are not counted by any counter.
-- `programme_count` is **not** 0 after seeding: it counts all programmes, and `seed_demo` creates three (Computer Science BSc and MSc, Software Engineering BSc; `seed_demo.py:49`, `:240-242`). It is 0 only on a database with no programmes at all.
+- `programme_count` is **not** 0 after seeding: it counts all programmes, and `seed_demo` creates three (Computer Science Bachelor of Science and Master of Science, Software Engineering Bachelor of Science; `seed_demo.py:49`, `:240-242`). It is 0 only on a database with no programmes at all.
 - The committed screenshot `/docs/screenshots/admin-portal-1280.png` shows 1 / 1 / 0 / 3: one real pending registration and one real student were added by the screenshot setup, there are no real staff, and the 3 programmes are the demo ones.
 
 **Inconsistency (INFERRED):** three counters hide demo rows and one does not. If the counter should mean "real programmes", it needs `Programme.objects.filter(is_demo=False)`.
@@ -39,7 +39,7 @@ They are shown on `templates/portals/admin.html:14-17`.
 
 > **Update 2026-10-10:** both gaps below are fixed (`apps/projects/imports.py`). The import is now all or nothing: every row is checked in one transaction, with a savepoint per row, and if any row is bad nothing is saved and every bad row is listed with its line number. Database errors (`IntegrityError`, `DataError`) and unexpected errors become row errors, never a traceback. Supervisors **and previous supervisors** must pass `can_supervise_in` (`apps/projects/services/assignment.py`), the rule `assign_project_supervisor` uses, without the active check for historic records. Rows about demo students are imported as demo data. Sample: `docs/sample_import.csv`. Tests: `apps/projects/tests_import.py`. The findings below describe the code at review time.
 
-**Where:** view `apps/projects/views.py:573-586` (admin only, `@role_required(Role.ADMIN)`), form `apps/projects/forms.py:105-114`, importer `apps/projects/imports.py:16-70`, URL `apps/projects/urls.py:19`.
+**Where:** view `apps/projects/views.py:573-586` (admin only, `@role_required(Role.ADMIN)`), form `apps/projects/forms.py:105-114`, importer `apps/projects/imports.py:16-70`, web address `apps/projects/urls.py:19`.
 
 **What it writes (VERIFIED)**
 
@@ -62,7 +62,7 @@ They are shown on `templates/portals/admin.html:14-17`.
 - Each row runs in its own `transaction.atomic()` savepoint (`imports.py:34`). A bad row is rolled back by itself, including an `ArchivedProject` already created in that row if a later previous-supervisor lookup fails (`:62`).
 - The error is recorded with its CSV line number (`:66-69`). The other rows carry on, and the page lists the rejected rows (`views.py:586`).
 - **Gap (INFERRED):** only the listed exception types are caught (`:66-68`). A database error such as `IntegrityError`/`DataError` (for example an over-long value in a field that is not truncated) would not be caught and would give a server error for the whole request. Rows imported before it would stay, because each one committed in its own savepoint.
-- **Gap (INFERRED):** previous supervisors are not checked against the project's department, unlike the main supervisor (`:61-62` vs `:50`).
+- **Gap (INFERRED):** previous supervisors are not checked against the project's department, unlike the main supervisor (`:61-62` Versus `:50`).
 
 ---
 
@@ -96,7 +96,7 @@ The CSV import link is also duplicated: `admin.html:32` and `admin_tools.html:5`
 
 ---
 
-## 5. Which seed data sets the guide URL to example.com
+## 5. Which seed data sets the guide web address to example.com
 
 > **Update 2026-10-10:** fixed. The seeded "Literature review checklist" is now a real one-page PDF generated at seed time (`apps/accounts/demo_pdf.py`; nothing binary is committed), downloaded through the permission-checked `download_shared_resource`. Seeded project documents are valid PDFs too. An older demo database has its external link replaced on the next seed (`_replace_external_demo_links`), and `purge_demo` deletes the file with its demo author. Tests: `test_no_seeded_resource_links_to_an_external_url`, `test_seeded_downloads_are_valid_pdfs` and the two tests after it in `apps/accounts/tests.py`. The findings below describe the code at review time.
 
@@ -116,7 +116,7 @@ The CSV import link is also duplicated: `admin.html:32` and `admin_tools.html:5`
 
 | Model | Where |
 |---|---|
-| `AuditEvent` | `apps/audit/admin.py:6-20` (the model and DB triggers also block changes: `apps/audit/models.py:7-36`) |
+| `AuditEvent` | `apps/audit/admin.py:6-20` (the model and database triggers also block changes: `apps/audit/models.py:7-36`) |
 | `ProjectSupervisorAssignment` | `apps/projects/admin.py:59-73` |
 | `ProjectStatusEvent` | `apps/projects/admin.py:76-90` (model guard too: `apps/projects/models/project.py:147-193`) |
 | `ProjectApprovalDecision` | `apps/projects/admin.py:93-106` (model guard: `apps/projects/models/approval.py:112-160`) |

@@ -4,9 +4,9 @@
 <section class="page-heading">
   <p class="eyebrow">Head of Department{% if department %} · {{ department.name }}{% endif %}</p>
   <h1>Department staff</h1>
-  <p class="muted">Appoint the FYP coordinator, who logs approved topics and records defences, and choose which lecturers may assign supervisors. New staff accounts are created by the system administrator.</p>
+  <p class="muted">Appoint the final-year project coordinator, who logs approved topics and records defences, and choose which lecturers may assign supervisors. New staff accounts are created by the system administrator.</p>
 </section>
-{% if staff and not coordinator_count %}<aside class="form-note"><strong>No FYP coordinator yet.</strong> Approved topics cannot be logged and defences cannot be recorded until you appoint one below.</aside>{% endif %}
+{% if staff and not coordinator_count %}<aside class="form-note"><strong>No final-year project coordinator yet.</strong> Approved topics cannot be logged and defences cannot be recorded until you appoint one below.</aside>{% endif %}
 <section class="card">
   {% if staff %}
     <div class="table-wrap">
@@ -16,13 +16,13 @@
           {% for member in staff %}
             <tr>
               <td data-label="Lecturer">{{ member.get_full_name|default:member.username }}<br><small class="muted">{{ member.email }}</small></td>
-              <td data-label="Role">{% if member.role == "coordinator" %}<span class="tag tag-live">FYP coordinator</span>{% else %}Supervisor{% endif %}</td>
+              <td data-label="Role">{% if member.role == "coordinator" %}<span class="tag tag-live">Final-year project coordinator</span>{% else %}Supervisor{% endif %}</td>
               <td data-label="Assigns supervisors">{% if member.can_assign_supervisors %}Yes{% else %}No{% endif %}</td>
               <td data-label="Change">
                 <div class="row">
                   <form method="post" class="inline-form">{% csrf_token %}<input type="hidden" name="user_id" value="{{ member.pk }}">
                     {% if member.role == "coordinator" %}<button type="submit" name="action" value="make_supervisor" class="btn-sm">Make supervisor</button>
-                    {% else %}<button type="submit" name="action" value="make_coordinator" class="btn-sm">Make FYP coordinator</button>{% endif %}
+                    {% else %}<button type="submit" name="action" value="make_coordinator" class="btn-sm">Make final-year project coordinator</button>{% endif %}
                     {% if member.can_assign_supervisors %}<button type="submit" name="action" value="remove_allocation" class="btn-sm">Remove assigning</button>
                     {% else %}<button type="submit" name="action" value="grant_allocation" class="btn-sm">Allow assigning</button>{% endif %}
                   </form>

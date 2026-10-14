@@ -27,7 +27,7 @@
     <section class="card">
       <p class="eyebrow">{{ project.department }} · {{ project.programme }}</p>
       <h3>{{ project.student.get_full_name|default:project.student.username }}</h3>
-      {% if project.student.student_profile %}<p class="muted">Student ID: {{ project.student.student_profile.student_number }}</p>{% endif %}
+      {% if project.student.student_profile %}<p class="muted">Student identification number: {{ project.student.student_profile.student_number }}</p>{% endif %}
       <p><strong>{{ project.title }}</strong> · {{ project.get_stage_display }}</p>
       {% include "projects/_health.html" with health=row.health %}
       <p class="muted">{{ project.description|default:"No project summary has been added yet."|truncatewords:36 }}</p>

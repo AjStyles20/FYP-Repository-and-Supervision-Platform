@@ -1,6 +1,6 @@
 """The project record and its lifecycle history.
 
-A project is what a student is being examined on. It becomes past work only when the HOD signs
+A project is what a student is being examined on. It becomes past work only when the Head of Department signs
 off completion, which is a separate act from a defence happening (decision D-15).
 """
 

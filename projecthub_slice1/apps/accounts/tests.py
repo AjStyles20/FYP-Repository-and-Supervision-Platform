@@ -513,7 +513,7 @@ class RegistrationFlowTests(TestCase):
                 )
                 self.assertRedirects(response, reverse("dashboard"))
                 self.client.logout()
-        # The student ID no longer signs in (D-41).
+        # The student identification number no longer signs in (D-41).
         response = self.client.post(reverse("login"), {"username": "BU/26/CS/1001", "password": self.password})
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "email or password is incorrect")
@@ -1135,7 +1135,7 @@ class RegistrationDecisionNoticeTests(TestCase):
         response = self._login("noah@bazeuniversity.edu.ng", self.PASSWORD)
 
         self.assertContains(response, "still awaiting approval by an administrator")
-        # By student ID it is just a failed sign-in now, and says nothing about the account.
+        # By student identification number it is just a failed sign-in now, and says nothing about the account.
         self.assertNotContains(self._login("BU/26/CS/5555", self.PASSWORD), "still awaiting approval")
 
     def test_a_wrong_password_reveals_nothing_about_the_account(self):
@@ -1191,11 +1191,11 @@ class RegistrationDecisionNoticeTests(TestCase):
         self.client.force_login(self.admin)
 
         self.client.post(reverse("review_student_registration", args=[student.pk]),
-                         {"action": "reject", "reason": "Student ID does not match our records."})
+                         {"action": "reject", "reason": "Student identification number does not match our records."})
 
-        self.assertIn("Reason: Student ID does not match our records.", mail.outbox[0].body)
+        self.assertIn("Reason: Student identification number does not match our records.", mail.outbox[0].body)
         self.assertEqual(AuditEvent.objects.get(action="account.registration_reject").details,
-                         {"reason": "Student ID does not match our records."})
+                         {"reason": "Student identification number does not match our records."})
 
     def test_a_mail_failure_keeps_the_decision_and_warns_the_admin(self):
         from unittest import mock
@@ -1287,12 +1287,12 @@ class RegistrationStatusPageTests(TestCase):
 # Self-registration is off by default (D-28); these tests cover it for a department that switches it on.
 @override_settings(PASSWORD_HASHERS=["django.contrib.auth.hashers.MD5PasswordHasher"], STUDENT_SELF_REGISTRATION=True)
 class StudentIdFormatTests(TestCase):
-    """Item 4: the student ID must match STUDENT_ID_REGEX, with a clear message when it does not."""
+    """Item 4: the student identification number must match STUDENT_ID_REGEX, with a clear message when it does not."""
 
     @classmethod
     def setUpTestData(cls):
-        faculty = Faculty.objects.create(name="ID Faculty")
-        department = Department.objects.create(faculty=faculty, name="ID Department")
+        faculty = Faculty.objects.create(name="Identification number Faculty")
+        department = Department.objects.create(faculty=faculty, name="Identification number Department")
         cls.programme = Programme.objects.create(department=department, name="Computer Science", degree_type="BSc")
 
     def _register(self, student_number, email="id.check@bazeuniversity.edu.ng"):
@@ -1311,7 +1311,7 @@ class StudentIdFormatTests(TestCase):
         for number in ("7892", "BU/22/CS/4012", "BU/23D/IT/7892", "BU/23B/IT/789012", "BU23BIT7892", "BU 23B IT 7892", "BU-23B-IT-7892"):
             response = self._register(number)
             self.assertEqual(response.status_code, 200, number)
-            self.assertContains(response, "full student ID as it appears on your Baze ID card", msg_prefix=number)
+            self.assertContains(response, "full student identification number as it appears on your Baze identity card", msg_prefix=number)
         self.assertFalse(User.objects.filter(username="id.check@bazeuniversity.edu.ng").exists())
 
     def test_sign_in_takes_the_baze_email_but_no_form_of_the_student_id(self):
@@ -1329,12 +1329,12 @@ class StudentIdFormatTests(TestCase):
         page = self.client.get(reverse("login"))
         self.assertContains(page, '<span class="field-label">Baze email</span>', html=True)
         self.assertContains(page, 'type="email"')
-        self.assertNotContains(page, "student ID")
+        self.assertNotContains(page, "student identification number")
         self.assertNotContains(page, "staff username")
 
     @override_settings(STUDENT_ID_REGEX=r"^[A-Z]{2}\d{4}$", STUDENT_ID_HELP="two letters and four digits")
     def test_the_format_and_message_come_from_settings(self):
-        self.assertContains(self._register("BU/23B/IT/7892"), "Baze ID card: two letters and four digits.")
+        self.assertContains(self._register("BU/23B/IT/7892"), "Baze identity card: two letters and four digits.")
         self.assertEqual(self._register("ab1234").status_code, 302)
 
 

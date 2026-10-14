@@ -144,9 +144,9 @@ DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL", "Baze Project Hub <no-reply@bazeu
 
 # --- Project Hub product settings -------------------------------------------------------------
 
-# Student ID format for self-registration, from .env. The Baze ID is BU / year and batch (A, B or C)
-# / department code / number, e.g. BU/23B/IT/7892. Input is upper-cased before it is checked and
-# stored. STUDENT_ID_HELP is the message shown when an ID does not match, so change both together.
+# Student identification number format for self-registration, from .env. The Baze identification number is BU / year and batch (A, B or C)
+# / department code / number, for example BU/23B/IT/7892. Input is upper-cased before it is checked and
+# stored. STUDENT_ID_HELP is the message shown when an identification number does not match, so change both together.
 STUDENT_ID_REGEX = env("STUDENT_ID_REGEX", r"^BU/\d{2}[A-C]/[A-Z]{2,4}/\d{3,5}$")
 STUDENT_ID_HELP = env("STUDENT_ID_HELP", "BU, your year and batch, your department code and your number, separated by slashes, like BU/23B/IT/7892")
 try:
@@ -168,7 +168,7 @@ SITE_NAME = "Baze Project Hub"
 # Repository access follows D-09: signed-in Baze Project Hub accounts only.
 PUBLIC_REPOSITORY = False
 
-# Personal data (student ID, an individual's contact) is never public, whatever the flag above says.
+# Personal data (student identification number, an individual's contact) is never public, whatever the flag above says.
 REPOSITORY_PAGE_SIZE = 12
 
 # Similar-topic checker (apps/projects/services/similarity.py): archived projects whose Jaccard

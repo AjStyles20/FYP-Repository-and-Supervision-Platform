@@ -109,7 +109,7 @@ class CsvImportTests(TestCase):
             with self.subTest(label):
                 imported, errors = import_archived_projects(csv_file(row))
                 self.assertEqual(imported, 0)
-                self.assertIn("must be a supervisor, coordinator or HOD in Computer Science", errors[0][1])
+                self.assertIn("must be a supervisor, coordinator or Head of Department in Computer Science", errors[0][1])
         # A supervisor who has since left is still a valid historic record.
         self.assertEqual(import_archived_projects(csv_file(self.row(supervisor_username="retired")))[0], 1)
 

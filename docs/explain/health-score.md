@@ -63,9 +63,9 @@ risk = 0.45  ->  score 45  ->  Watch
 |---|---|
 | The project's supervisor | Workflow page, and each student on "Supervised students" |
 | A coordinator in the project's department | Workflow page, and "Projects by health score" on the coordinator portal (top 8, highest first) |
-| HOD, student, admin | Not shown |
+| Head of Department, student, admin | Not shown |
 
-A HOD or coordinator who is the assigned supervisor of a project sees its score as that project's supervisor.
+A Head of Department or coordinator who is the assigned supervisor of a project sees its score as that project's supervisor.
 
 ## Known limits
 

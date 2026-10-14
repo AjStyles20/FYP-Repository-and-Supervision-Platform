@@ -1,4 +1,4 @@
-# Defence Q&A: Baze Project Hub
+# Defence questions and answers: Baze Project Hub
 
 Likely examiner questions, with a short answer to say aloud, how it works, where it is in the code, and how to show it live. Paths are relative to `projecthub_slice1/`. Keep this file up to date when a feature changes.
 
@@ -10,10 +10,10 @@ Likely examiner questions, with a short answer to say aloud, how it works, where
 
 ### 1. How do people get accounts? Can anyone become an administrator?
 
-**Say:** "Nobody creates their own account. The department's FYP coordinator, or the administrator, adds each final-year student after checking they're ready for their FYP, so only the right students get accounts. Staff accounts are created by the administrator. The very first administrator is created on the server with `createsuperuser`, so nobody can make themselves an admin through the website."
+**Say:** "Nobody creates their own account. The department's final-year project coordinator, or the administrator, adds each final-year student after checking they're ready for their final-year project, so only the right students get accounts. Staff accounts are created by the administrator. The very first administrator is created on the server with `createsuperuser`, so nobody can make themselves an admin through the website."
 
 **How it works:**
-- `add_student_account` (`apps/accounts/views.py`) with `AddStudentForm` (`apps/accounts/forms.py`): administrators for any department, a coordinator for any programme of their faculty (D-29). Same checks as registration (Baze email, Baze student ID format, both unique). The account is active at once with a temporary password shown once; the student must choose their own at first sign-in. Audited as `account.student_created`. Decision D-28.
+- `add_student_account` (`apps/accounts/views.py`) with `AddStudentForm` (`apps/accounts/forms.py`): administrators for any department, a coordinator for any programme of their faculty (D-29). Same checks as registration (Baze email, Baze student identification number format, both unique). The account is active at once with a temporary password shown once; the student must choose their own at first sign-in. Audited as `account.student_created`. Decision D-28.
 - Public self-registration is switched off (`STUDENT_SELF_REGISTRATION`); `/register/` explains who creates accounts. If a department switches it on, `StudentRegistrationForm` always creates an inactive, pending **student** (a forged `role=admin` is ignored) for the administrator to approve or reject.
 - Staff accounts: **System administration → Add staff account** (`add_staff_account`).
 - First admin: `python manage.py createsuperuser`. The custom manager (`ProjectHubUserManager.create_superuser` in `apps/accounts/models.py`) sets role = administrator.
@@ -25,7 +25,7 @@ Likely examiner questions, with a short answer to say aloud, how it works, where
 **Say:** "It is 12 bytes from the operating system's cryptographically secure random generator, encoded as 16 URL-safe characters: 96 bits, so it cannot be guessed. The database stores only a salted PBKDF2 hash. The password is shown once on a page the browser is told not to cache, it is never logged, and the person must replace it at first sign-in."
 
 **How it works:**
-1. `generate_temporary_password()` → `secrets.token_urlsafe(12)` (`apps/accounts/forms.py`). `secrets` uses the OS CSPRNG; the `random` module would be predictable and must not be used for passwords.
+1. `generate_temporary_password()` → `secrets.token_urlsafe(12)` (`apps/accounts/forms.py`). `secrets` uses the operating system CSPRNG; the `random` module would be predictable and must not be used for passwords.
 2. 12 bytes = 96 bits ≈ 7.9 × 10²⁸ possibilities; Base64url turns them into 16 characters from A–Z a–z 0–9 `-` `_`.
 3. `create_user(password=...)` stores a **PBKDF2-SHA256** hash: random salt per user, **1,000,000 iterations** (Django 5.2 default). The plain password is never stored, which is also why a forgotten password must be *reset*, not *looked up*.
 4. The result page is rendered directly (no redirect, so no flash message or cookie holds it) with `Cache-Control: no-store`. The audit entry records role and department only; a test checks the password is absent.
@@ -45,17 +45,17 @@ Likely examiner questions, with a short answer to say aloud, how it works, where
 
 **Say:** "Every non-public view is protected on the server by a `role_required` decorator: deny by default, 403 for the wrong role, the login page for anyone signed out. Hiding a menu link is never the protection."
 
-**How it works:** `role_required(*roles)` in `apps/accounts/permissions.py` wraps `login_required` and checks `request.user.role`. Object-level checks go further: a supervisor can only open workflows for projects they supervise, a coordinator only their department's (`project_workflow` in `apps/projects/views.py`). File downloads return 404, not 403, for files outside your department, so an ID does not even confirm a file exists (`download_project_document`).
+**How it works:** `role_required(*roles)` in `apps/accounts/permissions.py` wraps `login_required` and checks `request.user.role`. Object-level checks go further: a supervisor can only open workflows for projects they supervise, a coordinator only their department's (`project_workflow` in `apps/projects/views.py`). File downloads return 404, not 403, for files outside your department, so an identification number does not even confirm a file exists (`download_project_document`).
 
 **Show it:** sign in as a student and type `/admin-tools/` in the address bar → 403 page.
 
-### 3b. Who does what: supervisor, FYP coordinator, HOD, administrator?
+### 3b. Who does what: supervisor, final-year project coordinator, Head of Department, administrator?
 
-**Say:** "It follows how Baze works. Supervisors accept topics against their own criteria and supervise. The FYP coordinator, a lecturer the HOD appoints, logs the signed approval form and records defences. The HOD does HOD work: signs off when the student brings the final documents, which archives the project, and keeps the convocation list. The administrator only manages accounts and setup and sees no supervision material. Allocating supervisors is a permission the HOD gives to chosen lecturers, not a job title."
+**Say:** "It follows how Baze works. Supervisors accept topics against their own criteria and supervise. The final-year project coordinator, a lecturer the Head of Department appoints, logs the signed approval form and records defences. The Head of Department does Head of Department work: signs off when the student brings the final documents, which archives the project, and keeps the convocation list. The administrator only manages accounts and setup and sees no supervision material. Allocating supervisors is a permission the Head of Department gives to chosen lecturers, not a job title."
 
-**How it works:** stage rules in `TRANSITION_ROLES` (`apps/projects/services/lifecycle.py`); the coordinator-only check in `log_approved_form` (`apps/projects/services/approval.py`); the HOD's *Department staff* page (`department_staff` in `apps/accounts/views.py`) can only switch lecturers in their own department between supervisor and coordinator and grant the allocation permission; the HOD's queue shows only defended projects; the *Convocation list* (`convocation_list` in `apps/projects/views.py`) prints or downloads as CSV, with spreadsheet-formula protection, and every download is audited. Decision D-19.
+**How it works:** stage rules in `TRANSITION_ROLES` (`apps/projects/services/lifecycle.py`); the coordinator-only check in `log_approved_form` (`apps/projects/services/approval.py`); the Head of Department's *Department staff* page (`department_staff` in `apps/accounts/views.py`) can only switch lecturers in their own department between supervisor and coordinator and grant the allocation permission; the Head of Department's queue shows only defended projects; the *Convocation list* (`convocation_list` in `apps/projects/views.py`) prints or downloads as CSV, with spreadsheet-formula protection, and every download is audited. Decision D-19.
 
-**Show it:** sign in as the HOD → Department staff → make a lecturer the FYP coordinator → Convocation list → Download.
+**Show it:** sign in as the Head of Department → Department staff → make a lecturer the final-year project coordinator → Convocation list → Download.
 
 ### 4. Can an administrator lock everyone out?
 
@@ -104,13 +104,13 @@ Likely examiner questions, with a short answer to say aloud, how it works, where
 
 ## Features
 
-### 9. How does the similar-topic checker work? Is it AI?
+### 9. How does the similar-topic checker work? Is it artificial intelligence?
 
 **Say:** "It is not machine learning; it is a transparent word-overlap measure. It turns the title and abstract into a set of words, removing punctuation, common words like 'the', and plural and -ing endings, then computes the Jaccard index: shared words divided by all words. Archived projects scoring 0.35 or more are shown as a warning. It never blocks a submission."
 
-**Worked example:** "Campus Shuttle Delay Tracker" vs archived "Campus Shuttle Tracker": 7 shared words of 10 → 0.70 → listed.
+**Worked example:** "Campus Shuttle Delay Tracker" Versus archived "Campus Shuttle Tracker": 7 shared words of 10 → 0.70 → listed.
 
-**Limits to admit:** no synonyms ("timetable clash" vs "schedule conflict" scores 0), crude stemming, short texts swing a lot. That is why it only warns.
+**Limits to admit:** no synonyms ("timetable clash" Versus "schedule conflict" scores 0), crude stemming, short texts swing a lot. That is why it only warns.
 
 **Details:** `docs/explain/similarity.md`; code `apps/projects/services/similarity.py`.
 
@@ -146,7 +146,7 @@ Likely examiner questions, with a short answer to say aloud, how it works, where
 
 ### 14. Who can see what in the repository?
 
-**Say:** "Only signed-in Baze users can browse projects; the public internet cannot. Student IDs are visible to staff only. Contact details are opt-in: each person chooses, for their personal email and for their phone number separately, whether only they, staff, or all signed-in users can see it. Private supervision records such as meeting discussions are limited to the student, their supervisor and authorised department staff."
+**Say:** "Only signed-in Baze users can browse projects; the public internet cannot. Student identification numbers are visible to staff only. Contact details are opt-in: each person chooses, for their personal email and for their phone number separately, whether only they, staff, or all signed-in users can see it. Private supervision records such as meeting discussions are limited to the student, their supervisor and authorised department staff."
 
 **Details:** decisions D-09, D-14 and D-21 in `docs/decisions.md`; Q21 below.
 
@@ -207,13 +207,13 @@ Guards: `apps/audit/models.py`, `apps/projects/models/project.py`, `apps/project
 
 ## Sign-in, contact details and demo data
 
-### 20. What does everyone use to log in, and what is the student ID?
+### 20. What does everyone use to log in, and what is the student identification number?
 
-**Say:** "Their Baze email, students and staff alike. Lecturers have no student ID, so one way in for everyone is simpler, and the Baze email is the one thing every member of the university has. The student ID, for example `BU/23B/IT/7892` (year 23, batch B, department IT, number), is still recorded and checked when a student is added, and staff can search by it, but it doesn't log anyone in."
+**Say:** "Their Baze email, students and staff alike. Lecturers have no student identification number, so one way in for everyone is simpler, and the Baze email is the one thing every member of the university has. The student identification number, for example `BU/23B/IT/7892` (year 23, batch B, department IT, number), is still recorded and checked when a student is added, and staff can search by it, but it doesn't log anyone in."
 
-**How it works:** `ProjectAuthenticationForm.clean` in `apps/accounts/forms.py` looks the account up by Baze email (any case); anything else becomes a blank that matches no account. When a student is added, `checked_student_id` upper-cases the ID and checks it against `STUDENT_ID_REGEX` (`config/settings.py`; can be changed in `.env` if Baze's rules differ). Decisions D-20 and D-41.
+**How it works:** `ProjectAuthenticationForm.clean` in `apps/accounts/forms.py` looks the account up by Baze email (any case); anything else becomes a blank that matches no account. When a student is added, `checked_student_id` upper-cases the identification number and checks it against `STUDENT_ID_REGEX` (`config/settings.py`; can be changed in `.env` if Baze's rules differ). Decisions D-20 and D-41.
 
-**Show it:** log in as `ADAEZE@bazeuniversity.edu.ng` in capitals (it works); then try her student ID `BU/22A/CS/4041` and see the general error.
+**Show it:** log in as `ADAEZE@bazeuniversity.edu.ng` in capitals (it works); then try her student identification number `BU/22A/CS/4041` and see the general error.
 
 ### 21. Who can see a person's phone number or personal email?
 
@@ -245,7 +245,7 @@ Guards: `apps/audit/models.py`, `apps/projects/models/project.py`, `apps/project
 
 ### 25. A student or staff member entered the wrong details and can't change them. What does the administrator do?
 
-**Say:** "They fix it; that's what the administrator is for. From System administration the admin opens the person, staff from the staff list and students by searching their name, email or student ID, and corrects the name, the Baze email, the student ID or the programme, or resets a forgotten password. The sign-in moves with a corrected email, the person gets a notice at the new address, and every change goes into the audit log. People still change their own personal email and phone themselves under My details."
+**Say:** "They fix it; that's what the administrator is for. From System administration the admin opens the person, staff from the staff list and students by searching their name, email or student identification number, and corrects the name, the Baze email, the student identification number or the programme, or resets a forgotten password. The sign-in moves with a corrected email, the person gets a notice at the new address, and every change goes into the audit log. People still change their own personal email and phone themselves under My details."
 
 **How it works:** `manage_staff_account` and `manage_student_account` in `apps/accounts/views.py`, with `StaffEditForm` and `StudentEditForm` in `apps/accounts/forms.py`; the checks are shared (`corrected_baze_email`, `checked_student_id`). Two limits protect the workflow: reactivating an account never bypasses registration approval, and a student's programme can't change once they have a project, because the project belongs to that programme's department. Tests: `apps/accounts/tests_student_admin.py` and `ManageStaffAccountTests`. Decisions D-25 and D-26.
 
@@ -253,7 +253,7 @@ Guards: `apps/audit/models.py`, `apps/projects/models/project.py`, `apps/project
 
 ### 26. Why are there two administrators in the staff list?
 
-**Say:** "It's deliberate: one is the account I use every day, the other is a backup. The system never allows zero administrators: it refuses to deactivate or demote the last active one, and nobody can deactivate or demote themselves. A second administrator means that if the main account is locked out or its password is lost, someone can still get in and fix it. The backup has its own long password and is used rarely, and everything either account does is recorded in the audit log under its name. In production, Baze ICT would hold these accounts, not the developer."
+**Say:** "It's deliberate: one is the account I use every day, the other is a backup. The system never allows zero administrators: it refuses to deactivate or demote the last active one, and nobody can deactivate or demote themselves. A second administrator means that if the main account is locked out or its password is lost, someone can still get in and fix it. The backup has its own long password and is used rarely, and everything either account does is recorded in the audit log under its name. In production, Baze Information and Communication Technology would hold these accounts, not the developer."
 
 **How it works:** `manage_staff_account` in `apps/accounts/views.py` refuses to deactivate your own account or the last active administrator (`active_admin_count` in `apps/accounts/forms.py`); `StaffEditForm` refuses the same for a role change. Both accounts were made with `createsuperuser`, so both also have full access to the Django admin for maintaining the system (Q4, Q16).
 
@@ -269,7 +269,7 @@ Guards: `apps/audit/models.py`, `apps/projects/models/project.py`, `apps/project
 
 ### 28. What are the screenshots and demo videos for, and how are they controlled?
 
-**Say:** "So people can see a project working, not just read about it. A student adds up to six screenshots and up to two demo videos, either an uploaded file or a YouTube, Drive or Vimeo link. For supervisors who approve on a working demonstration, the video is evidence that stays after the defence, and future students browsing the archive see what was built. While the project runs, only the student, their supervisor and department staff see them; when the HOD signs off they move into the archive with the project's files."
+**Say:** "So people can see a project working, not just read about it. A student adds up to six screenshots and up to two demo videos, either an uploaded file or a YouTube, Drive or Vimeo link. For supervisors who approve on a working demonstration, the video is evidence that stays after the defence, and future students browsing the archive see what was built. While the project runs, only the student, their supervisor and department staff see them; when the Head of Department signs off they move into the archive with the project's files."
 
 **How it works:** `ProjectMedia` (`apps/projects/models/media.py`) hangs off a running or an archived project, like documents. Uploads are checked by extension, size and their first bytes, so a script renamed `photo.png` is refused; links must be https from YouTube, Google Drive or Vimeo. Files are served by `project_media_file` after the same access check as project files, with `nosniff`. `sign_off_completion` moves media with the documents; `purge_demo` deletes demo media files. Tests: `apps/projects/tests_media.py`. Decision D-30.
 
@@ -289,9 +289,9 @@ Guards: `apps/audit/models.py`, `apps/projects/models/project.py`, `apps/project
 
 ### 31. Can the department get a list of all projects?
 
-**Say:** "Yes, as a spreadsheet. The coordinator downloads the faculty's running projects, the HOD the department's, and the administrator everything: student, ID, programme, supervisor, stage and milestone progress, plus the health band for those allowed to see it. A cell can't turn into a spreadsheet formula, and each download is in the audit log."
+**Say:** "Yes, as a spreadsheet. The coordinator downloads the faculty's running projects, the Head of Department the department's, and the administrator everything: student, identification number, programme, supervisor, stage and milestone progress, plus the health band for those allowed to see it. A cell can't turn into a spreadsheet formula, and each download is in the audit log."
 
-**How it works:** `export_projects` in `apps/projects/views.py`, with the same `_csv_safe` guard as the convocation list. Tests: `apps/projects/tests_export.py`. Decision D-34. The full feature comparison with other FYP systems is in `docs/feature-comparison.md`.
+**How it works:** `export_projects` in `apps/projects/views.py`, with the same `_csv_safe` guard as the convocation list. Tests: `apps/projects/tests_export.py`. Decision D-34. The full feature comparison with other final-year project systems is in `docs/feature-comparison.md`.
 
 ### 32. Isn't the proposal form a lot for students, and can they change it later?
 
@@ -301,7 +301,7 @@ Guards: `apps/audit/models.py`, `apps/projects/models/project.py`, `apps/project
 
 ### 33. Can someone other than the student upload the final report?
 
-**Say:** "Yes, the department's coordinator, once the project is in progress, submitted or defended. Students sometimes bring the final copy to the office, so the coordinator can put it on the system for them. The file is recorded under the coordinator's name and the upload is in the audit log. Nothing else changes: the HOD still signs off, and that moves every file into the archive. Staff who may open the files see them listed on the workflow page, with who uploaded each one."
+**Say:** "Yes, the department's coordinator, once the project is in progress, submitted or defended. Students sometimes bring the final copy to the office, so the coordinator can put it on the system for them. The file is recorded under the coordinator's name and the upload is in the audit log. Nothing else changes: the Head of Department still signs off, and that moves every file into the archive. Staff who may open the files see them listed on the workflow page, with who uploaded each one."
 
 **How it works:** `upload_project_document` and `_coordinator_can_upload` in `apps/projects/views.py`; the file list reuses `_can_open_current_project_files`, so nobody gains access. Tests: `apps/projects/tests_coordinator_upload.py`. Decision D-37.
 

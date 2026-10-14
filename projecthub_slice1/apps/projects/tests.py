@@ -348,7 +348,7 @@ class RepositoryTests(TestCase):
         response = self.client.get(reverse("running_topics"), {"q": "BU/26/CS/1234"})
 
         self.assertNotContains(response, "Campus Transport Analytics")
-        self.assertNotContains(response, "student ID")
+        self.assertNotContains(response, "student identification number")
 
     def test_staff_can_search_by_student_id(self):
         staff = User.objects.create_user(
@@ -501,7 +501,7 @@ class RepositoryTests(TestCase):
             "own student": self.student,
             "assigned supervisor": self.supervisor,
             "department coordinator": self.coordinator,
-            "department HOD": self.hod,
+            "department Head of Department": self.hod,
             "administrator": self.admin,
         }
         refused = {
@@ -512,7 +512,7 @@ class RepositoryTests(TestCase):
             "coordinator of another department": User.objects.create(
                 username="doc.other.coordinator", role=Role.COORDINATOR, department=other_department
             ),
-            "HOD with no department": User.objects.create(username="doc.nodept.hod", role=Role.HOD),
+            "Head of Department with no department": User.objects.create(username="doc.nodept.hod", role=Role.HOD),
         }
         url = reverse("download_project_document", args=[document.pk])
 
@@ -917,7 +917,7 @@ class ApprovalDecisionHistoryTests(TestCase):
 
 
 class CompletionGapCheckTests(TestCase):
-    """HOD sign-off needs a documented gap, or an explicit confirmation that there is none."""
+    """Head of Department sign-off needs a documented gap, or an explicit confirmation that there is none."""
 
     @classmethod
     def setUpTestData(cls):
@@ -1131,7 +1131,7 @@ class SimilarityScoreTests(SimpleTestCase):
         self.assertGreaterEqual(score, 0.35)
 
     def test_partly_overlapping_text_scores_shared_over_all_words(self):
-        # {campus, shuttle, delay, tracker} vs {campus, shuttle, booking, app}: 2 shared of 6 words.
+        # {campus, shuttle, delay, tracker} versus {campus, shuttle, booking, app}: 2 shared of 6 words.
         self.assertAlmostEqual(similarity("Campus Shuttle Delay Tracker", "A campus shuttle booking app"), 2 / 6)
 
     def test_unrelated_text_scores_zero(self):
@@ -1391,7 +1391,7 @@ class ProjectStartKeywordsTests(TestCase):
         page = self.client.get(reverse("start_project"))
         self.assertContains(page, "Keywords (optional)")
         self.assertContains(page, "They help people find the project in a search.")
-        self.assertContains(page, 'placeholder="e.g. fintech, fraud detection, mobile money"')
+        self.assertContains(page, 'placeholder="For example fintech, fraud detection, mobile money"')
 
         self.client.post(reverse("start_project"), {"title": "Library Seat Booking", "description": "", "keywords": ""})
         self.assertEqual(Project.objects.get(student=student).keywords, "")
@@ -1406,19 +1406,19 @@ class SupervisorProvidedDocumentTests(TestCase):
                 self.client.force_login(User.objects.create(username=f"guide.{role}", role=role))
                 page = self.client.get(reverse("guidelines"))
                 self.assertContains(page, "Supervisor-provided documents")
-                for name in ("fyp-report-instructions.pdf", "fyp-report-instructions.docx"):
+                for name in ("final-year-project-report-instructions.pdf", "final-year-project-report-instructions.docx"):
                     self.assertContains(page, reverse("department_document", args=[name]))
-                download = self.client.get(reverse("department_document", args=["fyp-report-instructions.pdf"]))
+                download = self.client.get(reverse("department_document", args=["final-year-project-report-instructions.pdf"]))
                 self.assertEqual(download.status_code, 200)
-                self.assertIn('attachment; filename="fyp-report-instructions.pdf"', download["Content-Disposition"])
+                self.assertIn('attachment; filename="final-year-project-report-instructions.pdf"', download["Content-Disposition"])
                 self.assertTrue(b"".join(download.streaming_content).startswith(b"%PDF"))
         self.client.logout()
-        response = self.client.get(reverse("department_document", args=["fyp-report-instructions.pdf"]))
+        response = self.client.get(reverse("department_document", args=["final-year-project-report-instructions.pdf"]))
         self.assertEqual(response.status_code, 302)
         self.assertIn(reverse("login"), response["Location"])
 
     def test_only_the_listed_documents_can_be_downloaded(self):
         self.client.force_login(User.objects.create(username="guide.reader", role=Role.STUDENT))
-        for name in ("settings.py", "..", "fyp-report-instructions.txt"):
+        for name in ("settings.py", "..", "final-year-project-report-instructions.txt"):
             with self.subTest(name=name):
                 self.assertEqual(self.client.get(reverse("department_document", args=[name])).status_code, 404)

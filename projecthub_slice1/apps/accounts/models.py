@@ -63,7 +63,7 @@ class User(AbstractUser):
 
     @property
     def has_staff_role(self):
-        """True for supervisor, coordinator, HOD and admin roles (not the same as Django's is_staff)."""
+        """True for supervisor, coordinator, Head of Department and admin roles (not the same as Django's is_staff)."""
         return self.role in STAFF_ROLES
 
     def contact_for(self, viewer):
@@ -91,7 +91,7 @@ class User(AbstractUser):
 class StudentProfile(models.Model):
     class Status(models.TextChoices):
         CURRENT = "current", "Current"
-        FYP_COMPLETED = "fyp_completed", "FYP completed"
+        FYP_COMPLETED = "fyp_completed", "Final-year project completed"
         GRADUATED = "graduated", "Graduated"
 
     class RegistrationStatus(models.TextChoices):
@@ -151,7 +151,7 @@ class SupervisorProfile(models.Model):
     title = models.CharField(max_length=30, blank=True)  # Dr., Mrs., Prof.
     office = models.CharField(max_length=80, blank=True, default="")
     specialisation = models.CharField(
-        max_length=160, blank=True, default="", help_text="Subject area, e.g. Distributed systems."
+        max_length=160, blank=True, default="", help_text="Subject area, for example Distributed systems."
     )
     research_interests = models.TextField(
         blank=True, default="", help_text="Free text; shown on the public staff profile."

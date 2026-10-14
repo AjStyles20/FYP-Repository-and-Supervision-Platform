@@ -11,7 +11,7 @@ from .models.media import (
 
 
 class SupervisorChoiceField(forms.ModelChoiceField):
-    """Shows each supervisor's current load, e.g. "Dr Julius Makinde (3 active)", to keep numbers even."""
+    """Shows each supervisor's current load, for example "Dr Julius Makinde (3 active)", to keep numbers even."""
 
     def label_from_instance(self, obj):
         name = obj.get_full_name() or obj.username
@@ -29,7 +29,7 @@ class SupervisorAssignmentForm(forms.Form):
         required=False,
         max_length=1000,
         label="Reason for assignment or change",
-        help_text="Required when changing a supervisor, e.g. \"Student asked: wants a supervisor in AI\".",
+        help_text="Required when changing a supervisor, for example \"Student asked: wants a supervisor in artificial intelligence\".",
         widget=forms.Textarea(attrs={"rows": 2}),
     )
 
@@ -102,7 +102,7 @@ class UnassignedSuperviseeForm(forms.Form):
 # Keywords are optional tags that only help search; the label and example say so in a few words.
 KEYWORDS_LABEL = "Keywords (optional)"
 KEYWORDS_HELP = "A few words about the topic, separated by commas. They help people find the project in a search."
-KEYWORDS_PLACEHOLDER = "e.g. fintech, fraud detection, mobile money"
+KEYWORDS_PLACEHOLDER = "For example fintech, fraud detection, mobile money"
 
 
 class SupervisorProjectEditForm(forms.ModelForm):
@@ -136,7 +136,7 @@ class ProjectProposalForm(forms.Form):
                                    help_text="What existing work does not cover, which your project will.")
     working_project_demonstration = forms.CharField(widget=forms.Textarea(attrs={"rows": 4}),
                                                     label="Working project or demonstration evidence",
-                                                    help_text="Your supervisor asks for this before deciding, e.g. a prototype link.")
+                                                    help_text="Your supervisor asks for this before deciding, for example a prototype link.")
 
     def __init__(self, *args, method="topic_only", draft=False, **kwargs):
         super().__init__(*args, **kwargs)
@@ -182,7 +182,7 @@ class CompletionForm(forms.Form):
     )
     completion_note = forms.CharField(
         required=False, widget=forms.Textarea, label="Sign-off note",
-        help_text="What you checked, e.g. bound copies and corrections received.",
+        help_text="What you checked, for example bound copies and corrections received.",
     )
     gap_summary = forms.CharField(
         required=False,
@@ -194,7 +194,7 @@ class CompletionForm(forms.Form):
     graduation_year = forms.IntegerField(required=False, min_value=1900, max_value=2200)
 
     def clean(self):
-        # Same rule as sign_off_completion(); checked here too so the HOD sees it beside the fields.
+        # Same rule as sign_off_completion(); checked here too so the Head of Department sees it beside the fields.
         cleaned = super().clean()
         has_gap = bool((cleaned.get("gap_summary") or "").strip())
         if has_gap and cleaned.get("no_gap"):

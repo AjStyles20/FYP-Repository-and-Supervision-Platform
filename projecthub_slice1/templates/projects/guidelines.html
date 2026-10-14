@@ -1,10 +1,10 @@
 {% extends "base.html" %}
 {% block title %}Project guide · Baze Project Hub{% endblock %}
 {% block content %}
-<section class="page-heading"><p class="eyebrow">PROJECT GUIDE</p><h1>FYP guidelines and resources</h1><p class="muted">{% if show_resources %}A shared guide to the project process, with current resources from your supervisor and department.{% else %}The project process every student follows, for reference. Supervisors share their own guides with their students.{% endif %}</p>{% if user.role == 'supervisor' %}<a class="btn btn-primary" href="{% url 'announcements' %}#share-resource">Upload or edit a guide</a>{% endif %}</section>
+<section class="page-heading"><p class="eyebrow">PROJECT GUIDE</p><h1>Final-year project guidelines and resources</h1><p class="muted">{% if show_resources %}A shared guide to the project process, with current resources from your supervisor and department.{% else %}The project process every student follows, for reference. Supervisors share their own guides with their students.{% endif %}</p>{% if user.role == 'supervisor' %}<a class="btn btn-primary" href="{% url 'announcements' %}#share-resource">Upload or edit a guide</a>{% endif %}</section>
 
 <section class="grid-2">
-  <div class="card"><h2>Project workflow</h2><ol><li>Propose a project title and problem statement.</li><li>Review the supervisor’s proposal criteria and secure acceptance.</li><li>Have the department log the approved topic.</li><li>Track progress through supervisor meetings and agreed actions.</li><li>Submit the final work, defend it, and complete the HOD sign-off.</li><li>After the HOD signs off, the project and its shared files appear in the completed repository.</li></ol></div>
+  <div class="card"><h2>Project workflow</h2><ol><li>Propose a project title and problem statement.</li><li>Review the supervisor’s proposal criteria and secure acceptance.</li><li>Have the department log the approved topic.</li><li>Track progress through supervisor meetings and agreed actions.</li><li>Submit the final work, defend it, and complete the Head of Department sign-off.</li><li>After the Head of Department signs off, the project and its shared files appear in the completed repository.</li></ol></div>
   <div class="card"><h2>Recommended milestones</h2><ul><li>Topic selection and problem framing</li><li>Literature review and project plan</li><li>Implementation and testing</li><li>Draft report and presentation preparation</li><li>Defence and final archival</li></ul></div>
 </section>
 

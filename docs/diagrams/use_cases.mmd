@@ -1,5 +1,5 @@
 %% Use cases as implemented. Mermaid has no use-case diagram type, so this is a flowchart:
-%% actors on the left, use cases as rounded nodes. Every use case is a URL + view in
+%% actors on the left, use cases as rounded nodes. Every use case is a web address + view in
 %% projecthub_slice1/apps/*/urls.py and is only linked to the roles its view allows.
 %% docs/diagrams/README.md lists the view and guard behind each node.
 %% Solid line: the role can always do it (subject to department or ownership checks).
@@ -15,7 +15,7 @@ flowchart LR
     subgraph Accounts["Accounts"]
         UC_AddStudent("Add a student account<br/>(coordinator: own faculty)")
         UC_Register("Register as a student<br/>(off unless switched on)")
-        UC_Login("Sign in with Baze email<br/>or student ID")
+        UC_Login("Log in with Baze email")
         UC_Review("Approve or reject<br/>a registration")
         UC_Audit("Read the audit log")
     end

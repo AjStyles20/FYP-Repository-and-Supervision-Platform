@@ -43,7 +43,7 @@ class AddStudentAccountTests(TestCase):
         self.assertFalse(User.objects.filter(role=Role.STUDENT).exists())
         login = self.client.get(reverse("login"))
         self.assertNotContains(login, f'href="{reverse("register_student")}"')
-        self.assertContains(login, "Students: see your FYP coordinator. Staff: contact the system administrator.")
+        self.assertContains(login, "Students: see your final-year project coordinator. Staff: contact the system administrator.")
 
     def test_an_administrator_adds_a_student_who_must_choose_a_password(self):
         response = self.add(self.admin, programme=self.cyber_programme.pk)
@@ -88,9 +88,9 @@ class AddStudentAccountTests(TestCase):
         self.add(self.admin)
         cases = (
             ({"email": "tolu.ade@bazeuniversity.edu.ng", "student_number": "BU/23A/CS/5002"}, "An account already exists with this email address"),
-            ({"email": "second@bazeuniversity.edu.ng", "student_number": "BU/23A/CS/5001"}, "Another student already has this student ID"),
+            ({"email": "second@bazeuniversity.edu.ng", "student_number": "BU/23A/CS/5001"}, "Another student already has this student identification number"),
             ({"email": "x@gmail.com", "student_number": "BU/23A/CS/5003"}, "Use a Baze email address"),
-            ({"email": "y@bazeuniversity.edu.ng", "student_number": "5003"}, "full student ID as it appears"),
+            ({"email": "y@bazeuniversity.edu.ng", "student_number": "5003"}, "full student identification number as it appears"),
         )
         for changes, message in cases:
             with self.subTest(message):

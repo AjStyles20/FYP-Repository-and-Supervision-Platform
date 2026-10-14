@@ -37,7 +37,7 @@
     <p>No action is available for your account at this stage.</p>
   {% endif %}
   {% if can_upload_final %}
-    <p class="form-note">As the department's coordinator you can upload the final document for this student. The HOD's sign-off still archives the project.</p>
+    <p class="form-note">As the department's coordinator you can upload the final document for this student. The Head of Department's sign-off still archives the project.</p>
     <div class="actions"><a class="btn" href="{% url 'upload_project_document' project.pk %}">Upload final report</a></div>
   {% endif %}
 </section>

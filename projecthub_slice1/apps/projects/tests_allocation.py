@@ -89,11 +89,11 @@ class StudentAllocationTests(TestCase):
         self.assertEqual(self.busy_project.supervisor, self.julius)
 
         self.client.post(url, {"project_id": self.busy_project.pk, "supervisor": self.esther.pk,
-                               "reason": "Student asked: wants a supervisor in AI"})
+                               "reason": "Student asked: wants a supervisor in artificial intelligence"})
         self.busy_project.refresh_from_db()
         self.assertEqual(self.busy_project.supervisor, self.esther)
         self.assertEqual(self.busy_project.supervisor_assignments.get(ended_at__isnull=True).change_reason,
-                         "Student asked: wants a supervisor in AI")
+                         "Student asked: wants a supervisor in artificial intelligence")
 
     def test_a_coordinator_works_across_the_faculty_whatever_their_own_field(self):
         cyber_coordinator = User.objects.create(username="cyber.coord", role=Role.COORDINATOR, department=self.cyber,

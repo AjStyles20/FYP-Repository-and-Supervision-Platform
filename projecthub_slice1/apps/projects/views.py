@@ -41,7 +41,7 @@ from .services import (
 
 REPOSITORY_ROLES = (Role.SUPERVISOR, Role.COORDINATOR, Role.HOD, Role.ADMIN, Role.STUDENT)
 STUDENT_UPLOAD_STAGES = (ProjectStage.PROPOSED, ProjectStage.SUPERVISOR_ACCEPTED, ProjectStage.APPROVED, ProjectStage.IN_PROGRESS)
-# The department's coordinator may upload the final document late in the project; the HOD still signs off.
+# The department's coordinator may upload the final document late in the project; the Head of Department still signs off.
 COORDINATOR_UPLOAD_STAGES = (ProjectStage.IN_PROGRESS, ProjectStage.SUBMITTED, ProjectStage.DEFENDED)
 
 
@@ -217,7 +217,7 @@ def past_project_detail(request, project_id):
 def download_project_document(request, document_id):
     document = get_object_or_404(ProjectDocument.objects.select_related("project"), pk=document_id)
     if document.project_id and not _can_open_current_project_files(request.user, document):
-        # 404, not 403, so an ID from another department does not confirm the file exists.
+        # 404, not 403, so a record number from another department does not confirm the file exists.
         raise Http404
     if (
         document.visibility == ProjectDocument.Visibility.STAFF_ONLY
@@ -286,7 +286,7 @@ def project_media_file(request, media_id):
     """Show an uploaded screenshot or play an uploaded video, after the same checks as project files."""
     item = get_object_or_404(ProjectMedia.objects.select_related("project", "archived_project"), pk=media_id)
     if not item.file or not _can_view_media(request.user, item):
-        raise Http404  # 404, not 403, so an ID does not confirm the file exists
+        raise Http404  # 404, not 403, so a record number does not confirm the file exists
     opened, missing = open_stored_file(request, item.file, "image" if item.kind == ProjectMedia.Kind.IMAGE else "video")
     if missing:
         return missing
@@ -480,7 +480,7 @@ def start_project(request):
 
 @role_required(*REPOSITORY_ROLES)
 def project_workflow(request, project_id):
-    """The role-checked action page for proposal, approval, lifecycle and HOD sign-off."""
+    """The role-checked action page for proposal, approval, lifecycle and Head of Department sign-off."""
     project = get_object_or_404(Project.objects.select_related("student", "supervisor", "semester"), pk=project_id)
     user = request.user
     if user.role == Role.STUDENT:
@@ -738,7 +738,7 @@ def supervision(request):
     )
 
 
-CONVOCATION_COLUMNS = ("Student name", "Student ID", "Programme", "Project title", "Supervisor",
+CONVOCATION_COLUMNS = ("Student name", "Student identification number", "Programme", "Project title", "Supervisor",
                        "Signed off on", "Graduation verified", "Graduation year", "Semester")
 
 
@@ -748,13 +748,13 @@ def _csv_safe(value):
     return "'" + text if text[:1] in ("=", "+", "-", "@") else text
 
 
-PROJECT_EXPORT_COLUMNS = ("Project title", "Student name", "Student ID", "Programme", "Department", "Supervisor",
+PROJECT_EXPORT_COLUMNS = ("Project title", "Student name", "Student identification number", "Programme", "Department", "Supervisor",
                           "Stage", "Health", "Milestones done", "Overdue milestones", "Started on", "Semester")
 
 
 @role_required(Role.COORDINATOR, Role.HOD, Role.ADMIN)
 def export_projects(request):
-    """The running projects in the viewer's scope as a CSV: a coordinator's faculty, an HOD's department,
+    """The running projects in the viewer's scope as a CSV: a coordinator's faculty, a Head of Department's department,
     every project for an administrator. Health is filled only where the viewer may see it."""
     projects = Project.objects.filter(archived=False).select_related(
         "student__student_profile", "programme", "department", "supervisor", "semester"
@@ -794,7 +794,7 @@ def export_projects(request):
 
 @role_required(Role.HOD)
 def convocation_list(request):
-    """Students whose project the HOD has signed off: the list the HOD used to write by hand."""
+    """Students whose project the Head of Department has signed off: the list the Head of Department used to write by hand."""
     completions = ProjectCompletion.objects.filter(
         project__department_id=request.user.department_id
     ).select_related(
@@ -851,7 +851,7 @@ def convocation_list(request):
 
 @role_required(Role.COORDINATOR, Role.HOD, Role.ADMIN)
 def approvals(request):
-    # Coordinators log approved topics and record defences; the HOD only signs off (D-19).
+    # Coordinators log approved topics and record defences; the Head of Department only signs off (D-19).
     if request.user.role == Role.HOD:
         stages = [ProjectStage.DEFENDED]
     else:
@@ -967,9 +967,9 @@ def supervisor_assignments(request):
 # They live in department_documents/ (committed with the code) and are served only to signed-in
 # users, unlike static files. Only names in this list can be downloaded.
 DEPARTMENT_DOCUMENTS = (
-    ("fyp-report-instructions.pdf", "FYP report instructions and template (PDF)",
-     "Front pages, chapter structure, formatting, referencing (APA 7), plagiarism limits and hard-copy submission."),
-    ("fyp-report-instructions.docx", "FYP report instructions and template (Word)",
+    ("final-year-project-report-instructions.pdf", "Final-year project report instructions and template (PDF)",
+     "Front pages, chapter structure, formatting, referencing (American Psychological Association style, 7th edition), plagiarism limits and hard-copy submission."),
+    ("final-year-project-report-instructions.docx", "Final-year project report instructions and template (Word)",
      "The same document as a Word file, to write the report in."),
 )
 
@@ -1066,7 +1066,7 @@ def upload_project_document(request, project_id):
         log_event(actor=request.user, action="project.document_uploaded", summary=f"File uploaded for {project.title}", obj=project,
                   details={"document_type": document.document_type, "uploaded_by_role": request.user.role})
         if is_coordinator:
-            messages.success(request, "File uploaded for the student. It moves into the archive when the HOD signs off.")
+            messages.success(request, "File uploaded for the student. It moves into the archive when the Head of Department signs off.")
             return redirect("project_workflow", project_id=project.pk)
         messages.success(request, "File uploaded. It is visible to academic staff and to you.")
         return redirect("my_project")

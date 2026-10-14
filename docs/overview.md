@@ -8,7 +8,7 @@
 
 ## 1. What this is
 
-A web application that does two connected jobs for final-year projects (FYPs):
+A web application that does two connected jobs for final-year projects (final-year projects):
 
 1. **Repository.** Past and current projects are searchable, so students can see what has been done and avoid repeating or copying topics. Past projects keep their documented gap, final supervisor, earlier supervisor and downloadable files.
 2. **Supervision management.** Supervisor assignment, configurable approval, meetings, notices, availability, and a trustworthy record of what happened and when.
@@ -30,14 +30,14 @@ The full list of docs, including the code map, explainers, diagrams and reviews,
 | `product-blueprint.md` | Product navigation, privacy boundaries, lifecycle and staged delivery |
 | `database_schema.sql` | MySQL reference design (ER diagram source) |
 
-Read order for a new developer or AI agent: `overview.md` → `product-blueprint.md` → `requirements.md` → `decisions.md` → `implementation_plan.md` → `database_schema.sql` → `task.md`.
+Read order for a new developer or artificial intelligence agent: `overview.md` → `product-blueprint.md` → `requirements.md` → `decisions.md` → `implementation_plan.md` → `database_schema.sql` → `task.md`.
 
 ## 3. Fixed constraints (do not change without asking the author)
 
-- **Language/stack:** Python and HTML, built as a **web app**. **MySQL** database, designed in **MySQL Workbench** (reported as an HOD requirement; confirm).
+- **Language/stack:** Python and HTML, built as a **web app**. **MySQL** database, designed in **MySQL Workbench** (reported as a Head of Department requirement; confirm).
 - **No novelty requirement** from the school. A contribution still has to be explained at the defence.
-- **No imported student roster or project records.** The school will not release student data to other students. Student accounts are created by the department's FYP coordinator or the administrator, who checks the student is ready for their FYP (D-28). Development fixtures are synthetic, and old students' FYPs are not collected.
-- **Only the HOD signs off and archives** a project into the past-projects repository.
+- **No imported student roster or project records.** The school will not release student data to other students. Student accounts are created by the department's final-year project coordinator or the administrator, who checks the student is ready for their final-year project (D-28). Development fixtures are synthetic, and old students' Final-year projects are not collected.
+- **Only the Head of Department signs off and archives** a project into the past-projects repository.
 - **Approval varies by supervisor.** There is no single fixed rule.
 
 ## 4. Proposed stack (confirm in `decisions.md`)
@@ -82,15 +82,15 @@ projecthub/
 2. **History is never overwritten.** Supervisor changes, status changes and record edits add rows.
 3. **Audit log is append-only.** The application account must not be able to update or delete it.
 4. **Mark demo rows `is_demo = 1`** so they can be removed in one step.
-5. **Student IDs** are visible to staff only. Contact details (personal email, phone) are each person's own, and each is shown only to the audience its owner chose: only me (the default), staff only, or all signed-in Baze users.
+5. **Student identification numbers** are visible to staff only. Contact details (personal email, phone) are each person's own, and each is shown only to the audience its owner chose: only me (the default), staff only, or all signed-in Baze users.
 6. **No secrets in the repository.** Passwords hashed with Django's default hasher. CSRF protection on all forms.
-7. **Keep scope tight.** This is not an ERP, an LMS or a timetable system.
+7. **Keep scope tight.** This is not an ERP, an learning management system or a timetable system.
 
 ## 7. Glossary
 
-- **FYP** final-year project (undergraduate), including master's projects when added
+- **Final-year project** final-year project (undergraduate), including master's projects when added
 - **Supervisor** the lecturer supervising a student's project
 - **Coordinator** the lecturer who assigns students to supervisors and records approvals and defence outcomes
-- **HOD** head of department; final sign-off and archive
+- **Head of Department** head of department; final sign-off and archive
 - **Gap** what a finished project did not cover, recorded for later students to continue
-- **Project status vs student status:** completing a project does not mean graduating. They are separate fields.
+- **Project status versus student status:** completing a project does not mean graduating. They are separate fields.

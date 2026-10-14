@@ -87,7 +87,7 @@ class SharedResourceForm(forms.ModelForm):
     def clean(self):
         cleaned = super().clean()
         if not cleaned.get("url") and not cleaned.get("file") and not (self.instance and self.instance.file):
-            self.add_error("file", "Upload a file or provide a URL.")
+            self.add_error("file", "Upload a file or provide a web address.")
         return cleaned
 
 

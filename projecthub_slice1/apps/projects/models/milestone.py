@@ -1,6 +1,6 @@
 """Milestones a supervisor and student track together, and the faculty's common deadlines (D-33).
 
-A coordinator sets deadlines for the whole faculty (e.g. "Chapter 1" due 15 March); every running
+A coordinator sets deadlines for the whole faculty (for example "Chapter 1" due 15 March); every running
 project of the faculty gets a milestone linked to each deadline, and so does every project started
 later. A supervisor adds extra milestones for one student and marks any milestone done. Overdue
 milestones feed the health score.
