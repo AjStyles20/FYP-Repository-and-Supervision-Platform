@@ -712,7 +712,7 @@ def _email_registration_decision(request, student, *, approved, reason=""):
     if approved:
         subject = "Your Baze Project Hub account is approved"
         body = (f"Hello {name},\n\nYour Baze Project Hub registration has been approved. You can now sign in "
-                f"with your Baze email or student ID at:\n{request.build_absolute_uri(reverse('login'))}\n\n"
+                f"with your Baze email at:\n{request.build_absolute_uri(reverse('login'))}\n\n"
                 "Baze Project Hub")
     else:
         subject = "Your Baze Project Hub registration was not approved"

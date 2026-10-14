@@ -52,7 +52,7 @@ $env:DB_ENGINE = "sqlite"
 
 Open <http://127.0.0.1:8000/> in a browser.
 
-For local testing, sign in as `demo.amina` with password `ChangeMe123!`. The Amina demo account can also sign in with `amina@bazeuniversity.edu.ng` or student ID `BU/22A/CS/4012`. Open **Repository** to see synthetic current and past project records. Demo accounts and projects are clearly labelled test fixtures, not real university accounts or project submissions.
+For local testing, log in as `amina@bazeuniversity.edu.ng` with password `ChangeMe123!` (every demo account logs in with its Baze email: `demo.amina` becomes `amina@bazeuniversity.edu.ng`). Open **Repository** to see synthetic current and past project records. Demo accounts and projects are clearly labelled test fixtures, not real university accounts or project submissions.
 
 **The proposal:** the student fills in only what their supervisor's approval method needs: title, problem statement, objectives, methodology and (optional) tools for everyone; a literature review and research gap for supervisors who ask for one; demonstration evidence for supervisors who want a working project. **Save draft** keeps unfinished work (only the title is needed) where the supervisor cannot see it; **Submit to supervisor** dates it and alerts the supervisor. The form always opens with what was last saved, and the student can keep editing until the supervisor decides; after acceptance the topic is the record.
 
@@ -73,7 +73,7 @@ To try that staff workflow locally, sign in as `demo.coordinator` with password 
 ## Account access
 
 - **Students do not create their own accounts.** The FYP coordinator (for any programme of their faculty) or the administrator adds each final-year student under **Add student**: name, `@bazeuniversity.edu.ng` email, full student ID (for example `BU/23B/IT/7892`: Baze University, year 23, batch B, department IT, number 7892), programme and status. The account is active at once; a temporary password is shown once, and the student chooses their own at first sign-in. This keeps accounts to students the department has checked are ready for their FYP.
-- Everyone signs in with their Baze email; students can also use their full student ID. The short number alone (`7892`) is not accepted, because another year or department can have the same number.
+- Everyone logs in with their Baze email, and only with it (D-41): lecturers have no student ID, and one way in is simplest. The student ID is still recorded when a student is added.
 - Self-registration still exists but is **off** (`STUDENT_SELF_REGISTRATION=False`). If a department switches it on in `.env`, registrations wait for an administrator's approval, the student is emailed the decision, and a status page shows the outcome.
 - Every in-app alert is also emailed once to the person's Baze email (`EMAIL_ALERTS`, on by default; never to demo accounts); `SITE_URL` makes the link in the email absolute.
 - Email settings live in `projecthub_slice1/.env` (see `.env.example`). Without them, emails are printed in the server terminal instead of being sent, which is fine for development; at launch, add the SMTP details from Baze ICT.

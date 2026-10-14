@@ -207,13 +207,13 @@ Guards: `apps/audit/models.py`, `apps/projects/models/project.py`, `apps/project
 
 ## Sign-in, contact details and demo data
 
-### 20. What do students use to sign in, and what is the student ID?
+### 20. What does everyone use to log in, and what is the student ID?
 
-**Say:** "Their Baze email, or their full student ID, for example `BU/23B/IT/7892`: Baze University, the year 23 and batch B, the department code IT, and the number. We don't issue usernames, because a university doesn't. The short number `7892` on its own is refused, because another year or department can have the same last digits, so it could open the wrong account."
+**Say:** "Their Baze email, students and staff alike. Lecturers have no student ID, so one way in for everyone is simpler, and the Baze email is the one thing every member of the university has. The student ID, for example `BU/23B/IT/7892` (year 23, batch B, department IT, number), is still recorded and checked when a student is added, and staff can search by it, but it doesn't log anyone in."
 
-**How it works:** `ProjectAuthenticationForm` in `apps/accounts/forms.py` looks the account up by Baze email, then by student ID (any case). At registration `clean_student_number` upper-cases the ID and checks it against `STUDENT_ID_REGEX` (`config/settings.py`; can be changed in `.env` if Baze's rules differ). Explainer: `docs/explain/accounts-and-contact.md`. Decision D-20.
+**How it works:** `ProjectAuthenticationForm.clean` in `apps/accounts/forms.py` looks the account up by Baze email (any case); anything else becomes a blank that matches no account. When a student is added, `checked_student_id` upper-cases the ID and checks it against `STUDENT_ID_REGEX` (`config/settings.py`; can be changed in `.env` if Baze's rules differ). Decisions D-20 and D-41.
 
-**Show it:** sign in as `demo.adaeze` with `bu/22a/cs/4041` in small letters; then try `4041` alone and see the general error.
+**Show it:** log in as `ADAEZE@bazeuniversity.edu.ng` in capitals (it works); then try her student ID `BU/22A/CS/4041` and see the general error.
 
 ### 21. Who can see a person's phone number or personal email?
 

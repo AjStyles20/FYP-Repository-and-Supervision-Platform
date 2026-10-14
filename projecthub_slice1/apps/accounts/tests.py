@@ -492,7 +492,7 @@ class RegistrationFlowTests(TestCase):
         self.assertContains(response, "ending in @bazeuniversity.edu.ng")
         self.assertFalse(User.objects.filter(username="ada@example.com").exists())
 
-    def test_active_student_can_log_in_with_email_or_student_id(self):
+    def test_active_student_logs_in_with_the_baze_email_only(self):
         student = User.objects.create_user(
             username="ada.student@bazeuniversity.edu.ng",
             email="ada.student@bazeuniversity.edu.ng",
@@ -505,7 +505,7 @@ class RegistrationFlowTests(TestCase):
             programme=self.programme,
         )
 
-        for identifier in (student.email, "BU/26/CS/1001"):
+        for identifier in (student.email, " ADA.Student@BazeUniversity.edu.ng "):
             with self.subTest(identifier=identifier):
                 response = self.client.post(
                     reverse("login"),
@@ -513,8 +513,12 @@ class RegistrationFlowTests(TestCase):
                 )
                 self.assertRedirects(response, reverse("dashboard"))
                 self.client.logout()
+        # The student ID no longer signs in (D-41).
+        response = self.client.post(reverse("login"), {"username": "BU/26/CS/1001", "password": self.password})
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "email or password is incorrect")
 
-    def test_staff_can_log_in_with_baze_email_or_account_username(self):
+    def test_staff_log_in_with_the_baze_email_not_the_account_username(self):
         staff = User.objects.create_user(
             username="staff.okoro",
             email="okoro@bazeuniversity.edu.ng",
@@ -522,14 +526,12 @@ class RegistrationFlowTests(TestCase):
             role=Role.SUPERVISOR,
         )
 
-        for identifier in (staff.email, staff.username):
-            with self.subTest(identifier=identifier):
-                response = self.client.post(
-                    reverse("login"),
-                    {"username": identifier, "password": self.password},
-                )
-                self.assertRedirects(response, reverse("dashboard"))
-                self.client.logout()
+        response = self.client.post(reverse("login"), {"username": staff.email, "password": self.password})
+        self.assertRedirects(response, reverse("dashboard"))
+        self.client.logout()
+        response = self.client.post(reverse("login"), {"username": staff.username, "password": self.password})
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(response.wsgi_request.user.is_authenticated)
 
     def test_createsuperuser_is_an_application_admin(self):
         admin = User.objects.create_superuser(
@@ -1133,7 +1135,8 @@ class RegistrationDecisionNoticeTests(TestCase):
         response = self._login("noah@bazeuniversity.edu.ng", self.PASSWORD)
 
         self.assertContains(response, "still awaiting approval by an administrator")
-        self.assertContains(self._login("BU/26/CS/5555", self.PASSWORD), "still awaiting approval")
+        # By student ID it is just a failed sign-in now, and says nothing about the account.
+        self.assertNotContains(self._login("BU/26/CS/5555", self.PASSWORD), "still awaiting approval")
 
     def test_a_wrong_password_reveals_nothing_about_the_account(self):
         self._student()
@@ -1145,7 +1148,8 @@ class RegistrationDecisionNoticeTests(TestCase):
 
     def test_rejected_student_and_deactivated_staff_get_their_own_message(self):
         self._student(StudentProfile.RegistrationStatus.REJECTED)
-        User.objects.create_user("gone@bazeuniversity.edu.ng", password=self.PASSWORD, role=Role.SUPERVISOR, is_active=False)
+        User.objects.create_user("gone@bazeuniversity.edu.ng", email="gone@bazeuniversity.edu.ng", password=self.PASSWORD,
+                                 role=Role.SUPERVISOR, is_active=False)
 
         self.assertContains(self._login("noah@bazeuniversity.edu.ng", self.PASSWORD), "was not approved")
         self.assertContains(self._login("gone@bazeuniversity.edu.ng", self.PASSWORD), "has been deactivated")
@@ -1310,19 +1314,22 @@ class StudentIdFormatTests(TestCase):
             self.assertContains(response, "full student ID as it appears on your Baze ID card", msg_prefix=number)
         self.assertFalse(User.objects.filter(username="id.check@bazeuniversity.edu.ng").exists())
 
-    def test_sign_in_takes_the_full_id_in_any_case_but_not_the_short_number(self):
+    def test_sign_in_takes_the_baze_email_but_no_form_of_the_student_id(self):
         self._register("BU/23B/IT/7892")
         User.objects.filter(username="id.check@bazeuniversity.edu.ng").update(is_active=True)
         StudentProfile.objects.filter(student_number="BU/23B/IT/7892").update(
             registration_status=StudentProfile.RegistrationStatus.APPROVED)
-        for identifier, signed_in in (("bu/23b/it/7892", True), (" BU/23B/IT/7892 ", True), ("7892", False)):
+        for identifier, signed_in in (("id.check@bazeuniversity.edu.ng", True), ("bu/23b/it/7892", False),
+                                      (" BU/23B/IT/7892 ", False), ("7892", False)):
             self.client.logout()
             response = self.client.post(reverse("login"), {"username": identifier, "password": "Long-enough-pass-77"})
             self.assertEqual(response.status_code, 302 if signed_in else 200, identifier)
 
-    def test_the_sign_in_label_names_email_and_student_id_only(self):
+    def test_the_sign_in_label_names_the_baze_email_only(self):
         page = self.client.get(reverse("login"))
-        self.assertContains(page, "Baze email or student ID")
+        self.assertContains(page, '<span class="field-label">Baze email</span>', html=True)
+        self.assertContains(page, 'type="email"')
+        self.assertNotContains(page, "student ID")
         self.assertNotContains(page, "staff username")
 
     @override_settings(STUDENT_ID_REGEX=r"^[A-Z]{2}\d{4}$", STUDENT_ID_HELP="two letters and four digits")
@@ -1409,7 +1416,7 @@ class ThemeTests(TestCase):
 
     def test_the_sign_in_hint_no_longer_offers_a_staff_username(self):
         page = self.client.get(reverse("login"))
-        self.assertContains(page, "Use your Baze email. Students can also use their full student ID.")
+        self.assertContains(page, "Use your Baze email address, students and staff alike.")
         self.assertNotContains(page, "account username")
 
 

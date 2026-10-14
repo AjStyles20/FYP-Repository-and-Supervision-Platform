@@ -19,7 +19,7 @@
     </div>
     <div data-status-panel="approved"{% if status != "approved" %} hidden{% endif %}>
       <p><span class="tag tag-live">Approved</span></p>
-      <p>Your account is ready. Log in with your Baze email or student ID and the password you chose.</p>
+      <p>Your account is ready. Log in with your Baze email and the password you chose.</p>
       <p><a class="btn btn-primary" href="{% url 'login' %}">Log in</a></p>
     </div>
     <div data-status-panel="rejected"{% if status != "rejected" %} hidden{% endif %}>

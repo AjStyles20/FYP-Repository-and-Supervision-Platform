@@ -2,7 +2,7 @@
 
 This walkthrough follows one department through a term. Each step is one role, about one minute. Every click below was checked against the seeded data with a scripted run of the same URLs; all 42 checks passed.
 
-All demo accounts use the password **`ChangeMe123!`**. Usernames start with `demo.`. Students can also sign in with their Baze email or their full student ID.
+All demo accounts use the password **`ChangeMe123!`** and log in with their **Baze email** (D-41): drop `demo.` and add `@bazeuniversity.edu.ng`. So `demo.adaeze` logs in as `adaeze@bazeuniversity.edu.ng`, and `demo.se.coordinator` as `se.coordinator@bazeuniversity.edu.ng`. The steps below name accounts by their short `demo.` name.
 
 ---
 
@@ -13,7 +13,7 @@ From `projecthub_slice1/`, in PowerShell:
 ```powershell
 .\.venv\Scripts\python.exe manage.py purge_demo          # start from a clean story
 .\.venv\Scripts\python.exe manage.py seed_demo           # about 10 seconds
-.\.venv\Scripts\python.exe manage.py createsuperuser     # username: panel.admin (a real admin, see step 7)
+.\.venv\Scripts\python.exe manage.py createsuperuser     # username: panel.admin, email: panel.admin@bazeuniversity.edu.ng (it logs in with that email, see step 7)
 .\.venv\Scripts\python.exe manage.py runserver
 ```
 
@@ -42,7 +42,7 @@ From `projecthub_slice1/`, in PowerShell:
 
 ## Step 1 (0:00–1:00): Student, `demo.adaeze`: the decision history nobody can rewrite
 
-1. Log in with the **student ID `BU/22A/CS/4041`** to show that students can sign in with their ID.
+1. Log in with **`adaeze@bazeuniversity.edu.ng`**: everyone, students and staff, logs in with their Baze email.
 2. The student portal opens. Point at the stage track: "Approved by the department".
 3. Click **View progress** to open the Project workflow.
 4. Scroll to **History**: every stage change, with who made it and when.
@@ -133,7 +133,7 @@ From `projecthub_slice1/`, in PowerShell:
 
 ## Step 7 (6:00–7:00): Administrator, `panel.admin`: add a student, read the audit log
 
-1. Log in as `panel.admin`, the real admin from the setup.
+1. Log in as `panel.admin@bazeuniversity.edu.ng`, the real admin from the setup.
 2. Click **System administration** → **Add student account**. Enter Tolu Ade, `tolu.ade@bazeuniversity.edu.ng`, student ID `BU/23A/CS/5001`, programme "Computer Science BSc", status "Current final-year student". Click **Create student account**; a temporary password is shown once.
 3. **Say:** "Students can't create their own accounts. The coordinator or the administrator adds each final-year student after checking they're ready, so only the right students get in. The student must choose their own password at first sign-in."
 4. Click **Audit log**. The newest entry is "Student account created", with who did it and when.

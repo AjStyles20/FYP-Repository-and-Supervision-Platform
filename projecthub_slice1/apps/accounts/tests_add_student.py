@@ -61,7 +61,7 @@ class AddStudentAccountTests(TestCase):
         self.assertNotIn(temporary, str(event.details) + event.summary)
 
         self.client.logout()
-        self.client.post(reverse("login"), {"username": "BU/23A/CS/5001", "password": temporary})
+        self.client.post(reverse("login"), {"username": "tolu.ade@bazeuniversity.edu.ng", "password": temporary})
         self.assertRedirects(self.client.get(reverse("dashboard")), reverse("password_change"))
 
     def test_a_coordinator_adds_students_across_their_faculty_only(self):

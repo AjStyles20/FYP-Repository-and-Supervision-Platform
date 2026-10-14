@@ -88,8 +88,9 @@ class ManageStudentAccountTests(TestCase):
         self.assertEqual([message.to for message in mail.outbox], [["tolu.ade2@bazeuniversity.edu.ng"]])
 
         self.client.logout()
-        for identifier in ("tolu.ade2@bazeuniversity.edu.ng", "BU/23A/IT/5001"):
-            self.assertEqual(self.client.post(reverse("login"), {"username": identifier, "password": PASSWORD}).status_code, 302)
+        # The corrected Baze email signs in; the student ID does not (D-41).
+        for identifier, expected in (("tolu.ade2@bazeuniversity.edu.ng", 302), ("BU/23A/IT/5001", 200)):
+            self.assertEqual(self.client.post(reverse("login"), {"username": identifier, "password": PASSWORD}).status_code, expected)
             self.client.logout()
 
     def test_wrong_corrections_are_refused_and_nothing_changes(self):

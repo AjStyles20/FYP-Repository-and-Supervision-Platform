@@ -18,27 +18,18 @@ BAZE_EMAIL_DOMAIN = "@bazeuniversity.edu.ng"
 class ProjectAuthenticationForm(AuthenticationForm):
     status_message = ""  # set by clean() when the right password meets an inactive account
     username = forms.CharField(
-        label="Baze email or student ID",
-        help_text="Students can use their full student ID, like BU/23B/IT/7892.",
-        widget=forms.TextInput(attrs={"autofocus": True, "autocomplete": "username"}),
+        label="Baze email",
+        widget=forms.EmailInput(attrs={"autofocus": True, "autocomplete": "username", "placeholder": "name@bazeuniversity.edu.ng"}),
     )
 
     def clean(self):
-        identifier = self.cleaned_data.get("username")
+        # Everyone signs in with their Baze email, students and staff alike (D-41): lecturers have no
+        # student ID, and one way in is simpler. A student ID or an internal username no longer works:
+        # an identifier that is no account's email is turned into a blank, which no account matches.
+        identifier = (self.cleaned_data.get("username") or "").strip()
         if identifier:
-            identifier = identifier.strip()
-            # Staff and students sign in with their Baze email or student ID. A plain username still
-            # works underneath, for the server-created administrator and the demo.* accounts.
             account = User.objects.filter(email__iexact=identifier).first()
-            if account is None:
-                profile = (
-                    StudentProfile.objects.filter(student_number__iexact=identifier)
-                    .select_related("user")
-                    .first()
-                )
-                account = profile.user if profile else None
-            if account:
-                self.cleaned_data["username"] = account.get_username()
+            self.cleaned_data["username"] = account.get_username() if account else ""
         try:
             return super().clean()
         except ValidationError:
