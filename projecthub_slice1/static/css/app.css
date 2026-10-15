@@ -1908,12 +1908,18 @@ h2 + .resource-preview {
 /* The Baze crest in the header brand: black line art, so it sits on a small white tile. */
 .brand-logo {
   display: block;
-  width: 2.25rem;
-  height: 2.25rem;
-  padding: 2px;
+  width: 3rem; /* 48px: big enough to read the crest */
+  height: 3rem;
+  padding: 1px;
   background: #ffffff;
   border-radius: var(--radius-sm);
   object-fit: contain;
+}
+@media (max-width: 600px) {
+  .brand-logo {
+    width: 2.75rem; /* a little smaller on phones, so the header stays compact */
+    height: 2.75rem;
+  }
 }
 
 /* Login page: the photo behind the form, softened so the form stays the clear focus.
