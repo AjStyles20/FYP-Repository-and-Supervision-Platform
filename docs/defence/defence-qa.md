@@ -146,9 +146,9 @@ Likely examiner questions, with a short answer to say aloud, how it works, where
 
 ### 14. Who can see what in the repository?
 
-**Say:** "Only signed-in Baze users can browse projects; the public internet cannot. Student identification numbers are visible to staff only. Contact details are opt-in: each person chooses, for their personal email and for their phone number separately, whether only they, staff, or all signed-in users can see it. Private supervision records such as meeting discussions are limited to the student, their supervisor and authorised department staff."
+**Say:** "Anyone can browse completed projects as summaries, so the school can show its students' work; running topics, every file and supervision records need a Baze login. Student identification numbers are visible to staff only. Contact details are opt-in: each person chooses, for their personal email and for their phone number separately, whether only they, staff or all signed-in users can see it, and only a personal email can be opened to visitors, never a phone number. Private supervision records such as meeting discussions are limited to the student, their supervisor and authorised department staff."
 
-**Details:** decisions D-09, D-14 and D-21 in `docs/decisions.md`; Q21 below.
+**Details:** decisions D-09, D-14, D-21 and D-42 in `docs/decisions.md`; Q21 and Q35 below.
 
 ---
 
@@ -217,7 +217,7 @@ Guards: `apps/audit/models.py`, `apps/projects/models/project.py`, `apps/project
 
 ### 21. Who can see a person's phone number or personal email?
 
-**Say:** "Only who the owner chooses. Everyone, students, alumni and staff, has a My details page with a personal email and a phone number, and for each one they pick 'Only me', 'Staff only' or 'All signed-in Baze users'. The default is 'Only me', and nothing is ever shown to someone who isn't signed in. People can't change their own Baze email, because it's how they sign in, but an administrator can correct it if it was entered wrongly; everything else the owner can change at any time. A personal email matters most for alumni, because their Baze email may close after they graduate."
+**Say:** "Only who the owner chooses. Everyone, students, alumni and staff, has a My details page with a personal email and a phone number, and for each one they pick 'Only me', 'Staff only' or 'All signed-in Baze users'; for the personal email there is also 'Anyone, including visitors', which shows it on their completed projects to people who aren't logged in. The default is 'Only me', and a phone number can never be shown to visitors. People can't change their own Baze email, because it's how they sign in, but an administrator can correct it if it was entered wrongly; everything else the owner can change at any time. A personal email matters most for alumni, because their Baze email may close after they graduate."
 
 **How it works:** fields and `ContactVisibility` on `User` (`apps/accounts/models.py`); `User.contact_for(viewer)` returns only what the viewer may see, so hidden details never reach the page; `ContactDetailsForm` refuses a Baze address as the personal email and checks the phone format. Tests: `apps/accounts/tests_contact.py`. Decision D-21, the interim answer to Q-04 until the supervisor confirms.
 
@@ -313,6 +313,6 @@ Guards: `apps/audit/models.py`, `apps/projects/models/project.py`, `apps/project
 
 ### 35. What can someone see without logging in?
 
-**Say:** "Only the welcome page: what the hub is, how a project moves through it, totals such as the number of archived projects, and the faculties. Those are counts; no name, title or file. Every project page, the repository and every download still need a Baze login."
+**Say:** "The welcome page, and the completed projects as summaries: they can search them and read the title, description, supervisors, year, semester and the documented gap, so the school can show its work. They can't see running topics, any file, any student identification number or any supervision record, and a student's personal email appears only if the student chose to share it with visitors; a phone number never does. The department can switch the showcase off with one setting."
 
-**How it works:** `home` and `_welcome_figures` in `apps/accounts/views.py`; real rows only, unless the database holds only sample data. Tests: `HomePageTests` in `apps/accounts/tests.py`. Decision D-39.
+**How it works:** `role_or_public_required` in `apps/accounts/permissions.py` lets visitors through to `repository` and `past_project_detail` only while `PUBLIC_REPOSITORY` is on; `visible_to_visitors` keeps sample records out on a real site; `User.contact_for` shows visitors only a public personal email. Tests: `apps/projects/tests_public_repository.py`. Decisions D-39 and D-42.

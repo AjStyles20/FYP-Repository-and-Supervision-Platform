@@ -165,8 +165,10 @@ STUDENT_SELF_REGISTRATION = env("STUDENT_SELF_REGISTRATION", "False").lower() ==
 UI_THEME = env("UI_THEME", "glass") if env("UI_THEME", "glass") in ("glass", "classic") else "glass"
 SITE_NAME = "Baze Project Hub"
 
-# Repository access follows D-09: signed-in Baze Project Hub accounts only.
-PUBLIC_REPOSITORY = False
+# Visitors who are not logged in may browse completed projects as summaries (D-42; it replaces the
+# login-only rule of D-09). Running topics, files and student identification numbers stay login-only.
+# Set PUBLIC_REPOSITORY=False in .env to require a login for everything again.
+PUBLIC_REPOSITORY = env("PUBLIC_REPOSITORY", "True").lower() == "true"
 
 # Personal data (student identification number, an individual's contact) is never public, whatever the flag above says.
 REPOSITORY_PAGE_SIZE = 12

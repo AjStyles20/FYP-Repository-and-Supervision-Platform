@@ -82,7 +82,7 @@ projecthub/
 2. **History is never overwritten.** Supervisor changes, status changes and record edits add rows.
 3. **Audit log is append-only.** The application account must not be able to update or delete it.
 4. **Mark demo rows `is_demo = 1`** so they can be removed in one step.
-5. **Student identification numbers** are visible to staff only. Contact details (personal email, phone) are each person's own, and each is shown only to the audience its owner chose: only me (the default), staff only, or all signed-in Baze users.
+5. **Student identification numbers** are visible to staff only. Contact details (personal email, phone) are each person's own, and each is shown only to the audience its owner chose: only me (the default), staff only, all signed-in Baze users, or (personal email only) anyone including visitors.
 6. **No secrets in the repository.** Passwords hashed with Django's default hasher. CSRF protection on all forms.
 7. **Keep scope tight.** This is not an ERP, an learning management system or a timetable system.
 

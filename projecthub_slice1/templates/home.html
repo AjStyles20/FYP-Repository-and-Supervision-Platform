@@ -73,7 +73,7 @@
     {% endfor %}
   </div>{% endif %}
   {% if not faculties %}<p class="muted">No faculties have been set up yet.</p>{% endif %}
-  <p class="muted home-note">Log in to open the repository.</p>
+  <p class="muted home-note">{% if public_repository %}Anyone can browse completed projects. Log in to see running topics and project files.{% else %}Log in to open the repository.{% endif %}</p>
 </section>
 
 <p class="muted home-note"><strong>No account yet?</strong> Students: see your final-year project coordinator. Staff: contact the system administrator.</p>

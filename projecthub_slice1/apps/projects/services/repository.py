@@ -83,10 +83,18 @@ def local_year(moment):
     return timezone.localtime(moment).year
 
 
-def available_years():
+def visible_to_visitors(queryset):
+    """What a visitor who is not logged in may see: real records only, unless the database holds
+    nothing but sample data (the demo), so a real site never shows sample projects to the public."""
+    if queryset.model.objects.filter(is_demo=False).exists():
+        return queryset.filter(is_demo=False)
+    return queryset
+
+
+def available_years(past_only=False):
     # Years are worked out in Python on purpose. QuerySet.dates() makes MySQL convert time zones
     # with CONVERT_TZ, which returns NULL unless the server's time zone tables are loaded.
-    current_years = {
+    current_years = set() if past_only else {
         local_year(moment)
         for moment in Project.objects.filter(archived=False).values_list("updated_at", flat=True).distinct()
     }

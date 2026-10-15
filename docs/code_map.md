@@ -174,6 +174,9 @@
 | The year grid on search | `static/js/year-picker.js` | `select[data-year-picker]` |
 | What a semester code may look like (26A) | `apps/academics/models.py` | `class Semester` |
 | The Semesters page | `apps/academics/views.py` | `def semesters` |
+| Which pages visitors may open without logging in (the public showcase switch) | `apps/accounts/permissions.py` | `def role_or_public_required` |
+| Keeping sample records out of the public showcase | `apps/projects/services/repository.py` | `def visible_to_visitors` |
+| Which contact details a viewer (or a visitor) may see | `apps/accounts/models.py` | `def contact_for` |
 | Who may choose a project's semester | `apps/projects/views.py` | `def _can_set_semester` |
 | Which faculty deadlines reach a project | `apps/projects/services/semesters.py` | `def deadlines_for` |
 | Moving a project to another semester | `apps/projects/services/semesters.py` | `def set_project_semester` |

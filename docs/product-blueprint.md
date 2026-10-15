@@ -9,7 +9,7 @@
 
 Baze Project Hub gives students and academic staff one place to discover final-year work, reduce accidental topic duplication, manage supervision and approvals, and preserve completed projects and their documented research gaps.
 
-The system is not a public internet repository. Project discovery is available to authenticated Baze Project Hub users. The application must not imply that an email address is verified by checking its domain alone; account registration is reviewed by an administrator.
+Completed projects are a public showcase of summaries (D-42); running topics, files and supervision records are available only to authenticated Baze Project Hub users. The application must not imply that an email address is verified by checking its domain alone; account registration is reviewed by an administrator.
 
 ## Product principles
 

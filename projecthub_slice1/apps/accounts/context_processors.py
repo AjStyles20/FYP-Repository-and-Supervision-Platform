@@ -19,4 +19,5 @@ def site_switches(request):
         "self_registration_open": settings.STUDENT_SELF_REGISTRATION,
         "ui_theme": settings.UI_THEME,
         "brand_logo_url": logo_url(),
+        "public_repository": settings.PUBLIC_REPOSITORY,
     }

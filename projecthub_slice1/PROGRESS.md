@@ -26,7 +26,8 @@
 
 ### Academic structure and repository
 - Faculty → Department → Programme models, with a management page for administrators
-- Authenticated project repository with Current/Past sections, search, academic filters and role-aware project detail pages
+- Project repository with Current/Past sections, search, academic filters and role-aware project detail pages
+- Public showcase (D-42): visitors who are not logged in can browse, search and open completed projects as summaries; running topics, files and student identification numbers stay login-only; a personal email is shown to visitors only if its owner chooses "Anyone, including visitors" (never a phone number); `PUBLIC_REPOSITORY` turns it off
 - Permission-checked project downloads with per-file Baze-user/staff visibility and extension/size validation
 - Admin-only CSV import of historic project summaries, all or nothing: every bad row is listed with its line number and nothing is saved until every row is valid; supervisors and previous supervisors must be academic staff of the project's department. Demo sample: `docs/sample_import.csv`
 - Similar-topic checker: archived projects whose topics score above `SIMILARITY_THRESHOLD` are listed (`docs/explain/similarity.md`)
@@ -124,7 +125,7 @@ For the demo, run `.\run_demo.ps1` from the repository root instead. It uses its
 - Q-10: whether a corrections-required step is needed after the defence, and who clears it.
 - Q-11: what "too much for now" meant about the other supervision project.
 
-Q-03 (repository audience) is answered: signed-in Baze Project Hub users only.
+Q-03 (repository audience) is answered: signed-in Baze Project Hub users only, revised by D-42 (completed projects are public summaries).
 
 ## Notes
 - Django models are the source of truth. `docs/database_schema.sql` is an early design reference, and its table names do not match the Django tables.

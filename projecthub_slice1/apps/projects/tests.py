@@ -155,10 +155,16 @@ class RepositoryTests(TestCase):
             )
         )
 
-    def test_repository_requires_authentication(self):
+    @override_settings(PUBLIC_REPOSITORY=False)
+    def test_repository_requires_authentication_when_the_public_showcase_is_off(self):
         response = self.client.get(reverse("repository"))
 
         self.assertRedirects(response, f"{reverse('login')}?next={reverse('repository')}")
+
+    def test_running_topics_always_require_authentication(self):
+        response = self.client.get(reverse("running_topics"))
+
+        self.assertRedirects(response, f"{reverse('login')}?next={reverse('running_topics')}")
 
     def test_my_project_is_student_only(self):
         self.client.force_login(self.coordinator)

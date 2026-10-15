@@ -2,7 +2,7 @@
 {% load contact semesters %}
 {% block title %}{{ project.title }} · Baze Project Hub{% endblock %}
 {% block main_class %}wide{% endblock %}
-{% block back %}<p class="breadcrumb back-link"><a href="{% url 'repository' %}?section={% if is_past %}past{% else %}current{% endif %}"><span aria-hidden="true">←</span> Repository</a></p>{% endblock %}
+{% block back %}<p class="breadcrumb back-link"><a href="{% url 'repository' %}{% if not visitor %}?section={% if is_past %}past{% else %}current{% endif %}{% endif %}"><span aria-hidden="true">←</span> {% if visitor %}Completed projects{% else %}Repository{% endif %}</a></p>{% endblock %}
 {% block content %}
 
 <section class="detail-hero">
@@ -48,7 +48,12 @@
       </section>
     {% endif %}
 
-    {% if is_past %}
+    {% if is_past and visitor %}
+      <section class="documents-panel">
+        <h2>Project files</h2>
+        <p class="muted"><a href="{% url 'login' %}?next={{ request.get_full_path|urlencode }}">Log in</a> with a Baze email to see the project's files.</p>
+      </section>
+    {% elif is_past %}
       <section class="documents-panel">
         <h2>Available project files</h2>
         {% if documents %}
@@ -110,5 +115,5 @@
 
 {% include "projects/_similar_projects.html" with matches=similar_projects threshold=similarity_threshold %}
 
-<p class="privacy-note">This project summary is available to signed-in Baze Project Hub users. Private supervision meeting discussions and corrective-action records are not shown here.</p>
+<p class="privacy-note">{% if visitor %}This is a public summary of a completed project. A student's contact details appear only if the student chose to share them with visitors.{% else %}This project summary is available to signed-in Baze Project Hub users.{% endif %} Private supervision meeting discussions and corrective-action records are not shown here.</p>
 {% endblock %}

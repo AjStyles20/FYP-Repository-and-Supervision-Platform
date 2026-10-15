@@ -67,7 +67,7 @@ The features a final-year project (final-year project) management system is usua
 
 | Feature | Status | In this system |
 |---|---|---|
-| Searchable archive of past projects, with documented gaps | ✔ | Signed-in Baze users only |
+| Searchable archive of past projects, with documented gaps | ✔ | Public summaries for visitors (D-42); files and running topics need a login |
 | Import of historic projects | ✔ | All-or-nothing CSV import (D-23) |
 | Audit trail | ✔ | Append-only, protected by database triggers |
 | Reports and exports | ✔ | Project list CSV (coordinator, Head of Department, administrator) and the convocation list CSV |

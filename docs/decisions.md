@@ -17,7 +17,7 @@ Update this file whenever a decision is made or an open question is answered. Ne
 | D-06 | **Approval criteria vary by supervisor**; no fixed rule | Becomes a per-supervisor setting |
 | D-07 | Logs for admins only; students can edit their own entries (for example a change of supervisor) | All edits versioned |
 | D-08 | **Only the Head of Department signs off and archives** | Confirmed 2026-10-03 |
-| D-09 | Past and current project sections are visible to authenticated Baze Project Hub users to prevent repeated and copied topics; they are not open to unauthenticated internet visitors | User clarified 2026-10-05; student identification numbers remain staff-only and contact is opt-in |
+| D-09 | Past and current project sections are visible to authenticated Baze Project Hub users to prevent repeated and copied topics; they are not open to unauthenticated internet visitors. **Superseded in part by D-42** (completed projects are now public summaries) | User clarified 2026-10-05; student identification numbers remain staff-only and contact is opt-in |
 | D-10 | Supervisor said to go ahead with implementation; he said more features will be added later | Approval form unsigned |
 | D-11 | The gap/continue and similar-topic features are **not** what the supervisor meant by "unique features" | Kept only as bonus modules |
 | D-12 | The author wants to build this one and enjoys artificial intelligence model work and building a polished product | Shapes the optional artificial intelligence module |
@@ -50,6 +50,7 @@ Update this file whenever a decision is made or an open question is answered. Ne
 | D-39 | **A public welcome page.** Before logging in, visitors see what the hub is, live totals (counts only, never a name) and one tile per faculty; every project page still needs a login. Signing out returns to the welcome page. The action is called "Log in" everywhere, to pair with "Log out" | User asked 2026-10-13 |
 | D-40 | **A verified graduation needs its year.** The Head of Department cannot tick "Graduation verified" without the graduation year, so convocation lists and the archive never show a verified student without one | User asked 2026-10-13 |
 | D-41 | **Everyone logs in with their Baze email, and only with it.** Lecturers have no student identification number, so one way in for everybody is simpler and clearer. The student identification number and internal usernames (including `demo.*`) no longer sign anyone in; the student identification number is still recorded and checked when a student is added. Supersedes the sign-in part of D-20. An administrator created with `createsuperuser` must be given a Baze email to use the site | User decided 2026-10-14 |
+| D-42 | **Completed projects are a public showcase.** Visitors who are not logged in can browse and search completed projects and open their summaries: title, description, keywords, department, programme, year, semester, supervisors, documented gap and the student's name, so the school can show its students' work. Running topics, every file, student identification numbers and all supervision records stay login-only. A student's (or staff member's) contact details appear to visitors only if they choose "Anyone, including visitors" for their personal email under My details; a phone number can never be public. On a real site sample (demo) records are not shown to visitors. The setting `PUBLIC_REPOSITORY` (in `.env`) turns the showcase off again. Replaces the login-only rule of D-09 for completed projects; confirm student names and consent with the supervisor (Q-04) | User decided 2026-10-15 |
 
 ## B. Proposed (not yet confirmed)
 
@@ -70,7 +71,7 @@ Ask these in one short meeting. Record answers here.
 |---|---|---|---|
 | Q-01 | What did you mean by features that "make it unique"? Any examples? | Defines the contribution section | |
 | Q-02 | Is the project approval form signed, and does the title need to be fixed first? | Admin risk | |
-| Q-03 | "Public": visible to anyone on the internet, or only logged-in Baze users? | Privacy and security design | **Answered 2026-10-05:** signed-in Baze Project Hub users only |
+| Q-03 | "Public": visible to anyone on the internet, or only logged-in Baze users? | Privacy and security design | **Answered 2026-10-05:** signed-in Baze Project Hub users only. **Revised 2026-10-15 (D-42):** completed projects are public summaries; running topics and files stay login-only |
 | Q-04 | Should student names, identification numbers and contact details appear in the repository? Is student consent needed? | Privacy | **Interim answer by the author 2026-10-11 (D-21):** student identification numbers staff-only; each contact detail opt-in, with its owner choosing who sees it. Confirm with the supervisor |
 | Q-05 | Does Baze already have any project repository or supervision tool (Google Classroom, Moodle, forms)? | Gap statement | |
 | Q-06 | Is MySQL/Workbench a requirement for all projects, and are there other written defence requirements? | Stack | |

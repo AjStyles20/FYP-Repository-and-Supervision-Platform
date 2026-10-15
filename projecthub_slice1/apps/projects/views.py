@@ -15,7 +15,7 @@ from apps.academics.models import SEMESTER_CODE, normalise_semester_code
 from apps.audit.services import log_event
 from apps.accounts.models import Role, STAFF_ROLES, StudentProfile, User
 from django.contrib.auth.decorators import login_required
-from apps.accounts.permissions import role_required
+from apps.accounts.permissions import role_or_public_required, role_required
 
 from .forms import (
     AllocationForm, CompletionForm, CoordinatorApprovalForm, ProjectCsvImportForm, ProjectSemesterForm, ProjectDocumentForm, ProjectProposalForm, ProjectStartForm, StageActionForm,
@@ -31,6 +31,7 @@ from .services.health import HEALTH_PREFETCH, can_see_health, health_score
 from .services.similarity import similar_archived_projects, similarity_threshold
 from .services.assignment import allocation_departments
 from .services.milestones import apply_faculty_deadlines, create_deadline, remove_deadline, update_deadline
+from .services.repository import visible_to_visitors
 from .services.semesters import semester_for_code, set_archived_semester, set_project_semester
 from .services import (
     save_proposal_draft, allocate_student, assign_project_supervisor, unassign_project_supervisor, log_approved_form, record_supervisor_decision,
@@ -64,11 +65,14 @@ def _warn_about_similar_topics(request, project):
 
 
 def _repository_context(request, section):
-    can_see_student_id = request.user.role in STAFF_ROLES
+    visitor = not request.user.is_authenticated  # only possible on the completed projects (D-42)
+    can_see_student_id = getattr(request.user, "role", None) in STAFF_ROLES
     filters = read_filters(request.GET)
     query = filters["q"]
     current_projects = repository_current_projects(filters, can_see_student_id)
     past_projects = repository_past_projects(filters, can_see_student_id)
+    if visitor:
+        past_projects = visible_to_visitors(past_projects)
 
     if section == "current":
         items = current_projects
@@ -109,7 +113,8 @@ def _repository_context(request, section):
         "year": filters["year"],
         "semester": filters["semester"] or filters["semester_typed"],
         "semester_invalid": bool(filters["semester_typed"]) and not filters["semester"],
-        "years": available_years(),
+        "years": available_years(past_only=visitor),
+        "visitor": visitor,
         "faculties": faculties_with_structure(),
         "can_see_student_id": can_see_student_id,
         "section_count": {
@@ -119,7 +124,7 @@ def _repository_context(request, section):
     }
 
 
-@role_required(*REPOSITORY_ROLES)
+@role_or_public_required(*REPOSITORY_ROLES)
 def repository(request):
     if request.GET.get("section") == "current":
         query = request.GET.urlencode()
@@ -168,7 +173,7 @@ def _can_set_semester(user, department_id):
     )
 
 
-@role_required(*REPOSITORY_ROLES)
+@role_or_public_required(*REPOSITORY_ROLES)
 def past_project_detail(request, project_id):
     project = get_object_or_404(
         ArchivedProject.objects.select_related(
@@ -176,7 +181,10 @@ def past_project_detail(request, project_id):
         ).prefetch_related("previous_supervisors"),
         pk=project_id,
     )
-    can_set_semester = _can_set_semester(request.user, project.department_id)
+    visitor = not request.user.is_authenticated
+    if visitor and project not in visible_to_visitors(ArchivedProject.objects.filter(pk=project.pk)):
+        raise Http404  # sample records stay out of the public showcase on a real site
+    can_set_semester = not visitor and _can_set_semester(request.user, project.department_id)
     if request.method == "POST":
         if request.POST.get("action") != "set_semester" or not can_set_semester:
             raise PermissionDenied
@@ -189,7 +197,9 @@ def past_project_detail(request, project_id):
             messages.error(request, " ".join(semester_form.errors["semester"]))
         return redirect("past_project_detail", project_id=project.pk)
     visible_documents = Q(visibility=ProjectDocument.Visibility.BAZE_USERS)
-    if request.user.role in STAFF_ROLES:
+    if visitor:
+        visible_documents = Q(pk__in=[])  # files stay login-only (D-42)
+    elif request.user.role in STAFF_ROLES:
         visible_documents |= Q(visibility=ProjectDocument.Visibility.STAFF_ONLY)
     elif project.student_id == request.user.pk:
         visible_documents |= Q(uploaded_by=request.user)
@@ -199,13 +209,14 @@ def past_project_detail(request, project_id):
         {
             "project": project,
             "is_past": True,
-            "can_see_student_id": request.user.role in STAFF_ROLES,
+            "visitor": visitor,
+            "can_see_student_id": getattr(request.user, "role", None) in STAFF_ROLES,
             "student_profile": _student_profile(project.student),
             # Older archive rows may list the final supervisor among the earlier ones; show each once.
             "previous_supervisors": [person for person in project.previous_supervisors.all() if person.pk != project.supervisor_id],
             "documents": project.documents.filter(visible_documents).select_related("uploaded_by"),
             "media": project.media.filter(visible_documents),
-            "can_add_media": request.user.role == Role.ADMIN,
+            "can_add_media": getattr(request.user, "role", None) == Role.ADMIN,
             "semester_form": ProjectSemesterForm(initial={"semester": project.semester.code if project.semester else ""}) if can_set_semester else None,
             "similar_projects": similar_archived_projects(project.title, project.description, exclude_id=project.pk),
             "similarity_threshold": similarity_threshold(),

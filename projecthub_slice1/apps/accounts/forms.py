@@ -480,6 +480,7 @@ class ContactDetailsForm(forms.ModelForm):
         help_texts = {
             "personal_email": "Not your Baze email. Keep one here so people can still reach you after you graduate.",
             "phone": "Include the country code, for example +234 803 123 4567.",
+            "personal_email_visibility": "“Anyone, including visitors” shows it on your completed projects to people who are not logged in. A phone number is never shown to visitors.",
         }
 
     def clean_personal_email(self):

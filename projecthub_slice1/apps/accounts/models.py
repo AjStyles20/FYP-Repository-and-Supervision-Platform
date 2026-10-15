@@ -15,11 +15,17 @@ STAFF_ROLES = (Role.SUPERVISOR, Role.COORDINATOR, Role.HOD, Role.ADMIN)
 
 
 class ContactVisibility(models.TextChoices):
-    """Who may see one contact detail. Nothing is ever shown to people who are not signed in."""
+    """Who may see one contact detail. Only a personal email can be shown to visitors who are not
+    logged in, and only when its owner chooses "Anyone, including visitors" (D-42)."""
 
     HIDDEN = "hidden", "Only me"
     STAFF = "staff", "Staff only"
     SIGNED_IN = "signed_in", "All signed-in Baze users"
+    PUBLIC = "public", "Anyone, including visitors"
+
+
+# A phone number is never public: a public number invites unwanted calls and scams (D-42).
+PHONE_VISIBILITY_CHOICES = [choice for choice in ContactVisibility.choices if choice[0] != ContactVisibility.PUBLIC]
 
 
 phone_validator = RegexValidator(
@@ -58,7 +64,7 @@ class User(AbstractUser):
     )
     phone = models.CharField(max_length=20, blank=True, validators=[phone_validator])
     phone_visibility = models.CharField(
-        max_length=10, choices=ContactVisibility.choices, default=ContactVisibility.HIDDEN
+        max_length=10, choices=PHONE_VISIBILITY_CHOICES, default=ContactVisibility.HIDDEN
     )
 
     @property
@@ -69,17 +75,22 @@ class User(AbstractUser):
     def contact_for(self, viewer):
         """The contact details `viewer` may see, as (label, value, href) rows. The owner sees all."""
         rows = []
+        signed_in = getattr(viewer, "is_authenticated", False)
         for label, value, visibility, scheme in (
             ("Personal email", self.personal_email, self.personal_email_visibility, "mailto:"),
             ("Phone", self.phone, self.phone_visibility, "tel:"),
         ):
-            if not value or not getattr(viewer, "is_authenticated", False):
+            if not value:
                 continue
-            allowed = (
-                viewer.pk == self.pk
-                or visibility == ContactVisibility.SIGNED_IN
-                or (visibility == ContactVisibility.STAFF and viewer.role in STAFF_ROLES)
-            )
+            if not signed_in:
+                # A visitor sees only a personal email its owner made public; never a phone (D-42).
+                allowed = scheme == "mailto:" and visibility == ContactVisibility.PUBLIC
+            else:
+                allowed = (
+                    viewer.pk == self.pk
+                    or visibility in (ContactVisibility.SIGNED_IN, ContactVisibility.PUBLIC)
+                    or (visibility == ContactVisibility.STAFF and viewer.role in STAFF_ROLES)
+                )
             if allowed:
                 rows.append((label, value, scheme + value.replace(" ", "")))
         return rows
