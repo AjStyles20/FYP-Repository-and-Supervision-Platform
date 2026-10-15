@@ -6,13 +6,13 @@
   <title>{% block title %}Baze Project Hub{% endblock %}</title>
   <meta name="color-scheme" content="light">
   <link rel="stylesheet" href="{% static 'css/tokens.css' %}?v=3">
-  <link rel="stylesheet" href="{% static 'css/app.css' %}?v=38">
+  <link rel="stylesheet" href="{% static 'css/app.css' %}?v=39">
   {% if ui_theme == "glass" %}<link rel="stylesheet" href="{% static 'css/theme-glass.css' %}?v=7">{% endif %}
 </head>
 <body class="{% block body_class %}{% endblock %}">
 <header class="top{% if not user.is_authenticated %} top-public{% endif %}">
   <div class="top-inner">
-  <a class="brand" href="{% url 'home' %}">{% if brand_logo_url %}<img class="brand-logo" src="{{ brand_logo_url }}" alt="" width="48" height="48">{% else %}<span class="brand-mark" aria-hidden="true">BU</span>{% endif %}Baze Project Hub</a>
+  <a class="brand" href="{% url 'home' %}">{% if brand_logo_url %}<img class="brand-logo" src="{{ brand_logo_url }}" alt="" width="90" height="60">{% else %}<span class="brand-mark" aria-hidden="true">BU</span>{% endif %}Baze Project Hub</a>
   <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="main-nav" aria-label="Open navigation">
     <span class="nav-toggle-icon" aria-hidden="true"><span></span><span></span><span></span></span>
     {% if user.is_authenticated %}<span class="nav-count nav-toggle-count" data-counter="unread_notifications" aria-hidden="true"{% if not unread_notification_count %} hidden{% endif %}>{{ unread_notification_count|default:0 }}</span>{% endif %}
