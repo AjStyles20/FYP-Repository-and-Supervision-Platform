@@ -1514,6 +1514,12 @@ class HomePageTests(TestCase):
         self.assertIn('url("../img/login-background.jpg")', css)
         self.assertTrue((settings.BASE_DIR / "static" / "img" / "login-background.jpg").exists())
 
+    def test_the_login_page_shows_a_picture_beside_the_form(self):
+        page = self.client.get(reverse("login"))
+        # An image element on the right of the form (not a background), hidden on phones by the stylesheet.
+        self.assertContains(page, '<figure class="login-art"><img src="/static/img/image4.avif" alt="" loading="eager"></figure>', html=True)
+        self.assertTrue((settings.BASE_DIR / "static" / "img" / "image4.avif").exists())
+
     def test_signed_in_people_go_to_their_portal(self):
         user = User.objects.create(username="home.admin", role=Role.ADMIN)
         self.client.force_login(user)

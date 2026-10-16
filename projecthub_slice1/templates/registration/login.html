@@ -1,9 +1,11 @@
 {% extends "base.html" %}
+{% load static %}
 {% block title %}Log in · Baze Project Hub{% endblock %}
 {% block body_class %}page-login{% endblock %}
 {% block main_class %}narrow-shell{% endblock %}
 {% block back %}{% endblock %}
 {% block content %}
+<div class="login-layout">
 <section class="card narrow">
   <h1>Log in</h1>
   <p class="muted">Use your Baze email address, students and staff alike.</p>
@@ -17,4 +19,6 @@
   {% if self_registration_open %}<p>New student or past final-year student? <a href="{% url 'register_student' %}">Create an account</a>.</p>{% else %}<p class="muted"><strong>No account yet?</strong> Students: see your final-year project coordinator. Staff: contact the system administrator.</p>{% endif %}
   <p class="muted"><a href="{% url 'home' %}">What is Baze Project Hub?</a></p>
 </section>
+<figure class="login-art"><img src="{% static 'img/image4.avif' %}" alt="" loading="eager"></figure>
+</div>
 {% endblock %}
