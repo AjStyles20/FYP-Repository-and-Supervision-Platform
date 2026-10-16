@@ -1,3 +1,4 @@
+import os
 import tempfile
 from datetime import date, timedelta
 from io import StringIO
@@ -168,6 +169,11 @@ class SupervisorStudentWorkflowTests(TestCase):
         self.assertIn(b"guide contents", b"".join(download.streaming_content))
 
         self.client.force_login(self.supervisor)
+        edit_page = self.client.get(reverse("edit_shared_resource", args=[resource.pk]))
+        # The "Currently" link goes through the download view, not to the raw media path, which is not served.
+        self.assertContains(edit_page, f'href="{reverse("download_shared_resource", args=[resource.pk])}"')
+        self.assertNotContains(edit_page, f'href="{resource.file.url}"')
+        self.assertContains(edit_page, os.path.basename(resource.file.name))
         edit = self.client.post(reverse("edit_shared_resource", args=[resource.pk]), {
             "title": "Revised literature review guide", "description": "Updated format.", "url": "",
             "project_targets": [str(self.project.pk), str(self.second_project.pk)],

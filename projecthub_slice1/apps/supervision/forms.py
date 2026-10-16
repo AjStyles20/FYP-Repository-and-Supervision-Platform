@@ -1,4 +1,7 @@
+import os
+
 from django import forms
+from django.urls import reverse
 
 from apps.accounts.models import SupervisorProfile
 from .models import Announcement, MeetingMode, MeetingStatus, MeetingRequest, SharedResource, SupervisorAvailability, SupervisionMeeting
@@ -58,6 +61,28 @@ class ApprovalPolicyForm(forms.ModelForm):
         widgets = {"approval_criteria": forms.Textarea(attrs={"rows": 5})}
 
 
+class _CurrentFile:
+    """The saved file as the edit form shows it: its own name, linked through the checked download view."""
+
+    def __init__(self, file, url):
+        self.file, self.url = file, url
+
+    def __str__(self):
+        return os.path.basename(self.file.name)
+
+
+class DownloadLinkFileInput(forms.ClearableFileInput):
+    """A file input whose "Currently" link goes through the download view (media files are not served directly)."""
+
+    download_url = ""
+
+    def format_value(self, value):
+        value = super().format_value(value)
+        if self.download_url and self.is_initial(value):
+            return _CurrentFile(value, self.download_url)
+        return value
+
+
 class SharedResourceForm(forms.ModelForm):
     project_targets = forms.ModelMultipleChoiceField(
         queryset=Project.objects.none(),
@@ -71,10 +96,12 @@ class SharedResourceForm(forms.ModelForm):
         fields = ("title", "description", "url", "file")
         labels = {"url": "Link", "file": "Or upload a file"}
         help_texts = {"url": "A web address, for material that already lives online."}
-        widgets = {"description": forms.Textarea(attrs={"rows": 3})}
+        widgets = {"description": forms.Textarea(attrs={"rows": 3}), "file": DownloadLinkFileInput}
 
     def __init__(self, *args, supervisor, **kwargs):
         super().__init__(*args, **kwargs)
+        if self.instance.pk and self.instance.file:
+            self.fields["file"].widget.download_url = reverse("download_shared_resource", args=[self.instance.pk])
         targets = Project.objects.filter(supervisor=supervisor, archived=False).select_related("student").order_by("student__last_name", "student__first_name")
         if self.instance and self.instance.pk:
             targets = (targets | self.instance.projects.filter(supervisor=supervisor, archived=False)).distinct()
