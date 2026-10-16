@@ -53,6 +53,7 @@ def save_proposal_draft(project, *, proposed_title, problem_statement="", object
     return form
 
 
+@transaction.atomic
 def submit_proposal(project, *, proposed_title, problem_statement, objectives, methodology,
                     tools_and_technologies, literature_review="", research_gap="",
                     working_project_demonstration="", student_name_on_form="", signed_on=None):
