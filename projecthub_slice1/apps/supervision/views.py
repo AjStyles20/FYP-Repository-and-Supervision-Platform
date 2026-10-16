@@ -162,7 +162,8 @@ def _decide_meeting_request(request, project):
     notify(project.student, NotificationKind.MEETING_REQUEST_DECIDED, meeting_request,
            title=f"Your meeting request was {meeting_request.get_status_display().lower()}",
            body=f"Your supervisor {outcome}.", url=reverse("project_meetings", args=[project.pk]))
-    log_event(actor=request.user, action=f"meeting.request_{decision}ed", summary=f"Meeting request {decision}ed for {project.title}", obj=meeting_request)
+    decided = "accepted" if decision == "accept" else "declined"
+    log_event(actor=request.user, action=f"meeting.request_{decided}", summary=f"Meeting request {decided} for {project.title}", obj=meeting_request)
     messages.success(request, "Request accepted; the meeting is scheduled." if decision == "accept" else "Request declined; your student was told why.")
 
 
