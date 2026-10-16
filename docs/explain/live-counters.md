@@ -48,7 +48,7 @@ The 401 is JSON on purpose, not a redirect to the login page, so the script can 
 | `staff_count` | Active supervisor, coordinator and Head of Department accounts | Real rows | Demo and real rows |
 | `programme_count` | Programmes | Real rows | Demo and real rows |
 
-### 200 for a coordinator (their own department only)
+### 200 for a coordinator (their whole faculty, D-29)
 
 ```json
 {
@@ -66,7 +66,7 @@ The 401 is JSON on purpose, not a redirect to the login page, so the script can 
 
 | Key | Meaning |
 |---|---|
-| `active_count` | Projects in the department that are not archived (demo projects only for a demo viewer, as above) |
+| `active_count` | Projects in any department of the coordinator's faculty that are not archived (demo projects only for a demo viewer, as above) |
 | `unassigned_count` | Of those, projects with no supervisor |
 | `approval_count` | Projects at "Supervisor accepted", whose signed form the coordinator must log |
 | `defence_count` | Projects at "Submitted for examination", whose defence outcome must be recorded |

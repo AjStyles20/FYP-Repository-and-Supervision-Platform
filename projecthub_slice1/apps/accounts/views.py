@@ -17,6 +17,7 @@ from apps.academics.models import Programme
 from apps.audit.models import AuditEvent
 from apps.audit.services import log_event
 from apps.projects.models import ArchivedProject, Project, ProjectCompletion, ProjectStage
+from apps.projects.services.assignment import allocation_departments
 from apps.projects.services.counters import staff_with_counters
 from apps.projects.services.health import HEALTH_PREFETCH, health_score
 from apps.supervision.models import (
@@ -251,9 +252,11 @@ def for_viewer(queryset, user):
 
 
 def _department_projects(user):
+    """The running projects a coordinator or Head of Department looks after: a coordinator's whole
+    faculty (D-29), a Head of Department's own department."""
     projects = for_viewer(Project.objects.filter(archived=False), user)
     if user.department_id:
-        projects = projects.filter(department_id=user.department_id)
+        projects = projects.filter(department__in=allocation_departments(user))
     else:
         projects = projects.none()
     return projects.select_related("student", "supervisor", "programme", "department")
@@ -286,11 +289,12 @@ def _department_portal_context(user):
     return {
         "role": Role.COORDINATOR,
         "department": user.department,
+        "faculty": user.department.faculty if user.department_id else None,
         **department_counts(user),
         "pending_proposal_count": pending_proposals.count(),
         "queue_projects": (pending_proposals | awaiting_logging | awaiting_defence_record).order_by("updated_at")[:6],
         "health_rows": _department_health_rows(projects),
-        "supervisor_load": staff_with_counters(department=user.department)[:6] if user.department_id else [],
+        "supervisor_load": staff_with_counters(departments=allocation_departments(user), viewer=user)[:6] if user.department_id else [],
     }
 
 
@@ -311,7 +315,7 @@ def _supervisor_portal_context(user):
         "approved_count": projects.filter(stage__in=(ProjectStage.APPROVED, ProjectStage.IN_PROGRESS, ProjectStage.SUBMITTED, ProjectStage.DEFENDED)).count(),
         "defended_count": projects.filter(stage=ProjectStage.DEFENDED).count(),
         "upcoming_meetings": upcoming_meetings,
-        "past_count": ArchivedProject.objects.filter(Q(supervisor=user) | Q(previous_supervisors=user)).distinct().count(),
+        "past_count": for_viewer(ArchivedProject.objects.filter(Q(supervisor=user) | Q(previous_supervisors=user)), user).distinct().count(),
     }
 
 
@@ -321,7 +325,9 @@ def _hod_portal_context(user):
     graduation_checks = ProjectCompletion.objects.filter(
         project__department_id=user.department_id, graduation_verified=False
     ) if user.department_id else ProjectCompletion.objects.none()
-    archived_count = ArchivedProject.objects.filter(department_id=user.department_id).count() if user.department_id else 0
+    if not user.is_demo:
+        graduation_checks = graduation_checks.filter(project__is_demo=False)
+    archived_count = for_viewer(ArchivedProject.objects.filter(department_id=user.department_id), user).count() if user.department_id else 0
     return {
         "role": Role.HOD,
         "department": user.department,
@@ -330,7 +336,7 @@ def _hod_portal_context(user):
         "graduation_check_count": graduation_checks.count(),
         "archived_count": archived_count,
         "signoff_projects": signoff_queue[:6],
-        "supervisor_load": staff_with_counters(department=user.department)[:6] if user.department_id else [],
+        "supervisor_load": staff_with_counters(department=user.department, viewer=user)[:6] if user.department_id else [],
     }
 
 

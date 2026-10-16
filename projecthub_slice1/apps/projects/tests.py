@@ -1249,7 +1249,10 @@ class ProjectHealthScoreTests(TestCase):
     def setUpTestData(cls):
         faculty = Faculty.objects.create(name="Health Faculty")
         cls.department = Department.objects.create(faculty=faculty, name="Health Department")
-        cls.other_department = Department.objects.create(faculty=faculty, name="Other Health Department")
+        # Another faculty: a coordinator sees their whole faculty (D-29), so the outsider must be outside it.
+        cls.other_department = Department.objects.create(
+            faculty=Faculty.objects.create(name="Other Health Faculty"), name="Other Health Department"
+        )
         cls.programme = Programme.objects.create(department=cls.department, name="Computer Science", degree_type="BSc")
         cls.supervisor = User.objects.create(username="health.supervisor", role=Role.SUPERVISOR, department=cls.department)
         cls.coordinator = User.objects.create(username="health.coordinator", role=Role.COORDINATOR, department=cls.department)

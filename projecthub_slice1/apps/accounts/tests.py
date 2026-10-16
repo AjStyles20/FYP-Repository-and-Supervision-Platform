@@ -643,7 +643,7 @@ class SummaryApiTests(TestCase):
         for title, stage, supervisor, dept, prog in (
             ("Unassigned topic", ProjectStage.PROPOSED, None, cls.department, programme),
             ("Form to log", ProjectStage.SUPERVISOR_ACCEPTED, cls.supervisor, cls.department, programme),
-            ("Other department", ProjectStage.SUBMITTED, None, other, other_programme),
+            ("Other department", ProjectStage.SUBMITTED, None, other, other_programme),  # same faculty
         ):
             Project.objects.create(
                 student=User.objects.create(username=f"summary.{title}", role=Role.STUDENT), title=title,
@@ -669,7 +669,8 @@ class SummaryApiTests(TestCase):
         )
 
     REAL_ADMIN_COUNTERS = {"pending_count": 1, "student_count": 4, "staff_count": 3, "programme_count": 2}
-    REAL_COORDINATOR_COUNTERS = {"active_count": 2, "unassigned_count": 1, "approval_count": 1, "defence_count": 0}
+    # The coordinator counts the whole faculty (D-29): both departments' projects.
+    REAL_COORDINATOR_COUNTERS = {"active_count": 3, "unassigned_count": 2, "approval_count": 1, "defence_count": 1}
 
     def _get(self, user=None):
         if user:
@@ -696,12 +697,41 @@ class SummaryApiTests(TestCase):
             self.assertTrue(all(isinstance(value, int) for value in body["counters"].values()))
             self.assertIsInstance(body["unread_notifications"], int)
 
-    def test_coordinator_gets_only_their_department_counters(self):
+    def test_coordinator_gets_their_faculty_counters(self):
         body = self._get(self.coordinator).json()
 
         self.assertEqual(body["role"], "coordinator")
         self.assertEqual(body["counters"], self.REAL_COORDINATOR_COUNTERS)  # the demo project is not counted
         self.assertEqual(body["unread_notifications"], 0)
+
+    def test_a_coordinator_does_not_count_another_faculty_and_a_head_of_department_counts_their_department(self):
+        elsewhere = Department.objects.create(faculty=Faculty.objects.create(name="Elsewhere Faculty"), name="Elsewhere")
+        Project.objects.create(
+            student=User.objects.create(username="summary.elsewhere", role=Role.STUDENT), title="Elsewhere topic",
+            stage=ProjectStage.PROPOSED, department=elsewhere,
+            programme=Programme.objects.create(department=elsewhere, name="History", degree_type="BA"),
+        )
+        self.assertEqual(self._get(self.coordinator).json()["counters"], self.REAL_COORDINATOR_COUNTERS)
+        self.client.force_login(self.hod)
+        self.assertEqual(self.client.get(reverse("dashboard")).context["active_count"], 2)  # own department only
+
+    def test_supervisor_load_and_past_counts_follow_the_demo_rule(self):
+        ArchivedProject.objects.create(title="Real finished topic", year=2025, department=self.department,
+                                       programme=self.programme, student=self.student, supervisor=self.supervisor)
+        ArchivedProject.objects.create(title="Demo finished topic", year=2025, department=self.department,
+                                       programme=self.programme, student=self.student, supervisor=self.supervisor, is_demo=True)
+        self.client.force_login(self.coordinator)
+        load = self.client.get(reverse("dashboard")).context["supervisor_load"]
+        self.assertNotIn("summary.demo.supervisor", [row.username for row in load])
+        self.assertEqual({row.username: row.past_count for row in load}["summary.supervisor"], 1)
+        self.client.force_login(self.demo_coordinator)
+        load = self.client.get(reverse("dashboard")).context["supervisor_load"]
+        self.assertIn("summary.demo.supervisor", [row.username for row in load])
+        self.assertEqual({row.username: row.past_count for row in load}["summary.supervisor"], 2)
+        self.client.force_login(self.hod)
+        self.assertEqual(self.client.get(reverse("dashboard")).context["archived_count"], 1)
+        self.client.force_login(self.supervisor)
+        self.assertEqual(self.client.get(reverse("dashboard")).context["past_count"], 1)
 
     def test_a_real_admin_on_a_mixed_database_sees_only_real_rows(self):
         self.assertEqual(self._get(self.admin).json()["counters"], self.REAL_ADMIN_COUNTERS)
@@ -738,7 +768,7 @@ class SummaryApiTests(TestCase):
     def test_a_real_coordinator_does_not_count_demo_projects_and_a_demo_coordinator_does(self):
         self.assertEqual(self._get(self.coordinator).json()["counters"], self.REAL_COORDINATOR_COUNTERS)
         self.assertEqual(self._get(self.demo_coordinator).json()["counters"],
-                         {"active_count": 3, "unassigned_count": 2, "approval_count": 1, "defence_count": 0})
+                         {"active_count": 4, "unassigned_count": 3, "approval_count": 1, "defence_count": 1})
         self.assertIn("Demo topic", [p.title for p in self.client.get(reverse("dashboard")).context["queue_projects"]])
 
     def test_counters_match_the_portal_page(self):

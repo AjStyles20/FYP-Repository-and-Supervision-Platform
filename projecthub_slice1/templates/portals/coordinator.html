@@ -6,7 +6,7 @@
 <section class="hero-band">
   <div class="hero-copy">
     <p class="hero-greeting">{% greeting user %}</p>
-    <p class="eyebrow">Coordinator portal · Department office{% if department %} · {{ department }}{% endif %}</p>
+    <p class="eyebrow">Coordinator portal{% if faculty %} · {{ faculty }}{% elif department %} · {{ department }}{% endif %}</p>
     <h1>Keep the project process moving</h1>
     <p>Coordinate student allocations, log signed proposal forms, and see which projects are ready for their next department step.</p>
     <div class="hero-actions">{% if user.can_assign_supervisors %}<a class="btn btn-primary" href="{% url 'supervisor_assignments' %}">Open allocation board</a>{% endif %}<a class="btn btn-quiet" href="{% url 'approvals' %}">Open approval register</a></div>
@@ -25,7 +25,7 @@
   {% for row in health_rows %}
     <article class="card card-pad-sm"><h3><a href="{% url 'project_workflow' row.project.pk %}">{{ row.project.title }}</a></h3><p class="muted">{{ row.project.student.get_full_name|default:row.project.student.username }} · {{ row.project.get_stage_display }} · Supervisor: {{ row.project.supervisor.get_full_name|default:"Unassigned" }}</p>{% include "projects/_health.html" with health=row.health %}</article>
   {% empty %}
-    <div class="card"><p class="muted">No active projects in your department.</p></div>
+    <div class="card"><p class="muted">No active projects in your faculty.</p></div>
   {% endfor %}
 </section>
 
@@ -42,7 +42,7 @@
   <div class="stack">
     <div class="section-title"><div><p class="eyebrow">Capacity</p><h2>Supervisor workload</h2></div>{% if user.can_assign_supervisors %}<a href="{% url 'supervisor_assignments' %}">Manage assignments</a>{% endif %}</div>
     <div class="card"><dl class="fact-list">
-      {% for supervisor in supervisor_load %}<div><dt>{{ supervisor.get_full_name|default:supervisor.username }}</dt><dd>{{ supervisor.active_count }} active · {{ supervisor.approved_count }} approved · {{ supervisor.defended_count }} defended · {{ supervisor.past_count }} past</dd></div>{% empty %}<div><dt>No supervisors found</dt><dd>Staff in this department will appear when their accounts are active.</dd></div>{% endfor %}
+      {% for supervisor in supervisor_load %}<div><dt>{{ supervisor.get_full_name|default:supervisor.username }}</dt><dd>{{ supervisor.active_count }} active · {{ supervisor.approved_count }} approved · {{ supervisor.defended_count }} defended · {{ supervisor.past_count }} past</dd></div>{% empty %}<div><dt>No supervisors found</dt><dd>Staff in this faculty will appear when their accounts are active.</dd></div>{% endfor %}
     </dl></div>
     <div class="card card-pad-sm"><div class="card-head"><h3>Coordinator tools</h3></div><ul class="plain-list"><li><a href="{% url 'academic_structure' %}">View faculty and programme structure</a></li><li><a href="{% url 'repository' %}?section=current">Browse current project topics</a></li><li><a href="{% url 'announcements' %}">Department notices</a></li></ul></div>
   </div>
