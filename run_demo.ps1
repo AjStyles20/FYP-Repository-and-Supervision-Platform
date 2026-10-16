@@ -4,8 +4,9 @@
 #   .\run_demo.ps1 -Fresh     delete the demo database first and build the demo story again
 #   .\run_demo.ps1 -NoServer  prepare the demo database without starting the server
 #
-# Demo accounts all use the password ChangeMe123! (for example demo.admin, demo.coordinator,
-# demo.okoro, demo.amina). The real MySQL database is not touched, and this terminal goes back to
+# Demo accounts log in with their Baze email and the password ChangeMe123! (for example
+# admin@bazeuniversity.edu.ng, coordinator@bazeuniversity.edu.ng, okoro@bazeuniversity.edu.ng,
+# amina@bazeuniversity.edu.ng). The real MySQL database is not touched, and this terminal goes back to
 # using MySQL when the script ends.
 param([switch]$Fresh, [switch]$NoServer)
 
