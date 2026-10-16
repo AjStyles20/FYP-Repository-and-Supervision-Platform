@@ -15,6 +15,7 @@ from apps.accounts.models import Role, StudentProfile, SupervisorProfile
 from apps.accounts.permissions import role_required
 from apps.projects.files import open_stored_file
 from apps.projects.models import Project
+from apps.projects.services.assignment import coordinates
 
 from .forms import (
     ApprovalPolicyForm, AvailabilityForm, AnnouncementForm, MeetingForm, MeetingRequestForm, SharedResourceForm,
@@ -58,8 +59,10 @@ def _project_access(user, project):
         return project.student_id == user.pk
     if project.supervisor_id == user.pk:
         return True
+    if user.role == Role.COORDINATOR:
+        return coordinates(user, project.department_id)
     return (
-        user.role in (Role.COORDINATOR, Role.HOD)
+        user.role == Role.HOD
         and user.department_id is not None
         and user.department_id == project.department_id
     )

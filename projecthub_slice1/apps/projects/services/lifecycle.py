@@ -15,6 +15,7 @@ from django.utils import timezone
 from apps.audit.services import log_event
 from apps.accounts.models import Role, StudentProfile
 
+from .assignment import coordinates as _coordinates
 from ..models import (
     ArchivedProject,
     DocumentType,
@@ -63,8 +64,8 @@ def record_transition(project, to_stage, actor=None, note="", when=None):
         raise ValidationError("Your role cannot record this project stage transition.")
     if (from_stage, to_stage) in SUPERVISOR_TRANSITIONS and project.supervisor_id != actor.pk:
         raise ValidationError("Only the assigned supervisor can record this transition.")
-    if actor.role == Role.COORDINATOR and actor.department_id != project.department_id:
-        raise ValidationError("Only a coordinator in the project's department can record this transition.")
+    if actor.role == Role.COORDINATOR and not _coordinates(actor, project.department_id):
+        raise ValidationError("Only a coordinator of the project's faculty can record this transition.")
     if actor.role == Role.HOD and actor.department_id != project.department_id:
         raise ValidationError("Only the Head of the project's department can record this transition.")
     if actor.role == Role.STUDENT and project.student_id != actor.pk:

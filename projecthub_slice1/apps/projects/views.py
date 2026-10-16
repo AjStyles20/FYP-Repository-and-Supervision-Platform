@@ -29,7 +29,7 @@ from .files import open_stored_file
 from .imports import import_archived_projects
 from .services.health import HEALTH_PREFETCH, can_see_health, health_score
 from .services.similarity import similar_archived_projects, similarity_threshold
-from .services.assignment import allocation_departments
+from .services.assignment import allocation_departments, coordinates
 from .services.milestones import apply_faculty_deadlines, create_deadline, remove_deadline, update_deadline
 from .services.repository import visible_to_visitors
 from .services.semesters import semester_for_code, set_archived_semester, set_project_semester
@@ -42,13 +42,13 @@ from .services import (
 
 REPOSITORY_ROLES = (Role.SUPERVISOR, Role.COORDINATOR, Role.HOD, Role.ADMIN, Role.STUDENT)
 STUDENT_UPLOAD_STAGES = (ProjectStage.PROPOSED, ProjectStage.SUPERVISOR_ACCEPTED, ProjectStage.APPROVED, ProjectStage.IN_PROGRESS)
-# The department's coordinator may upload the final document late in the project; the Head of Department still signs off.
+# The faculty's coordinator may upload the final document late in the project; the Head of Department still signs off.
 COORDINATOR_UPLOAD_STAGES = (ProjectStage.IN_PROGRESS, ProjectStage.SUBMITTED, ProjectStage.DEFENDED)
 
 
 def _coordinator_can_upload(user, project):
     return (
-        user.role == Role.COORDINATOR and user.department_id is not None and user.department_id == project.department_id
+        coordinates(user, project.department_id)
         and not project.archived and project.stage in COORDINATOR_UPLOAD_STAGES
     )
 
@@ -167,10 +167,8 @@ def current_project_detail(request, project_id):
 
 
 def _can_set_semester(user, department_id):
-    """The department's coordinator, or an administrator, chooses a project's semester (D-38)."""
-    return user.role == Role.ADMIN or (
-        user.role == Role.COORDINATOR and user.department_id is not None and user.department_id == department_id
-    )
+    """The faculty's coordinator, or an administrator, chooses a project's semester (D-38, D-43)."""
+    return user.role == Role.ADMIN or coordinates(user, department_id)
 
 
 @role_or_public_required(*REPOSITORY_ROLES)
@@ -427,7 +425,7 @@ def _can_open_current_project_files(user, document):
     if user.role == Role.ADMIN:
         return True
     if user.role in (Role.SUPERVISOR, Role.COORDINATOR, Role.HOD):
-        return project.supervisor_id == user.pk or (
+        return project.supervisor_id == user.pk or coordinates(user, project.department_id) or (
             user.department_id is not None and user.department_id == project.department_id
         )
     return False
@@ -500,7 +498,10 @@ def project_workflow(request, project_id):
     elif user.role == Role.SUPERVISOR:
         if project.supervisor_id != user.pk:
             raise PermissionDenied
-    elif user.role in (Role.COORDINATOR, Role.HOD):
+    elif user.role == Role.COORDINATOR:
+        if not coordinates(user, project.department_id):
+            raise PermissionDenied
+    elif user.role == Role.HOD:
         if project.department_id != user.department_id:
             raise PermissionDenied
     elif user.role != Role.ADMIN:
@@ -868,7 +869,9 @@ def approvals(request):
     else:
         stages = [ProjectStage.PROPOSED, ProjectStage.SUPERVISOR_ACCEPTED, ProjectStage.SUBMITTED]
     projects = Project.objects.filter(stage__in=stages, archived=False)
-    if request.user.role != Role.ADMIN:
+    if request.user.role == Role.COORDINATOR:
+        projects = projects.filter(department__in=allocation_departments(request.user))
+    elif request.user.role != Role.ADMIN:
         if request.user.department_id:
             projects = projects.filter(department_id=request.user.department_id)
         else:
@@ -1057,8 +1060,8 @@ def import_projects(request):
 def upload_project_document(request, project_id):
     is_coordinator = request.user.role == Role.COORDINATOR
     if is_coordinator:
-        # Only a project in the coordinator's own department; anything else is "not found".
-        project = get_object_or_404(Project, pk=project_id, department_id=request.user.department_id or 0, archived=False)
+        # Only a project in the coordinator's faculty; anything else is "not found".
+        project = get_object_or_404(Project, pk=project_id, department__in=allocation_departments(request.user), archived=False)
         if not _coordinator_can_upload(request.user, project):
             raise PermissionDenied
     else:

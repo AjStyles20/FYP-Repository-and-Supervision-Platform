@@ -37,6 +37,16 @@ def can_supervise_in(user, department_id, *, require_active=True, faculty_wide=F
     ).exists()
 
 
+def coordinates(user, department_id):
+    """True when `user` is a coordinator of the faculty that holds `department_id` (D-29, D-43): a
+    coordinator looks after every department of their faculty, whatever their own teaching field."""
+    if user.role != Role.COORDINATOR or not user.department_id or department_id is None:
+        return False
+    return user.department_id == department_id or Department.objects.filter(
+        pk=department_id, faculty__departments__pk=user.department_id
+    ).exists()
+
+
 def allocation_departments(user):
     """The departments `user` allocates in (D-29): a coordinator works across their whole faculty,
     whatever their own teaching field; anyone else given the allocation permission (a supervisor or

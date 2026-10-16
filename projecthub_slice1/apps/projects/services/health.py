@@ -124,9 +124,9 @@ def health_score(project, now=None):
 
 
 def can_see_health(user, project):
-    """Supervisors and coordinators only: the project's supervisor, or a coordinator in its department."""
-    from apps.accounts.models import Role
+    """Supervisors and coordinators only: the project's supervisor, or a coordinator of its faculty."""
+    from .assignment import coordinates
 
     if project.supervisor_id and project.supervisor_id == user.pk:
         return True
-    return user.role == Role.COORDINATOR and bool(user.department_id) and user.department_id == project.department_id
+    return coordinates(user, project.department_id)

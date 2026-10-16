@@ -502,7 +502,8 @@ class RepositoryTests(TestCase):
             visibility=ProjectDocument.Visibility.STAFF_ONLY,
             uploaded_by=self.student,
         )
-        other_department = Department.objects.create(faculty=self.department.faculty, name="Software Engineering")
+        # Another faculty: a coordinator sees every department of their own faculty (D-43).
+        other_department = Department.objects.create(faculty=Faculty.objects.create(name="Other Faculty"), name="Software Engineering")
         allowed = {
             "own student": self.student,
             "assigned supervisor": self.supervisor,
@@ -991,7 +992,7 @@ class CompletionGapCheckTests(TestCase):
 
 
 class CoordinatorDepartmentStepTests(TestCase):
-    """Logging approval and recording the defence belong to any coordinator in the department."""
+    """Logging approval and recording the defence belong to any coordinator of the faculty (D-43)."""
 
     @classmethod
     def setUpTestData(cls):
@@ -1001,10 +1002,13 @@ class CoordinatorDepartmentStepTests(TestCase):
         cls.coordinator = User.objects.create(
             username="dept.coordinator", role=Role.COORDINATOR, department=cls.project.department
         )
-        other_project, _, _ = _assignment_fixtures(" elsewhere")
+        other_project, _, _ = _assignment_fixtures(" elsewhere")  # another faculty
         cls.outside_coordinator = User.objects.create(
             username="outside.coordinator", role=Role.COORDINATOR, department=other_project.department
         )
+        # A coordinator whose own department (their teaching field) is a sister department of the same faculty.
+        sister = Department.objects.create(faculty=cls.project.department.faculty, name="Sister Department")
+        cls.faculty_coordinator = User.objects.create(username="faculty.coordinator", role=Role.COORDINATOR, department=sister)
 
     def _accepted_by_supervisor(self):
         submit_proposal(
@@ -1053,6 +1057,25 @@ class CoordinatorDepartmentStepTests(TestCase):
         self._set_stage(ProjectStage.SUBMITTED)
         self.client.post(url, {"note": "Passed", "when": "2026-10-04"})
         self.assertEqual(self._stage(), ProjectStage.DEFENDED)
+
+    def test_a_coordinator_from_a_sister_department_of_the_faculty_does_both_through_the_workflow_page(self):
+        self._accepted_by_supervisor()
+        self.client.force_login(self.faculty_coordinator)
+        url = reverse("project_workflow", args=[self.project.pk])
+        self.assertEqual(self.client.get(url).status_code, 200)
+        self.assertIn(self.project, self.client.get(reverse("approvals")).context["projects"])
+
+        self.client.post(url, {"notes": "Filed", "logged_on": "2026-10-02"})
+        self.assertEqual(self._stage(), ProjectStage.APPROVED)
+
+        self._set_stage(ProjectStage.SUBMITTED)
+        self.client.post(url, {"note": "Passed", "when": "2026-10-04"})
+        self.assertEqual(self._stage(), ProjectStage.DEFENDED)
+
+    def test_coordinator_from_another_faculty_cannot_open_the_project(self):
+        self.client.force_login(self.outside_coordinator)
+        self.assertEqual(self.client.get(reverse("project_workflow", args=[self.project.pk])).status_code, 403)
+        self.assertNotIn(self.project, self.client.get(reverse("approvals")).context["projects"])
 
     def test_coordinator_from_another_department_cannot_log_approval_or_record_defence(self):
         self._accepted_by_supervisor()

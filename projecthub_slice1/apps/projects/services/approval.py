@@ -24,6 +24,7 @@ from ..models import (
     ProjectStage,
     SupervisorDecision,
 )
+from .assignment import coordinates
 from .lifecycle import record_transition
 
 APPROVING_DECISIONS = (SupervisorDecision.ACCEPTED, SupervisorDecision.ACCEPTED_WITH_CHANGES)
@@ -160,8 +161,8 @@ def record_supervisor_decision(project, *, supervisor, decision, comments, name_
 @transaction.atomic
 def log_approved_form(project, *, coordinator, notes, logged_on):
     """Step 3. The department logs the signed form, which is what makes the topic approved."""
-    if coordinator.role != Role.COORDINATOR or coordinator.department_id != project.department_id:
-        raise ValidationError("Only a coordinator in the project's department can log the approval form.")
+    if not coordinates(coordinator, project.department_id):
+        raise ValidationError("Only a coordinator of the project's faculty can log the approval form.")
     form = _open_form(project)
     if not form.is_supervisor_signed:
         raise ValidationError("The supervisor has not signed this form yet.")

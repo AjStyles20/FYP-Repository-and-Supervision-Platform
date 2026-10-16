@@ -5,7 +5,7 @@
 <section class="page-heading">
   <p class="eyebrow">DEPARTMENT WORKSPACE</p>
   <h1>Student allocation</h1>
-  <p class="muted">Give each student in your department a supervisor, keeping the numbers even, and change a supervisor when needed. Each change is recorded with its author, time and reason.</p>
+  <p class="muted">Give each student in your {% if user.role == 'coordinator' %}faculty{% else %}department{% endif %} a supervisor, keeping the numbers even, and change a supervisor when needed. Each change is recorded with its author, time and reason.</p>
   {% if user.role == "coordinator" %}<div class="actions"><a class="btn btn-primary" href="{% url 'add_student_account' %}">Add student</a></div>{% endif %}
 </section>
 

@@ -32,7 +32,8 @@ class CoordinatorUploadTests(TestCase):
     def setUpTestData(cls):
         faculty = Faculty.objects.create(name="Upload Faculty")
         cls.department = Department.objects.create(faculty=faculty, name="Computer Science")
-        other = Department.objects.create(faculty=faculty, name="Software Engineering")
+        # Another faculty: a coordinator acts across every department of their own faculty (D-43).
+        other = Department.objects.create(faculty=Faculty.objects.create(name=f"Other {faculty.name}"), name="Software Engineering")
         programme = Programme.objects.create(department=cls.department, name="Computer Science", degree_type="BSc")
         cls.student = User.objects.create(username="upload.student", role=Role.STUDENT)
         StudentProfile.objects.create(user=cls.student, student_number="BU/22A/CS/3001", programme=programme)
@@ -114,7 +115,8 @@ class ProjectFileListTests(TestCase):
     def setUpTestData(cls):
         faculty = Faculty.objects.create(name="File List Faculty")
         department = Department.objects.create(faculty=faculty, name="Computer Science")
-        other = Department.objects.create(faculty=faculty, name="Software Engineering")
+        # Another faculty: a coordinator acts across every department of their own faculty (D-43).
+        other = Department.objects.create(faculty=Faculty.objects.create(name=f"Other {faculty.name}"), name="Software Engineering")
         programme = Programme.objects.create(department=department, name="Computer Science", degree_type="BSc")
         cls.student = User.objects.create(username="list.student", first_name="Ada", last_name="Bello", role=Role.STUDENT)
         StudentProfile.objects.create(user=cls.student, student_number="BU/22A/CS/3002", programme=programme)
