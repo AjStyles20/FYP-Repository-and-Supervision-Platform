@@ -69,7 +69,7 @@
   <h2>Approval decisions</h2>
   <p class="muted">Every supervisor decision and departmental log entry is kept, including ones a later resubmission replaced. Entries cannot be edited or deleted.</p>
   {% if project.approval_decisions.all %}
-    <ol class="timeline">{% for decision in project.approval_decisions.all %}<li><strong>{{ decision.get_step_display }}{% if decision.decision %}: {{ decision.get_decision_display }}{% endif %}</strong><span class="timeline-meta">“{{ decision.proposed_title }}” · {{ decision.decided_on|date:"j M Y"|default:"no date" }}{% if decision.decided_by %} · {{ decision.decided_by.get_full_name|default:decision.decided_by.username }}{% endif %}{% if decision.approval_method %} · method: {{ decision.approval_method }}{% endif %}</span>{% if decision.comments %}<span class="timeline-note">{{ decision.comments|linebreaksbr }}</span>{% endif %}</li>{% endfor %}</ol>
+    <ol class="timeline">{% for decision in project.approval_decisions.all %}<li><strong>{{ decision.get_step_display }}{% if decision.decision %}: {{ decision.get_decision_display }}{% endif %}</strong><span class="timeline-meta">“{{ decision.proposed_title }}” · {{ decision.decided_on|date:"j M Y"|default:"no date" }}{% if decision.decided_by %} · {{ decision.decided_by.get_full_name|default:decision.decided_by.username }}{% endif %}{% if decision.approval_method %} · checked against: {{ decision.approval_method_label }}{% endif %}</span>{% if decision.comments %}<span class="timeline-note">{{ decision.comments|linebreaksbr }}</span>{% endif %}</li>{% endfor %}</ol>
   {% else %}<p>No approval decisions recorded yet.</p>{% endif %}
 </section>
 {% endblock %}

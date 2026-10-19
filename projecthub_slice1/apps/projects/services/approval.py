@@ -58,7 +58,8 @@ def save_proposal_draft(project, *, proposed_title, problem_statement="", object
 def submit_proposal(project, *, proposed_title, problem_statement, objectives, methodology,
                     tools_and_technologies, literature_review="", research_gap="",
                     working_project_demonstration="", student_name_on_form="", signed_on=None):
-    """Step 1. Record the student's proposal and keep the project title in step with it.
+    """Step 1. Record the student's proposal and keep the project title in step with it. A project with
+    no description yet (one the coordinator created by allocation) takes the problem statement as its summary.
 
     Submitting dates the form (today unless given), which puts it with the supervisor, who is alerted."""
     signed_on = signed_on or timezone.localdate()
@@ -96,9 +97,15 @@ def submit_proposal(project, *, proposed_title, problem_statement, objectives, m
             "coordinator_notes": "",
         },
     )
+    changed = []
     if project.title != proposed_title:
         project.title = proposed_title
-        project.save(update_fields=["title", "updated_at"])
+        changed.append("title")
+    if not project.description.strip() and problem_statement.strip():
+        project.description = problem_statement.strip()
+        changed.append("description")
+    if changed:
+        project.save(update_fields=[*changed, "updated_at"])
     log_event(actor=project.student, action="project.proposed", summary=f"Proposal submitted for {project.title}", obj=project)
     if project.supervisor_id:
         from apps.supervision.models import NotificationKind

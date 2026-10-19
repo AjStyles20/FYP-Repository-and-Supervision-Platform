@@ -151,6 +151,12 @@ class ProjectApprovalDecision(models.Model):
     def __str__(self):
         return f"{self.get_step_display()} · {self.project.title}"
 
+    @property
+    def approval_method_label(self):
+        """The method's name as the form shows it ("Literature review and research gap"), not its code."""
+        labels = dict(ProjectApprovalForm._meta.get_field("approval_method").choices)
+        return labels.get(self.approval_method, self.approval_method)
+
     def save(self, *args, **kwargs):
         if self.pk:
             raise PermissionError("Approval decisions are append-only.")

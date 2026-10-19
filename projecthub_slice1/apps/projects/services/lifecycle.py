@@ -145,13 +145,19 @@ def sign_off_completion(
     return completion, archived
 
 
+def _problem_statement(project):
+    form = getattr(project, "approval_form", None)
+    return form.problem_statement.strip() if form else ""
+
+
 def _archive_project(project, completion):
     """Create the past-work record, move the files across and update the student's status."""
     from .assignment import previous_supervisors_for
 
     archived = ArchivedProject.objects.create(
         title=project.title,
-        description=project.description,
+        # The summary visitors read (D-42): the project's description, or failing that its problem statement.
+        description=project.description.strip() or _problem_statement(project),
         keywords=project.keywords,
         year=completion.signed_on.year,
         completed_on=completion.signed_on,

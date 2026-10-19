@@ -954,6 +954,12 @@ class CompletionGapCheckTests(TestCase):
             self._sign_off(gap_summary="Something", no_gap=True)
         self._assert_not_archived()
 
+    def test_a_project_without_a_description_is_archived_with_its_problem_statement(self):
+        ProjectApprovalForm.objects.create(project=self.project, proposed_title=self.project.title,
+                                           problem_statement="  Students cannot tell when the shuttle comes.  ")
+        _, archived = self._sign_off(no_gap=True)
+        self.assertEqual(archived.description, "Students cannot tell when the shuttle comes.")
+
     def test_recorded_gap_is_carried_to_the_archive(self):
         completion, archived = self._sign_off(gap_summary="  Evaluate with more users  ")
 
@@ -1025,6 +1031,14 @@ class CoordinatorDepartmentStepTests(TestCase):
 
     def _stage(self):
         return Project.objects.get(pk=self.project.pk).stage
+
+    def test_the_proposal_fills_a_blank_description_and_the_page_names_the_approval_method(self):
+        self._accepted_by_supervisor()
+        self.assertEqual(Project.objects.get(pk=self.project.pk).description, "P")  # the problem statement
+        self.client.force_login(self.coordinator)
+        page = self.client.get(reverse("project_workflow", args=[self.project.pk]))
+        self.assertContains(page, "checked against: Topic, aim and methodology")
+        self.assertNotContains(page, "method: topic_only")
 
     def test_department_coordinator_logs_approval_on_a_project_they_do_not_supervise(self):
         self._accepted_by_supervisor()
