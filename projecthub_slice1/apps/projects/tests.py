@@ -39,7 +39,7 @@ from .services import (
     submit_proposal,
     unassign_project_supervisor,
 )
-from .services.similarity import similar_archived_projects, similarity, stem, tokens
+from .services.similarity import similar_archived_projects, similarity, similarity_threshold, stem, tokens
 from .services.health import AT_RISK, ON_TRACK, WATCH, health_band, health_score
 
 
@@ -1272,6 +1272,48 @@ class SimilarTopicPagesTests(TestCase):
 
         self.assertEqual([match["id"] for match in response.context["similar_projects"]], [self.seating.pk])
         self.assertContains(response, "1.00")
+
+    def test_an_identical_title_warns_even_when_a_long_archived_description_dilutes_the_abstract_score(self):
+        archived = self._archive(
+            "Machine Learning-Based Early Warning System for Student Academic Performance",
+            "A web application that predicts which students are at risk of failing a course from attendance, "
+            "continuous assessment and previous results, using a random forest model trained on past records "
+            "and shown to lecturers on a dashboard with weekly alerts.",
+            2025,
+        )
+        title = "Machine Learning-Based Early Warning System for Student Academic Performance"
+        # The whole-text score alone stays under the threshold; the title-only score is 1.0.
+        self.assertLess(similarity(f"{title} Poor understanding", f"{archived.title} {archived.description}"), 0.35)
+        matches = similar_archived_projects(title, "Poor understanding")
+        self.assertEqual([(match["id"], match["score"]) for match in matches], [(archived.pk, 1.0)])
+
+    def test_an_identical_title_on_a_proposal_shows_the_warning_and_still_saves_it(self):
+        archived = self._archive(
+            "Library Seat Booking",
+            "Students reserve reading-room places online, see live occupancy, receive reminders before their "
+            "slot ends, and librarians review usage reports for planning opening hours.",
+            2024,
+        )
+        # Without the title-only score this proposal would not warn: the whole-text score is under 0.35.
+        self.assertLess(similarity("Library Seat Booking No power", f"{archived.title} {archived.description}"), 0.35)
+        project = Project.objects.create(
+            student=self.student, title="Working title", description="No power",
+            department=self.department, programme=self.programme,
+        )
+        self.client.force_login(self.student)
+
+        response = self.client.post(reverse("project_workflow", args=[project.pk]), {
+            "proposed_title": "Library Seat Booking", "problem_statement": "Poor understanding",
+            "objectives": "Improve understanding", "methodology": "Incremental",
+        }, follow=True)
+
+        self.assertTrue(ProjectApprovalForm.objects.get(project=project).student_signed_on)  # submitted, not blocked
+        self.assertContains(response, "1 archived project looks similar")
+        self.assertContains(response, "Library Seat Booking</a>")
+
+    def test_an_unrelated_title_still_gives_no_match_and_the_threshold_is_unchanged(self):
+        self.assertEqual(similarity_threshold(), 0.35)
+        self.assertEqual(similar_archived_projects("Hostel Laundry Booking", "Poor understanding"), [])
 
     @override_settings(SIMILARITY_THRESHOLD=0.99)
     def test_threshold_comes_from_settings(self):

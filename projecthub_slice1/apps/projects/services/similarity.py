@@ -3,7 +3,8 @@
 The score is the Jaccard index of two word sets, J = |A ∩ B| / |A ∪ B|, where each set holds the
 words of a title plus its abstract after lowercasing, removing punctuation, dropping common
 English stop-words and stripping plural and -ing endings (so seat, seats and seating match).
-1.0 means the same words, 0.0 means none in common. It is a warning aid for students and
+1.0 means the same words, 0.0 means none in common. Titles are also scored against each other
+alone, and the higher score counts, so a long abstract cannot hide an identical title. It is a warning aid for students and
 supervisors, never a rule: nothing is blocked because of a score.
 See docs/explain/similarity.md for the formula and a worked example.
 """
@@ -74,19 +75,27 @@ def similarity_threshold():
 def similar_archived_projects(title, abstract="", *, exclude_id=None, limit=MATCH_LIMIT):
     """Archived projects scoring at or above the threshold, best first, at most `limit`.
 
+    Each archived project gets two scores: title and abstract against its title and description,
+    and title against title alone. The higher one counts, so a long archived description cannot
+    dilute an identical or near-identical title below the threshold.
+
     Returns a list of dicts with id, title, year and score. Every archived project is compared in
     Python; that is fine for a department-sized archive (hundreds to a few thousand rows).
     """
     topic = tokens(f"{title} {abstract}")
     if not topic:
         return []
+    title_only = tokens(title)
     threshold = similarity_threshold()
     rows = ArchivedProject.objects.values_list("id", "title", "description", "year")
     if exclude_id is not None:
         rows = rows.exclude(pk=exclude_id)
     matches = []
     for pk, other_title, other_abstract, year in rows:
-        score = jaccard(topic, tokens(f"{other_title} {other_abstract}"))
+        score = max(
+            jaccard(topic, tokens(f"{other_title} {other_abstract}")),
+            jaccard(title_only, tokens(other_title)),
+        )
         if score >= threshold:
             matches.append({"id": pk, "title": other_title, "year": year, "score": score})
     matches.sort(key=lambda match: (-match["score"], -match["year"], match["title"]))
